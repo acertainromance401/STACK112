@@ -36,7 +36,8 @@ enum NetworkError: LocalizedError {
 actor NetworkService {
     static let shared = NetworkService()
     static let overrideKey = "API_BASE_URL_OVERRIDE"
-    private static let fallbackBaseURL = "http://localhost:8000"
+    static let userIDKey = "AISYS_USER_ID"
+    private static let fallbackBaseURL = "http://172.27.212.232:8000"
 
     private var baseURL: URL
     private let session: URLSession
@@ -78,6 +79,15 @@ actor NetworkService {
 
     func currentBaseURLString() -> String {
         baseURL.absoluteString
+    }
+
+    static func currentUserID() -> String {
+        if let existing = UserDefaults.standard.string(forKey: userIDKey), !existing.isEmpty {
+            return existing
+        }
+        let generated = UUID().uuidString
+        UserDefaults.standard.set(generated, forKey: userIDKey)
+        return generated
     }
 
     /// /search?q=...&limit=... → [APICase]
@@ -138,7 +148,7 @@ actor NetworkService {
     }
 
     /// /dashboard/wrong-answers?user_id=...&limit=... → 최근 오답 노트
-    func listWrongAnswers(userID: String = "demo-user", limit: Int = 20) async throws -> [APIWrongAnswerItem] {
+    func listWrongAnswers(userID: String, limit: Int = 20) async throws -> [APIWrongAnswerItem] {
         var components = URLComponents(
             url: baseURL.appendingPathComponent("dashboard/wrong-answers"),
             resolvingAgainstBaseURL: false
@@ -160,6 +170,19 @@ actor NetworkService {
         let (data, response) = try await session.data(from: url)
         try validate(response)
         return try decoder.decode(APICase.self, from: data)
+    }
+
+    /// POST /ir/extract — OCR 텍스트 → 키워드 + 핵심문장
+    func irExtract(text: String, topKeywords: Int = 10, topSentences: Int = 5) async throws -> APIIRExtractResponse {
+        let url = baseURL.appendingPathComponent("ir/extract")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = ["text": text, "top_keywords": topKeywords, "top_sentences": topSentences] as [String: Any]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
+        return try decoder.decode(APIIRExtractResponse.self, from: data)
     }
 
     private func validate(_ response: URLResponse) throws {

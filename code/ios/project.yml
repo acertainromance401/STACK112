@@ -7,7 +7,7 @@ configs:
 settings:
   base:
     SWIFT_VERSION: 5.0
-    IPHONEOS_DEPLOYMENT_TARGET: 16.4
+    IPHONEOS_DEPLOYMENT_TARGET: 17.0
     MACOSX_DEPLOYMENT_TARGET: 15.0
     MACCATALYST_DEPLOYMENT_TARGET: 15.0
     CODE_SIGN_STYLE: Automatic
@@ -23,7 +23,7 @@ targets:
   AISYSApp:
     type: application
     platform: iOS
-    deploymentTarget: "16.4"
+    deploymentTarget: "17.0"
     sources:
       - AISYSApp/Sources
     dependencies:
@@ -50,7 +50,7 @@ targets:
   AISYSAppTests:
     type: bundle.unit-test
     platform: iOS
-    deploymentTarget: "16.4"
+    deploymentTarget: "17.0"
     hostApplication: AISYSApp
     sources:
       - AISYSAppTests

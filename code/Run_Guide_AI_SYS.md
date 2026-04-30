@@ -98,7 +98,7 @@ docker compose down
 
 ### 7.2 DB 초기화가 다시 안 되는 경우
 원인:
-- schema.sql/seed.sql은 DB 볼륨이 "처음" 생성될 때만 자동 실행
+- schema.sql은 DB 볼륨이 "처음" 생성될 때만 자동 실행
 
 해결:
 
@@ -110,7 +110,7 @@ docker compose up -d --build
 ### 7.3 API는 켜졌는데 조회 결과가 없을 때
 확인:
 - DB가 healthy인지 확인
-- seed.sql이 적용됐는지 확인
+- 운영 데이터가 적재됐는지 확인
 
 ```bash
 docker compose ps
@@ -122,7 +122,6 @@ docker compose logs db
 - 실행 정의: docker-compose.yml
 - API 이미지 빌드: code/backend/Dockerfile
 - DB 스키마: code/db/schema.sql
-- DB 시드: code/db/seed.sql
 - 백엔드 실행 가이드: code/backend/README.md
 
 ## 9. 요약

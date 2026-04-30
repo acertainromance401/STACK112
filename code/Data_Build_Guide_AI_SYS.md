@@ -178,9 +178,7 @@
 
 | 수집ID | 우선순위 | 과목 | 사건번호 | 판례명 | 소스유형 | 출처URL | 원문확보 | 메타입력 | 정규화 | 검수상태 | 담당자 | 최종수정일 | 비고 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| C-0001 | P1 | 형사소송법 | 2019도12345 | 위법수집증거 관련 판결 | 공식사이트 | https://example.org/case/2019do12345 | Y | Y | Y | reviewed | 홍길동 | 2026-04-08 | 유사판례 2건 연결 |
-| C-0002 | P1 | 형법 | 2020도56789 | 정당방위 범위 판결 | 파일데이터 | https://example.org/case/2020do56789 | Y | N | N | collected | 김민수 | 2026-04-08 | 메타 보완 필요 |
-| C-0003 | P2 | 경찰학 | 2018도11111 | 현행범 체포 적법성 판결 | 공식사이트 | https://example.org/case/2018do11111 | N | N | N | blocked | 이수진 | 2026-04-08 | 출처 이용조건 확인 필요 |
+| C-XXXX | P1 | 형사소송법 | (실데이터 입력) | (실데이터 입력) | 공식사이트 | (실데이터 URL) | Y/N | Y/N | Y/N | reviewed/blocked | 담당자명 | YYYY-MM-DD | 운영 메모 |
 
 ### 13.1 컬럼 정의
 - 수집ID: 수집 작업의 고유 식별자
@@ -207,8 +205,7 @@
 ### 13.3 CSV 템플릿 예시
 ```csv
 collection_id,priority,subject,case_number,case_name,source_type,source_url,raw_collected,meta_entered,normalized,review_status,owner,updated_at,note
-C-0001,P1,형사소송법,2019도12345,위법수집증거 관련 판결,공식사이트,https://example.org/case/2019do12345,Y,Y,Y,reviewed,홍길동,2026-04-08,유사판례 2건 연결
-C-0002,P1,형법,2020도56789,정당방위 범위 판결,파일데이터,https://example.org/case/2020do56789,Y,N,N,collected,김민수,2026-04-08,메타 보완 필요
+C-XXXX,P1,형사소송법,(실데이터 입력),(실데이터 입력),공식사이트,(실데이터 URL),Y,N,Y,collected,담당자명,YYYY-MM-DD,운영 메모
 ```
 
 ## 14. DB 구축 실행 가이드 (PostgreSQL)
@@ -230,9 +227,6 @@ createdb aisys
 
 # 스키마 적용
 psql -d aisys -f db/schema.sql
-
-# 시드 데이터 적용
-psql -d aisys -f db/seed.sql
 ```
 
 ### 14.3 생성되는 핵심 객체

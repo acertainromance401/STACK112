@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct AISYSApp: App {
@@ -14,5 +15,6 @@ struct AISYSApp: App {
                     await LLMService.shared.loadModelIfNeeded()
                 }
         }
+        .modelContainer(for: ScannedCase.self)
     }
 }

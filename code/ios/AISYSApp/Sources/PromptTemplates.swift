@@ -88,4 +88,28 @@ enum LLMPromptTemplate {
         - citations: [case_number list]
         """
     }
+
+    /// OX 퀴즈 생성 프롬프트
+    /// 출력 형식: 문항마다 "---" 구분자 사용
+    static func oxQuiz(caseNumber: String, caseName: String, keySentences: String, keywords: String, count: Int) -> String {
+        """
+        판례 OX 퀴즈 \(count)개를 만들어라.
+
+        사건번호: \(caseNumber)
+        사건명: \(caseName)
+        핵심문장: \(keySentences.prefix(300))
+
+        규칙: O와 X를 섞어라. 구분자는 --- 이다.
+
+        출력형식:
+        - statement: 한국어 진술
+        - answer: O
+        - explanation: \(caseNumber) 판례에서 도출
+        ---
+        - statement: 한국어 진술
+        - answer: X
+        - explanation: \(caseNumber) 판례와 다른 내용
+        ---
+        """
+    }
 }

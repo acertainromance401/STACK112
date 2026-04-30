@@ -89,3 +89,61 @@ class GroundedAnswerResponse(BaseModel):
     citations: list[Citation]
     safety_flags: list[str]
     generated_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# IR 파이프라인 스키마
+# ---------------------------------------------------------------------------
+
+class IRExtractRequest(BaseModel):
+    """OCR로 추출한 판례 텍스트를 정제·축약 요청"""
+    text: str
+    top_keywords: int = 10
+    top_sentences: int = 5
+
+
+class IRExtractResponse(BaseModel):
+    """키워드 및 핵심 문장 반환"""
+    keywords: list[str]
+    key_sentences: str
+
+
+class SimilarCaseItem(BaseModel):
+    case_id: str
+    similarity: float
+    rank: int
+
+
+class SimilarCasesResponse(BaseModel):
+    case_number: str
+    total: int
+    items: list[SimilarCaseItem]
+
+
+# ---------------------------------------------------------------------------
+# LLM 요약 / OX 퀴즈 스키마
+# ---------------------------------------------------------------------------
+
+class OXQuizItem(BaseModel):
+    statement: str
+    answer: bool          # True=O, False=X
+    explanation: str
+
+
+class LLMSummarizeRequest(BaseModel):
+    """핵심 문장 + 메타 정보로 요약 및 OX 퀴즈 생성 요청"""
+    case_number: str
+    case_name: str
+    key_sentences: str    # ir_pipeline.extract_key_sentences() 결과
+    keywords: list[str]   # ir_pipeline.extract_keywords() 결과
+    generate_quiz: bool = True
+    quiz_count: int = 3
+
+
+class LLMSummarizeResponse(BaseModel):
+    case_number: str
+    one_line_summary: str
+    key_issue: str
+    ruling_point: str
+    exam_takeaway: str
+    quiz: list[OXQuizItem]

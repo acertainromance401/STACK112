@@ -261,6 +261,13 @@ final class LlamaCppEngine: LocalLLMEngine {
             throw LocalLLMEngineError.runtimeUnavailable("프롬프트 토큰화 결과가 비어 있습니다.")
         }
 
+        // n_batch(512)를 초과하면 llama_decode가 SIGABRT로 크래시.
+        // 뒤쪽(최신 내용)을 우선 보존하여 트리밍.
+        let batchLimit = 480
+        if promptTokens.count > batchLimit {
+            promptTokens = Array(promptTokens.suffix(batchLimit))
+        }
+
         let promptBatch = promptTokens.withUnsafeMutableBufferPointer {
             llama_batch_get_one($0.baseAddress, Int32($0.count))
         }
@@ -399,9 +406,59 @@ final class RuleBasedLocalEngine: LocalLLMEngine {
         // 별도 모델 로딩 없음
     }
 
+    /// 프롬프트에서 필드 값을 추출해 구조화된 응답을 생성합니다.
     func generate(prompt: String, maxTokens: Int) async throws -> String {
         _ = maxTokens
-        let normalized = prompt.replacingOccurrences(of: "\n", with: " ")
-        return String(normalized.prefix(500))
+        
+        // 프롬프트의 마지막 부분에서 필드 추출 (정규식 대신 간단한 string 처리)
+        func extractField(_ keyword: String) -> String {
+            // "case_name:" 또는 "caseName:" 형식으로 검색
+            let lowerPrompt = prompt.lowercased()
+            let lowerKeyword = keyword.lowercased()
+            
+            guard let range = lowerPrompt.range(of: lowerKeyword + ":") else {
+                return ""
+            }
+            
+            // 키워드 이후의 텍스트 추출
+            let afterKeyword = String(prompt[range.upperBound...])
+            
+            // 첫 번째 줄 또는 쉼표까지의 텍스트
+            let endCharacters = CharacterSet(charactersIn: "\n,;]}")
+            let components = afterKeyword.components(separatedBy: endCharacters)
+            let value = components.first ?? ""
+            
+            return value.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        let caseName = extractField("case_name").isEmpty
+            ? extractField("caseName")
+            : extractField("case_name")
+        
+        let issue = extractField("issue")
+        let keywords = extractField("keywords")
+        let keySentences = extractField("key_sentences").prefix(200)
+        
+        // 모두 빈 경우를 대비한 폴백
+        if caseName.isEmpty && issue.isEmpty && keywords.isEmpty {
+            return """
+            - one_line_summary: 기본 요약 (데이터 미제공)
+            - key_issue: 쟁점 정보가 제공되지 않았습니다
+            - ruling_point: 판결 결론 정보가 제공되지 않았습니다
+            - exam_takeaway: 시험 포인트 정보가 제공되지 않았습니다
+            """
+        }
+        
+        // 항상 파싱 가능한 형식으로 반환
+        let summaryText = caseName.isEmpty
+            ? "기본 요약"
+            : "\(caseName)은(는) \(issue.isEmpty ? "중요한 판례" : issue)입니다."
+        
+        return """
+        - one_line_summary: \(summaryText)
+        - key_issue: \(issue.isEmpty ? "쟁점이 제공되지 않았습니다" : issue)
+        - ruling_point: \(keySentences.isEmpty ? (issue.isEmpty ? "판결 결론 미제공" : "주요 내용: \(issue)") : keySentences)
+        - exam_takeaway: \(keywords.isEmpty ? "시험 포인트: 개념 확인" : "시험 포인트: \(keywords)")
+        """
     }
 }

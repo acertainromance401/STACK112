@@ -22,7 +22,6 @@
 - [code/Data_Build_Guide_AI_SYS.md](code/Data_Build_Guide_AI_SYS.md)
 - [code/Run_Guide_AI_SYS.md](code/Run_Guide_AI_SYS.md)
 - [code/db/schema.sql](code/db/schema.sql)
-- [code/db/seed.sql](code/db/seed.sql)
 - [code/data/README.md](code/data/README.md)
 - [code/backend/README.md](code/backend/README.md)
 - [docker-compose.yml](docker-compose.yml)

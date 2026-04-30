@@ -18,14 +18,20 @@ final class CaseSummaryViewModel: ObservableObject {
     @Published private(set) var selectedCase: APICase?
     @Published private(set) var summary: LLMSummary?
     @Published private(set) var quizQuestion: QuizQuestion?
+    @Published private(set) var oxQuizItems: [OXQuizQuestion] = []
 
     @Published private(set) var isSearching = false
     @Published private(set) var isSummarizing = false
     @Published private(set) var isGeneratingQuiz = false
+    @Published private(set) var isGeneratingOXQuiz = false
     @Published private(set) var llmState: LLMState = .idle
     @Published private(set) var errorMessage: String?
     @Published private(set) var backendConnected = false
     @Published private(set) var hasLoadedInitialCases = false
+
+    // IR 파이프라인 결과 (백엔드 /ir/extract 응답 캐시)
+    private(set) var irKeywords: [String] = []
+    private(set) var irKeySentences: String = ""
 
     // MARK: - Dependencies
 
@@ -47,6 +53,12 @@ final class CaseSummaryViewModel: ObservableObject {
 
     convenience init() {
         self.init(network: .shared, llm: .shared)
+    }
+
+    /// OCRView에서 미리 추출한 IR 결과를 주입합니다 (DB 없이 테스트할 때 사용).
+    func injectIRResult(keywords: [String], keySentences: String) {
+        irKeywords = keywords
+        irKeySentences = keySentences
     }
 
     // MARK: - Search
@@ -92,8 +104,18 @@ final class CaseSummaryViewModel: ObservableObject {
         selectedCase = caseItem
         summary = nil
         quizQuestion = nil
-        guard await ensureModelReady() else { return }
+        oxQuizItems = []
+        irKeywords = []
+        irKeySentences = ""
+
+        // IR 추출과 LLM 요약을 병렬로 시작
+        async let irTask: Void = fetchIRExtract(caseItem: caseItem)
+        guard await ensureModelReady() else {
+            _ = await irTask
+            return
+        }
         await performSummarize(caseItem: caseItem)
+        _ = await irTask
     }
 
     func generateQuizForSelectedCase() async {
@@ -102,6 +124,25 @@ final class CaseSummaryViewModel: ObservableObject {
         quizQuestion = nil
         guard await ensureModelReady() else { return }
         await performQuizGeneration(caseItem: caseItem)
+    }
+
+    /// IR 처리 결과(keySentences, keywords) 기반 OX 퀴즈 생성
+    func generateOXQuizForSelectedCase() async {
+        guard let caseItem = selectedCase else { return }
+        errorMessage = nil
+        oxQuizItems = []
+        guard await ensureModelReady() else { return }
+        isGeneratingOXQuiz = true
+        defer { isGeneratingOXQuiz = false }
+        do {
+            oxQuizItems = try await llm.generateOXQuiz(
+                caseItem: caseItem,
+                keySentences: irKeySentences,
+                keywords: irKeywords
+            )
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     // MARK: - Computed Display Values
@@ -158,6 +199,27 @@ final class CaseSummaryViewModel: ObservableObject {
             quizQuestion = try await llm.generateQuiz(caseItem: caseItem, summary: summary)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// 백엔드 /ir/extract 호출 — 실패해도 UX 차단 없이 폴백(빈 값)으로 진행
+    private func fetchIRExtract(caseItem: APICase) async {
+        let combinedText = [
+            caseItem.issueSummary,
+            caseItem.holdingSummary,
+            caseItem.examPoints,
+        ].compactMap { $0 }.joined(separator: " ")
+
+        guard !combinedText.isEmpty else { return }
+
+        do {
+            let result = try await network.irExtract(text: combinedText)
+            irKeywords = result.keywords
+            irKeySentences = result.keySentences
+        } catch {
+            // IR 추출 실패 시 DB 데이터를 폴백으로 사용 (LLM은 계속 동작)
+            irKeywords = caseItem.subject.isEmpty ? [] : [caseItem.subject]
+            irKeySentences = caseItem.issueSummary ?? ""
         }
     }
 }

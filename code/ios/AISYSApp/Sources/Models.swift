@@ -64,6 +64,12 @@ struct APIWrongAnswerItem: Codable {
     }
 }
 
+/// POST /ir/extract 응답 — 키워드 + 핵심 문장
+struct APIIRExtractResponse: Decodable {
+    let keywords: [String]
+    let keySentences: String
+}
+
 // MARK: - LLM Output Model
 
 /// PromptTemplates.summarize 출력을 파싱한 결과
@@ -135,6 +141,42 @@ struct CaseDetail: Equatable {
     let conclusion: String
     let examPoint: String
     let similarCases: [String]
+}
+
+// MARK: - OX Quiz Model
+
+/// LLM이 생성하는 O/X 퀴즈 단일 문항
+struct OXQuizQuestion: Identifiable, Equatable {
+    let id = UUID()
+    let statement: String      // 판단할 진술
+    let answer: Bool           // true = O (맞음), false = X (틀림)
+    let explanation: String    // 해설
+
+    /// LLM raw 텍스트 "- statement: ...\n- answer: O\n- explanation: ..." 파싱
+    static func parseList(rawOutput: String) -> [OXQuizQuestion] {
+        // 각 문항은 "---" 구분자로 구분
+        let blocks = rawOutput.components(separatedBy: "---")
+        return blocks.compactMap { block -> OXQuizQuestion? in
+            func value(_ key: String) -> String? {
+                guard let range = block.range(
+                    of: #"- \#(key):\s*(.+)"#,
+                    options: .regularExpression
+                ) else { return nil }
+                return String(block[range])
+                    .components(separatedBy: ": ")
+                    .dropFirst()
+                    .joined(separator: ": ")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            guard
+                let stmt = value("statement"),
+                let answerStr = value("answer"),
+                let explanation = value("explanation")
+            else { return nil }
+            let answer = answerStr.uppercased().hasPrefix("O")
+            return OXQuizQuestion(statement: stmt, answer: answer, explanation: explanation)
+        }
+    }
 }
 
 struct QuizQuestion: Equatable {

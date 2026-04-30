@@ -117,7 +117,6 @@ AI_SYS 프로젝트는 다음 4가지 핵심 역할로 구성됩니다.
 
 ### 주요 파일
 - `db/schema.sql` - DB 스키마 정의
-- `db/seed.sql` - 초기 데이터
 - `data/raw/` - 원본 데이터
 - `data/normalized/` - 정규화된 데이터
 - `data/reviewed/` - 검수된 데이터

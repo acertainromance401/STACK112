@@ -2,6 +2,5 @@ flowchart LR
     A[개발자 PC] --> B[docker compose up -d --build]
     B --> C[DB 컨테이너 시작<br/>PostgreSQL + pgvector]
     C --> D[schema.sql 자동 적용]
-    D --> E[seed.sql 자동 적용]
-    E --> F[API 컨테이너 시작<br/>FastAPI]
-    F --> G[브라우저 접속<br/>http://127.0.0.1:8000/docs]
+    D --> E[API 컨테이너 시작<br/>FastAPI]
+    E --> F[브라우저 접속<br/>http://127.0.0.1:8000/docs]

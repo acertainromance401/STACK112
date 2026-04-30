@@ -66,7 +66,7 @@ data/
 
 db/
 ├── schema.sql                       # 데이터베이스 스키마 정의
-└── seed.sql                         # 초기 데이터 로드 스크립트
+└── (운영 데이터는 외부 적재 파이프라인으로 관리)
 ```
 
 ---
@@ -362,7 +362,6 @@ pg_dump -h localhost -U user aisys > backup.sql
 
 ## 참고 문서
 - [데이터베이스 스키마](../db/schema.sql)
-- [초기 데이터 로드](../db/seed.sql)
 - [데이터 빌드 가이드](../code/Data_Build_Guide_AI_SYS.md)
 - [정책 검증 가이드](../data/policy/SCourt_Policy_Check_Guide.md)
 
@@ -372,7 +371,6 @@ pg_dump -h localhost -U user aisys > backup.sql
 
 ### 참고 코드 (현재 기준)
 - `code/db/schema.sql` - DB 스키마 정의
-- `code/db/seed.sql` - 시드 데이터
 - `code/data/README.md` - 데이터 운영 구조 및 가이드
 - `code/data/policy/SCourt_Policy_Check_Guide.md` - 정책 검증 기준
 - `code/backend/app/main.py` - 검색/대시보드 SQL 사용처
@@ -392,9 +390,9 @@ pg_dump -h localhost -U user aisys > backup.sql
 | 항목 | 상세 |
 |------|------|
 | DB 스키마 확립 | `schema.sql`로 초기화 체계 완료 (pgvector 포함) |
-| 초기 시드 데이터 | Swift 더미 데이터의 주요 케이스를 `seed.sql`로 이관 완료 |
+| 초기 데이터 정책 | 더미/샘플 데이터 제거, 실데이터 적재 중심으로 전환 |
 | 이관된 판례 | 2021도16503, 2022도12345, 2021도1234, 2020도4521, 2018도19876, 2023도16220, 2021도20457, 2017도18543 등 |
-| 오답 데이터 이관 | Swift 오답노트 더미를 `user_case_history`(demo-user) 기반으로 이관 완료 |
+| 오답 데이터 운영 | 사용자별 실사용 이력(`user_case_history`) 기반 조회 |
 | 게시 상태 뷰 | `published_cases` 뷰 기준으로 API 조회 정리 |
 | 데이터 단계 구조 | `raw/normalized/reviewed/failed/manifests` 폴더 구조 정의 완료 |
 | 운영 문서 확보 | 정책 체크 가이드, 메일 템플릿, manifest 템플릿 등 문서 확보 |

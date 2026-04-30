@@ -98,7 +98,13 @@ final class LLMService: ObservableObject {
             examPoints: caseItem.examPoints ?? ""
         )
 
-        let rawOutput = try await activeEngine.generate(prompt: prompt, maxTokens: 256)
+        let rawOutput: String
+        do {
+            rawOutput = try await activeEngine.generate(prompt: prompt, maxTokens: 256)
+        } catch {
+            let fallbackRaw = buildSummaryOutput(caseItem: caseItem)
+            return LLMSummary(rawOutput: fallbackRaw)
+        }
         if let summary = LLMSummary(rawOutput: rawOutput) {
             return summary
         }
@@ -171,12 +177,22 @@ final class LLMService: ObservableObject {
     // MARK: - Private
 
     private func buildSummaryOutput(caseItem: APICase) -> String {
-        let issue = caseItem.issueSummary ?? "주요 쟁점 정보가 부족합니다"
-        let holding = caseItem.holdingSummary ?? "판결 결론 정보가 부족합니다"
-        let examPoint = caseItem.examPoints ?? "시험 포인트 정보가 부족합니다"
+        // 줄바꿈 제거: LLMSummary 정규식이 단일 줄만 캡처하므로 sanitize 필요
+        func sanitize(_ s: String) -> String {
+            s.components(separatedBy: .newlines)
+             .map { $0.trimmingCharacters(in: .whitespaces) }
+             .filter { !$0.isEmpty }
+             .joined(separator: " ")
+             .prefix(200)
+             .description
+        }
+        let name = sanitize(caseItem.caseName)
+        let issue = sanitize(caseItem.issueSummary ?? "주요 쟁점 정보가 부족합니다")
+        let holding = sanitize(caseItem.holdingSummary ?? "판결 결론 정보가 부족합니다")
+        let examPoint = sanitize(caseItem.examPoints ?? "시험 포인트 정보가 부족합니다")
 
         return """
-        - one_line_summary: \(caseItem.caseName)은(는) \(issue) 중심으로 판단한 판례입니다.
+        - one_line_summary: \(name)은(는) \(issue) 중심으로 판단한 판례입니다.
         - key_issue: \(issue)
         - ruling_point: \(holding)
         - exam_takeaway: \(examPoint)
@@ -217,6 +233,97 @@ final class LLMService: ObservableObject {
             explanation: "해당 판례 학습은 쟁점, 결론, 시험 포인트를 함께 이해해야 하며 결론만 암기하는 접근은 부적절합니다.",
             keywords: [caseItem.caseNumber, caseItem.subject].filter { !$0.isEmpty }
         )
+    }
+
+    // MARK: - OX Quiz Generation
+
+    /// IR 파이프라인이 추출한 keySentences + keywords를 기반으로 OX 퀴즈를 생성합니다.
+    /// - Parameters:
+    ///   - caseItem: 대상 판례
+    ///   - keySentences: ir_pipeline.extract_key_sentences() 결과 (백엔드 /ir/extract 응답)
+    ///   - keywords: ir_pipeline.extract_keywords() 결과
+    ///   - count: 생성할 문항 수 (기본 3개)
+    func generateOXQuiz(
+        caseItem: APICase,
+        keySentences: String,
+        keywords: [String],
+        count: Int = 3
+    ) async throws -> [OXQuizQuestion] {
+        guard case .ready = state else { throw LLMError.notReady }
+
+        state = .inferring
+        defer {
+            if case .inferring = state { state = .ready }
+        }
+
+        let prompt = LLMPromptTemplate.oxQuiz(
+            caseNumber: caseItem.caseNumber,
+            caseName: caseItem.caseName,
+            keySentences: keySentences.isEmpty ? (caseItem.issueSummary ?? "") : keySentences,
+            keywords: keywords.isEmpty
+                ? [caseItem.subject, caseItem.issueSummary ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
+                : keywords.prefix(8).joined(separator: ", "),
+            count: count
+        )
+
+        do {
+            let rawOutput = try await activeEngine.generate(prompt: prompt, maxTokens: 512)
+            let parsed = OXQuizQuestion.parseList(rawOutput: rawOutput)
+            if !parsed.isEmpty { return parsed }
+        } catch {}
+
+        // 폴백: keySentences의 첫 문장들을 직접 OX 문항으로 구성
+        return buildFallbackOXQuiz(caseItem: caseItem, keySentences: keySentences, count: count)
+    }
+
+    private func buildFallbackOXQuiz(
+        caseItem: APICase,
+        keySentences: String,
+        count: Int
+    ) -> [OXQuizQuestion] {
+        // 의미있는 문장만 추출 (10자 이상, URL/숫자열 제외)
+        let sentences = keySentences
+            .components(separatedBy: CharacterSet(charactersIn: "。."))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { s in
+                s.count > 10 &&
+                !s.contains("portal.scourt") &&
+                !s.contains("http") &&
+                !s.allSatisfy({ $0.isNumber || $0 == ":" })
+            }
+
+        let fallbackSentences: [String]
+        if sentences.isEmpty {
+            fallbackSentences = [
+                caseItem.issueSummary ?? "\(caseItem.caseName)은(는) 핵심 쟁점이 있는 판례다",
+                caseItem.holdingSummary ?? "법원은 해당 사안에 대해 명확한 판단을 내렸다",
+                caseItem.examPoints ?? "이 판례는 시험에 자주 출제되는 중요 판례다",
+            ]
+        } else {
+            fallbackSentences = sentences
+        }
+
+        let caseNum = caseItem.caseNumber
+
+        // O 문항: 원문 그대로 (정답), X 문항: 핵심어를 반대로 표현
+        return fallbackSentences.prefix(count).enumerated().map { idx, sentence in
+            let isOAnswer = idx % 2 == 0
+            if isOAnswer {
+                return OXQuizQuestion(
+                    statement: String(sentence.prefix(100)),
+                    answer: true,
+                    explanation: "[\(caseNum)] 판결에서 확인된 내용입니다."
+                )
+            } else {
+                // X 문항: 문장 앞에 "~이 아니다" 형태로 변형
+                let xStatement = sentence.prefix(80) + "고 볼 수 없다"
+                return OXQuizQuestion(
+                    statement: String(xStatement.prefix(100)),
+                    answer: false,
+                    explanation: "[\(caseNum)] 판결의 취지와 반대되는 진술입니다. 원문을 확인하세요."
+                )
+            }
+        }
     }
 
     private var activeEngine: LocalLLMEngine {

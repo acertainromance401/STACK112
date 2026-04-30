@@ -49,9 +49,9 @@ AI_SYS는 경찰 공무원 시험 준비를 위한 판례 학습 플랫폼으로
 ### 2-3. 데이터/DB(PostgreSQL)
 
 완료 내용:
-- `schema.sql`, `seed.sql`로 초기화/시드 체계 확보
-- Swift 더미에 있던 주요 케이스를 DB 시드로 이관
-- 오답노트 더미를 `user_case_history` 기반으로 이관
+- `schema.sql` 기반 초기화 체계 확보
+- 운영 데이터 적재 기준으로 DB 조회 체계 정비
+- 사용자별 `user_case_history` 기반 조회 체계 정비
 - 게시 상태 뷰(`published_cases`)를 기준으로 API 조회되도록 정리
 
 운영 규칙 측면 진행:
@@ -289,7 +289,7 @@ QA:
 ### 9-2. 데이터 소스 변경 (앱 더미 -> DB 중심)
 
 - 변경 전: iOS 화면 흐름 일부가 Swift 더미 데이터 중심으로 동작
-- 변경 후: 더미 케이스 및 오답노트를 DB 시드(`seed.sql`, `user_case_history`)로 이관해 API 기반으로 조회
+- 변경 후: 실데이터 및 `user_case_history` 기반으로 API 조회
 - 영향: 앱-API-DB 데이터 정합성 개선, 실제 운영 형태와 유사한 검증 가능
 
 ### 9-3. 대시보드 범위 확장

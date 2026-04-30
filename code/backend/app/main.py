@@ -3,9 +3,21 @@ from .database import get_conn
 from .schemas import (
     CaseItem,
     HealthResponse,
+    IRExtractRequest,
+    IRExtractResponse,
+    LLMSummarizeRequest,
+    LLMSummarizeResponse,
+    OXQuizItem,
     RecommendedCasesResponse,
     SearchResponse,
+    SimilarCasesResponse,
     WrongAnswersResponse,
+)
+from .ir_pipeline import (
+    build_tfidf_matrix,
+    extract_key_sentences,
+    extract_keywords,
+    find_similar_cases,
 )
 
 app = FastAPI(title="AI_SYS API", version="0.1.0")
@@ -212,7 +224,7 @@ def dashboard_recommended(limit: int = Query(7, ge=1, le=30)) -> RecommendedCase
 
 @app.get("/dashboard/wrong-answers", response_model=WrongAnswersResponse)
 def dashboard_wrong_answers(
-    user_id: str = Query("demo-user"),
+    user_id: str = Query(..., min_length=1),
     limit: int = Query(20, ge=1, le=100),
 ) -> WrongAnswersResponse:
     sql = """
@@ -242,4 +254,130 @@ def dashboard_wrong_answers(
         for row in rows
     ]
     return WrongAnswersResponse(total=len(items), items=items)
+
+
+# ---------------------------------------------------------------------------
+# IR 파이프라인 엔드포인트
+# ---------------------------------------------------------------------------
+
+@app.post("/ir/extract", response_model=IRExtractResponse)
+def ir_extract(body: IRExtractRequest) -> IRExtractResponse:
+    """OCR 텍스트 → 키워드 + 핵심 문장 반환.
+    Swift OCRView에서 스캔한 텍스트를 전송하면 Llama 입력용으로 축약합니다."""
+
+    # IDF는 단일 문서이므로 코퍼스 없이 단어 빈도만으로 계산
+    # (DB 판례 전체를 인덱싱한 tfidf_df가 없는 환경에서도 동작)
+    from .ir_pipeline import tokenize
+    import numpy as np
+    import pandas as pd
+
+    tokens = tokenize(body.text)
+    if not tokens:
+        return IRExtractResponse(keywords=[], key_sentences="")
+
+    doc_len = len(tokens)
+    term_counts: dict[str, int] = {}
+    for t in tokens:
+        term_counts[t] = term_counts.get(t, 0) + 1
+
+    # 단일 문서이므로 IDF=1 고정, TF만으로 키워드 순위 결정
+    tf_scores = {t: c / doc_len for t, c in term_counts.items()}
+    sorted_kw = sorted(tf_scores.items(), key=lambda x: x[1], reverse=True)
+    keywords = [kw for kw, _ in sorted_kw[: body.top_keywords]]
+
+    key_sentences = extract_key_sentences(body.text, top_n=body.top_sentences)
+
+    return IRExtractResponse(keywords=keywords, key_sentences=key_sentences)
+
+
+@app.get("/cases/{case_number}/similar", response_model=SimilarCasesResponse)
+def similar_cases(
+    case_number: str,
+    top_k: int = Query(5, ge=1, le=20),
+) -> SimilarCasesResponse:
+    """특정 판례와 TF-IDF 코사인 유사도가 높은 판례를 반환합니다."""
+
+    # DB에서 published 판례 전체 텍스트 로드
+    sql = """
+        SELECT case_number, issue_summary, holding_summary, exam_points
+        FROM published_cases
+        WHERE issue_summary IS NOT NULL
+        ORDER BY updated_at DESC
+        LIMIT 500
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            rows = cur.fetchall()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="판례 데이터가 없습니다")
+
+    cases = [
+        {
+            "case_id": row[0],
+            "full_text": " ".join(filter(None, [row[1], row[2], row[3]])),
+        }
+        for row in rows
+    ]
+
+    if not any(c["case_id"] == case_number for c in cases):
+        raise HTTPException(status_code=404, detail="Case not found or not published")
+
+    tfidf_df, _ = build_tfidf_matrix(cases)
+    results = find_similar_cases(case_number, tfidf_df, top_k=top_k)
+
+    return SimilarCasesResponse(
+        case_number=case_number,
+        total=len(results),
+        items=results,
+    )
+
+
+# ---------------------------------------------------------------------------
+# LLM 요약 / OX 퀴즈 엔드포인트
+# ---------------------------------------------------------------------------
+
+@app.post("/llm/summarize", response_model=LLMSummarizeResponse)
+def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
+    """핵심 문장 + 키워드 → Llama 요약 및 OX 퀴즈 생성.
+    Swift LLMService는 이 엔드포인트 대신 로컬 추론도 가능하지만,
+    백엔드 호출 시 이 엔드포인트가 [EVIDENCE] 블록을 구성하여 응답합니다."""
+
+    from .schemas import PromptTemplates  # noqa: F401 — 존재 시 사용
+    import re
+
+    evidence_block = (
+        f"case_number: {body.case_number}\n"
+        f"case_name: {body.case_name}\n"
+        f"keywords: {', '.join(body.keywords)}\n"
+        f"key_sentences:\n{body.key_sentences}"
+    )
+
+    # 현재는 규칙 기반으로 응답 구성 (Llama 연동 전 폴백)
+    # 추후 LlamaCppEngine 서버 사이드 연동 시 이 블록을 교체합니다.
+    summary_text = (
+        f"{body.case_name} 판례는 다음 핵심 쟁점을 다룹니다: "
+        f"{', '.join(body.keywords[:3])}."
+    )
+
+    quiz_items: list[OXQuizItem] = []
+    sentences = [s.strip() for s in body.key_sentences.split("\n") if s.strip()]
+    for i, sentence in enumerate(sentences[: body.quiz_count]):
+        quiz_items.append(
+            OXQuizItem(
+                statement=sentence[:120],
+                answer=True,
+                explanation=f"[{body.case_number}] 판결문 핵심 문장에서 직접 도출된 내용입니다.",
+            )
+        )
+
+    return LLMSummarizeResponse(
+        case_number=body.case_number,
+        one_line_summary=summary_text,
+        key_issue=body.keywords[0] if body.keywords else "",
+        ruling_point=sentences[0] if sentences else "",
+        exam_takeaway=f"시험 포인트: {', '.join(body.keywords[:5])}",
+        quiz=quiz_items,
+    )
 

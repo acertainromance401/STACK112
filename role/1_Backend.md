@@ -141,7 +141,7 @@ docker run -p 8000:8000 aisys-backend
 
 ## 데이터베이스 스키마
 
-관련 파일: `db/schema.sql`, `db/seed.sql`
+관련 파일: `db/schema.sql`
 
 ### 주요 테이블/뷰
 - `cases` — 판례 원본 테이블 (status 컬럼으로 published/draft 관리)

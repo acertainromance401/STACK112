@@ -14,7 +14,7 @@
 | OCR | Vision + PhotosPicker | OCR 텍스트를 검색 쿼리로 전달 |
 | 온디바이스 LLM | LlamaSwift (llama.cpp) + GGUF | 요약/퀴즈 생성 경로 연결 |
 | API 서버 | FastAPI + Uvicorn | /health, /search, /cases, /dashboard/* |
-| DB | PostgreSQL + pgvector | schema.sql, seed.sql 기반 초기화 |
+| DB | PostgreSQL + pgvector | schema.sql 기반 초기화 |
 | 컨테이너 | Docker Compose | ai_sys_team 프로젝트로 운영 |
 
 운영 메모

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0134EB00FCADE9C6760E94C3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71F7EC6215383E28B8504D6 /* Models.swift */; };
 		0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */; };
+		0D8B09BABDDB4ECA59B0D5F9 /* ScannedCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */; };
 		17842704C3A11AEB56ED1DAA /* AISYSAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */; };
 		1C43007E9CD651F2878094CB /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EB6CEDE58FD30A4BC467BE /* LLMService.swift */; };
 		24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE170875E59DB4941C4441FB /* NetworkService.swift */; };
@@ -20,6 +21,7 @@
 		B932ED19AEA38751B581B486 /* SearchFlowViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */; };
 		BEC559B8757E110E4D9EC191 /* LlamaSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B21C82E0E8B7FE766A20E4DD /* LlamaSwift */; };
 		C4DABF681E9D0290768E3FB4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F408ACC8D034B72FF9346C76 /* HomeView.swift */; };
+		CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */ = {isa = PBXBuildFile; fileRef = 694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */; };
 		F4D032582C2307BE5B20F222 /* NavigationBackButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */; };
 		F712F650434C229033AFC935 /* CaseSummaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */; };
 /* End PBXBuildFile section */
@@ -39,10 +41,12 @@
 		353E1A434AF9C763B420648A /* AISYSAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AISYSAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplates.swift; sourceTree = "<group>"; };
 		4EB8550D7167F38BF77BC796 /* AISYSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISYSApp.swift; sourceTree = "<group>"; };
+		694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Llama-3.2-1B-Instruct-Q4_K_M.gguf"; sourceTree = "<group>"; };
 		6FD11294844C01BF1B041A12 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISYSAppTests.swift; sourceTree = "<group>"; };
 		80EB6CEDE58FD30A4BC467BE /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		A012500B9935794B1603D393 /* AISYSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AISYSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedCase.swift; sourceTree = "<group>"; };
 		BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeState.swift; sourceTree = "<group>"; };
 		D71F7EC6215383E28B8504D6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngines.swift; sourceTree = "<group>"; };
@@ -98,6 +102,7 @@
 				BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */,
 				FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */,
 				F408ACC8D034B72FF9346C76 /* HomeView.swift */,
+				694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */,
 				80EB6CEDE58FD30A4BC467BE /* LLMService.swift */,
 				E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */,
 				D71F7EC6215383E28B8504D6 /* Models.swift */,
@@ -106,6 +111,7 @@
 				188D4A67A763047523D31AE1 /* OCRView.swift */,
 				48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */,
 				6FD11294844C01BF1B041A12 /* RootTabView.swift */,
+				A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */,
 				EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */,
 			);
 			name = Sources;
@@ -199,6 +205,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +228,7 @@
 				A562AF02780501D1737514AE /* OCRView.swift in Sources */,
 				0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */,
 				33B554E67648A09D2B3FA223 /* RootTabView.swift in Sources */,
+				0D8B09BABDDB4ECA59B0D5F9 /* ScannedCase.swift in Sources */,
 				B932ED19AEA38751B581B486 /* SearchFlowViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -249,7 +257,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -277,7 +285,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -305,7 +313,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -367,7 +375,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACCATALYST_DEPLOYMENT_TARGET = 15.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.0;
@@ -386,7 +394,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -454,7 +462,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACCATALYST_DEPLOYMENT_TARGET = 15.0;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0.0;

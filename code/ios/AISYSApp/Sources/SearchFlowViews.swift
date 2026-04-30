@@ -1,10 +1,14 @@
 import SwiftUI
+import SwiftData
 
 struct SearchView: View {
     @EnvironmentObject private var store: ReviewStore
     @EnvironmentObject private var runtime: AppRuntimeState
     @StateObject private var viewModel = CaseSummaryViewModel()
     @State private var keyword = ""
+
+    @Query(sort: \ScannedCase.scannedAt, order: .reverse)
+    private var scannedCases: [ScannedCase]
 
     var body: some View {
         ScrollView {
@@ -72,6 +76,41 @@ struct SearchView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+
+                // ── 로컬 스캔 판례 섹션 ────────────────────────────
+                if !scannedCases.isEmpty {
+                    Divider().padding(.vertical, 4)
+
+                    Text("내가 스캔한 판례")
+                        .font(.title3.bold())
+                    Text("OCR로 저장된 \(scannedCases.count)건")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(scannedCases) { scanned in
+                        NavigationLink {
+                            CaseSummaryView(
+                                apiCase: scanned.toAPICase(),
+                                viewModel: {
+                                    let vm = CaseSummaryViewModel()
+                                    vm.injectIRResult(
+                                        keywords: scanned.keywords,
+                                        keySentences: scanned.keySentences
+                                    )
+                                    return vm
+                                }()
+                            )
+                        } label: {
+                            SearchResultCard(
+                                title: scanned.caseName,
+                                subtitle: "스캔 \(DateFormatter.shortDate.string(from: scanned.scannedAt))",
+                                tags: scanned.keywords.prefix(3).map { "#\($0)" },
+                                summary: scanned.keySentences
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
             .padding()
         }
@@ -100,52 +139,101 @@ struct CaseSummaryView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 if let resolved = viewModel.displayDetail ?? detail {
-                    Text(resolved.title).font(.largeTitle.bold())
 
-                    // LLM 추론 진행 상态 표시
+                    // ── 제목 ──────────────────────────────────────
+                    Text(resolved.title)
+                        .font(.title2.bold())
+
+                    // ── LLM 추론 상태 ──────────────────────────────
                     if viewModel.isSummarizing {
                         HStack(spacing: 8) {
                             ProgressView()
-                            Text("Llama가 판례를 분석 중입니다...")
+                            Text("판례를 분석하는 중...")
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
                     }
 
-                    if viewModel.isGeneratingQuiz {
-                        HStack(spacing: 8) {
-                            ProgressView()
-                            Text("Llama가 관련 문제를 생성 중입니다...")
-                                .font(.subheadline).foregroundStyle(.secondary)
+                    // ── 암기 수첩 카드 ──────────────────────────────
+                    StudyNoteCard(
+                        label: "한 줄 요약",
+                        content: viewModel.summary?.oneLineSummary ?? resolved.issue,
+                        accentColor: .blue
+                    )
+                    StudyNoteCard(
+                        label: "핵심 쟁점",
+                        content: viewModel.summary?.keyIssue ?? resolved.issue,
+                        accentColor: .orange
+                    )
+                    StudyNoteCard(
+                        label: "판결 결론",
+                        content: viewModel.summary?.rulingPoint ?? resolved.conclusion,
+                        accentColor: .teal
+                    )
+                    StudyNoteCard(
+                        label: "시험 포인트",
+                        content: viewModel.summary?.examTakeaway ?? resolved.examPoint,
+                        accentColor: .purple
+                    )
+
+                    // IR 키워드 태그
+                    if !viewModel.irKeywords.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("추출 키워드")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    ForEach(viewModel.irKeywords, id: \.self) { kw in
+                                        TagView(text: kw)
+                                    }
+                                }
+                            }
                         }
-                        .padding(.vertical, 4)
                     }
-
-                    InfoCard(title: "핵심 쟁점", detail: resolved.issue)
-                    InfoCard(title: "판결 결론", detail: resolved.conclusion)
-                    InfoCard(title: "시험 포인트", detail: resolved.examPoint)
 
                     if let err = viewModel.errorMessage {
                         Text(err).foregroundStyle(.red).font(.caption)
                     }
 
-                    Button {
-                        Task { await viewModel.generateQuizForSelectedCase() }
-                    } label: {
-                        Text(viewModel.quizQuestion == nil ? "퀴즈 생성" : "퀴즈 다시 생성")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.isSummarizing || viewModel.isGeneratingQuiz)
+                    Divider()
 
-                    if let question = viewModel.quizQuestion {
-                        NavigationLink("관련 문제 보기") {
-                            QuizView(question: question)
+                    // ── OX 퀴즈 버튼 ───────────────────────────────
+                    if viewModel.isGeneratingOXQuiz {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            Text("OX 퀴즈를 생성하는 중...")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Button {
+                            Task { await viewModel.generateOXQuizForSelectedCase() }
+                        } label: {
+                            Label(
+                                viewModel.oxQuizItems.isEmpty ? "OX 퀴즈 생성" : "OX 퀴즈 다시 생성",
+                                systemImage: "checkmark.circle"
+                            )
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.indigo)
+                        .disabled(viewModel.isSummarizing)
+                    }
+
+                    if !viewModel.oxQuizItems.isEmpty {
+                        NavigationLink {
+                            OXQuizView(
+                                caseTitle: resolved.title,
+                                items: viewModel.oxQuizItems
+                            )
+                        } label: {
+                            Label("OX 퀴즈 풀기 (\(viewModel.oxQuizItems.count)문항)", systemImage: "arrow.right.circle")
                         }
                         .buttonStyle(.bordered)
+                        .tint(.indigo)
                     }
 
+                    // 유사 판례
                     if !resolved.similarCases.isEmpty {
                         Text("유사 판례 리스트").font(.title2.bold())
                         ForEach(resolved.similarCases, id: \.self) { item in
@@ -164,8 +252,180 @@ struct CaseSummaryView: View {
             }
         }
     }
-
 }
+
+// MARK: - 암기 수첩 카드
+
+private struct StudyNoteCard: View {
+    let label: String
+    let content: String
+    let accentColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.caption.bold())
+                .foregroundStyle(accentColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(accentColor.opacity(0.12))
+                .clipShape(Capsule())
+            Text(content)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(accentColor.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - OX 퀴즈 뷰
+
+struct OXQuizView: View {
+    let caseTitle: String
+    let items: [OXQuizQuestion]
+
+    @State private var currentIndex = 0
+    @State private var selectedAnswer: Bool? = nil
+    @State private var showResult = false
+    @State private var correctCount = 0
+    @State private var finished = false
+
+    private var current: OXQuizQuestion? { items.indices.contains(currentIndex) ? items[currentIndex] : nil }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("OX 퀴즈")
+                    .font(.largeTitle.bold())
+                Text(caseTitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                if finished {
+                    // ── 결과 화면 ──────────────────────────────────
+                    VStack(spacing: 12) {
+                        Image(systemName: correctCount == items.count ? "star.fill" : "checkmark.seal")
+                            .font(.system(size: 52))
+                            .foregroundStyle(correctCount == items.count ? .yellow : .teal)
+                        Text("\(items.count)문항 중 \(correctCount)개 정답")
+                            .font(.title2.bold())
+                        Text(correctCount == items.count ? "완벽합니다!" : "틀린 문항을 다시 확인해보세요.")
+                            .foregroundStyle(.secondary)
+                        Button("처음부터 다시") {
+                            currentIndex = 0
+                            selectedAnswer = nil
+                            showResult = false
+                            correctCount = 0
+                            finished = false
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+
+                } else if let q = current {
+                    // ── 진행 바 ────────────────────────────────────
+                    ProgressView(value: Double(currentIndex), total: Double(items.count))
+                        .tint(.indigo)
+                    Text("문항 \(currentIndex + 1) / \(items.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    // ── 진술 ───────────────────────────────────────
+                    Text(q.statement)
+                        .font(.headline)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                    // ── O / X 버튼 ────────────────────────────────
+                    HStack(spacing: 24) {
+                        OXButton(label: "O", color: .teal, selected: selectedAnswer == true) {
+                            guard !showResult else { return }
+                            selectedAnswer = true
+                            commitAnswer(correct: q.answer)
+                        }
+                        OXButton(label: "X", color: .red, selected: selectedAnswer == false) {
+                            guard !showResult else { return }
+                            selectedAnswer = false
+                            commitAnswer(correct: !q.answer)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    // ── 해설 ───────────────────────────────────────
+                    if showResult, let chosen = selectedAnswer {
+                        let isCorrect = chosen == q.answer
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(isCorrect ? "정답입니다" : "오답입니다")
+                                .font(.headline)
+                                .foregroundStyle(isCorrect ? .teal : .red)
+                            Text(q.explanation)
+                                .font(.subheadline)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        Button(currentIndex + 1 < items.count ? "다음 문항" : "결과 보기") {
+                            advance()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.indigo)
+                    }
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("OX 퀴즈")
+        .withSmallBackButton()
+    }
+
+    private func commitAnswer(correct: Bool) {
+        showResult = true
+        if correct { correctCount += 1 }
+    }
+
+    private func advance() {
+        if currentIndex + 1 < items.count {
+            currentIndex += 1
+            selectedAnswer = nil
+            showResult = false
+        } else {
+            finished = true
+        }
+    }
+}
+
+private struct OXButton: View {
+    let label: String
+    let color: Color
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 48, weight: .bold))
+                .frame(width: 100, height: 100)
+                .background(selected ? color : color.opacity(0.15))
+                .foregroundStyle(selected ? .white : color)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 
 struct QuizView: View {
     let question: QuizQuestion
@@ -415,5 +675,13 @@ private struct TagView: View {
             .background(Color.blue.opacity(0.12))
             .clipShape(Capsule())
     }
+}
+
+private extension DateFormatter {
+    static let shortDate: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MM/dd HH:mm"
+        return f
+    }()
 }
 

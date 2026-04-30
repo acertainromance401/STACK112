@@ -8,13 +8,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2) DB 스키마/시드 적용
+## 2) DB 스키마 적용
 ```bash
 cd ..
 brew services start postgresql@17
 /opt/homebrew/opt/postgresql@17/bin/createdb aisys
 /opt/homebrew/opt/postgresql@17/bin/psql -d aisys -f code/db/schema.sql
-/opt/homebrew/opt/postgresql@17/bin/psql -d aisys -f code/db/seed.sql
 ```
 
 ## 3) 실행
@@ -57,4 +56,4 @@ docker compose down -v
 - Docs: http://127.0.0.1:8000/docs
 - DB: postgresql://postgres:postgres@127.0.0.1:5432/aisys
 
-참고: 스키마/시드는 DB 볼륨이 처음 생성될 때 자동 적용됩니다. 이미 볼륨이 있으면 `docker compose down -v` 후 다시 시작하세요.
+참고: 스키마는 DB 볼륨이 처음 생성될 때 자동 적용됩니다. 이미 볼륨이 있으면 `docker compose down -v` 후 다시 시작하세요.

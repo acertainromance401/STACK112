@@ -5,6 +5,8 @@ struct HomeView: View {
     @State private var isLoadingDashboard = false
     @State private var dashboardError: String?
     @State private var currentAPIBaseURL = ""
+    @State private var showAPISettings = false
+    @State private var apiURLInput = ""
 
     var body: some View {
         ScrollView {
@@ -22,9 +24,19 @@ struct HomeView: View {
                 .foregroundStyle(.secondary)
 
                 if !currentAPIBaseURL.isEmpty {
-                    Text("API: \(currentAPIBaseURL)")
+                    HStack {
+                        Text("API: \(currentAPIBaseURL)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("설정") {
+                            apiURLInput = currentAPIBaseURL
+                            showAPISettings = true
+                        }
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.blue)
+                    }
+                    .contentShape(Rectangle())
                 }
 
                 HStack(spacing: 12) {
@@ -96,6 +108,49 @@ struct HomeView: View {
         }
         .navigationTitle("AI_SYS")
         .withSmallBackButton()
+        .sheet(isPresented: $showAPISettings) {
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField("http://192.168.x.x:8000", text: $apiURLInput)
+                            .autocapitalization(.none)
+                            .keyboardType(.URL)
+                        
+                        HStack {
+                            Button("저장") {
+                                NetworkService.shared.configureBaseURL(apiURLInput)
+                                currentAPIBaseURL = apiURLInput
+                                showAPISettings = false
+                            }
+                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.borderedProminent)
+                            
+                            Button("초기화") {
+                                NetworkService.shared.configureBaseURL("")
+                                currentAPIBaseURL = ""
+                                apiURLInput = ""
+                                showAPISettings = false
+                            }
+                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.bordered)
+                        }
+                    } header: {
+                        Text("API 서버 주소")
+                    } footer: {
+                        Text("현재 IP: \(currentAPIBaseURL)")
+                    }
+                }
+                .navigationTitle("API 설정")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("닫기") {
+                            showAPISettings = false
+                        }
+                    }
+                }
+            }
+        }
         .task {
             await loadDashboardFromBackendIfNeeded()
         }
@@ -119,7 +174,7 @@ struct HomeView: View {
 
         do {
             async let recommended = NetworkService.shared.listRecommendedCases(limit: 7)
-            async let wrong = NetworkService.shared.listWrongAnswers(userID: "demo-user", limit: 20)
+            async let wrong = NetworkService.shared.listWrongAnswers(userID: NetworkService.currentUserID(), limit: 20)
             let payload = try await (recommended, wrong)
             store.applyRemoteDashboard(recommended: payload.0, wrong: payload.1)
             dashboardError = nil
