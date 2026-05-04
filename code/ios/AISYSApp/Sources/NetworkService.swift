@@ -37,7 +37,11 @@ actor NetworkService {
     static let shared = NetworkService()
     static let overrideKey = "API_BASE_URL_OVERRIDE"
     static let userIDKey = "AISYS_USER_ID"
-    private static let fallbackBaseURL = "http://172.27.212.232:8000"
+#if DEBUG
+    private static let fallbackBaseURL = "http://127.0.0.1:8000"
+#else
+    private static let fallbackBaseURL = "https://api.example.com"
+#endif
 
     private var baseURL: URL
     private let session: URLSession

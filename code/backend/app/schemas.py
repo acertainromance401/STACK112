@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CaseItem(BaseModel):
@@ -147,3 +147,4 @@ class LLMSummarizeResponse(BaseModel):
     ruling_point: str
     exam_takeaway: str
     quiz: list[OXQuizItem]
+    citations: list[str] = Field(default_factory=list)

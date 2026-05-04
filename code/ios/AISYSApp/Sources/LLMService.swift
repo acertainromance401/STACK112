@@ -256,13 +256,26 @@ final class LLMService: ObservableObject {
             if case .inferring = state { state = .ready }
         }
 
+        let compactSentences = keySentences
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .prefix(4)
+            .joined(separator: " ")
+
+        let compactKeywords = Array(NSOrderedSet(array: keywords.map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }))
+            .compactMap { $0 as? String }
+            .filter { !$0.isEmpty }
+
         let prompt = LLMPromptTemplate.oxQuiz(
             caseNumber: caseItem.caseNumber,
             caseName: caseItem.caseName,
-            keySentences: keySentences.isEmpty ? (caseItem.issueSummary ?? "") : keySentences,
-            keywords: keywords.isEmpty
+            keySentences: compactSentences.isEmpty ? (caseItem.issueSummary ?? "") : compactSentences,
+            keywords: compactKeywords.isEmpty
                 ? [caseItem.subject, caseItem.issueSummary ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
-                : keywords.prefix(8).joined(separator: ", "),
+                : compactKeywords.prefix(8).joined(separator: ", "),
             count: count
         )
 

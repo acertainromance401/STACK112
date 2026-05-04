@@ -60,7 +60,7 @@ struct SearchView: View {
                 } else if !viewModel.searchResults.isEmpty {
                     ForEach(viewModel.searchResults) { apiCase in
                         NavigationLink {
-                            CaseSummaryView(apiCase: apiCase, viewModel: viewModel)
+                            CaseSummaryView(apiCase: apiCase, viewModel: viewModel, shouldAutoSave: true)
                         } label: {
                             SearchResultCard(
                                 title: apiCase.caseName,
@@ -136,6 +136,9 @@ struct CaseSummaryView: View {
     @ObservedObject var viewModel: CaseSummaryViewModel = CaseSummaryViewModel()
     // 더미 데이터 폴백 경로
     var detail: CaseDetail? = nil
+    /// true 이면 화면 진입 시 ReviewStore 에 자동 저장
+    var shouldAutoSave: Bool = false
+    @EnvironmentObject private var store: ReviewStore
 
     var body: some View {
         ScrollView {
@@ -249,6 +252,7 @@ struct CaseSummaryView: View {
         .task {
             if let c = apiCase {
                 await viewModel.select(caseItem: c)
+                if shouldAutoSave { store.saveCase(c) }
             }
         }
     }
@@ -550,17 +554,97 @@ struct WrongAnswerSaveView: View {
 
 struct ReviewView: View {
     @EnvironmentObject private var store: ReviewStore
+    @Query(sort: \ScannedCase.scannedAt, order: .reverse)
+    private var scannedCases: [ScannedCase]
 
     var body: some View {
-        List(store.wrongAnswers) { item in
-            VStack(alignment: .leading, spacing: 6) {
-                Text(item.title).font(.headline)
-                Text(item.memo).font(.subheadline).foregroundStyle(.secondary)
-                Text(item.date).font(.caption).foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("복습 노트")
+                    .font(.largeTitle.bold())
+                Text("검색하거나 스캔한 판례가 자동으로 저장됩니다.")
+                    .foregroundStyle(.secondary)
+
+                // ── 빈 상태 ────────────────────────────────────
+                if store.savedCases.isEmpty && scannedCases.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "bookmark.slash")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                        Text("저장된 판례가 없습니다.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("검색 결과를 탭하거나 OCR로 스캔하면 여기에 저장됩니다.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 60)
+                }
+
+                // ── 검색한 판례 (API) ───────────────────────────
+                if !store.savedCases.isEmpty {
+                    Text("검색한 판례")
+                        .font(.title3.bold())
+                    ForEach(store.savedCases) { apiCase in
+                        NavigationLink {
+                            CaseSummaryView(apiCase: apiCase)
+                        } label: {
+                            SearchResultCard(
+                                title: apiCase.caseName,
+                                subtitle: "\(apiCase.courtName)  \(apiCase.caseNumber)",
+                                tags: apiCase.subject.isEmpty ? [] : ["#\(apiCase.subject)"],
+                                summary: apiCase.issueSummary ?? ""
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                store.removeCase(id: apiCase.id)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+
+                // ── 스캔한 판례 (OCR) ───────────────────────────
+                if !scannedCases.isEmpty {
+                    if !store.savedCases.isEmpty { Divider().padding(.vertical, 4) }
+                    Text("스캔한 판례")
+                        .font(.title3.bold())
+                    Text("OCR로 저장된 \(scannedCases.count)건")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ForEach(scannedCases) { scanned in
+                        NavigationLink {
+                            CaseSummaryView(
+                                apiCase: scanned.toAPICase(),
+                                viewModel: {
+                                    let vm = CaseSummaryViewModel()
+                                    vm.injectIRResult(
+                                        keywords: scanned.keywords,
+                                        keySentences: scanned.keySentences
+                                    )
+                                    return vm
+                                }()
+                            )
+                        } label: {
+                            SearchResultCard(
+                                title: scanned.caseName,
+                                subtitle: "스캔 \(DateFormatter.shortDate.string(from: scanned.scannedAt))",
+                                tags: scanned.keywords.prefix(3).map { "#\($0)" },
+                                summary: scanned.keySentences
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
-            .padding(.vertical, 4)
+            .padding()
         }
-        .navigationTitle("Review")
+        .navigationTitle("복습 노트")
         .withSmallBackButton()
     }
 }

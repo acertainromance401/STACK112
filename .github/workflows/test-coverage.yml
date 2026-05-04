@@ -38,12 +38,28 @@ jobs:
           pip install -r code/backend/requirements.txt
           pip install pytest pytest-cov
 
+      - name: Check tests directory
+        id: tests-dir
+        run: |
+          if [ -d code/backend/tests ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run tests with coverage
+        if: steps.tests-dir.outputs.exists == 'true'
         run: |
           pytest code/backend/tests/ --cov=code/backend/app --cov-report=xml --cov-report=term
 
+      - name: Run backend smoke check
+        if: steps.tests-dir.outputs.exists != 'true'
+        run: |
+          python -m compileall code/backend/app
+
       - name: Upload coverage reports
+        if: steps.tests-dir.outputs.exists == 'true'
         uses: codecov/codecov-action@v3
         with:
           files: ./coverage.xml
-          flags: unitt          flags: unitt          fella
+          flags: unittests
