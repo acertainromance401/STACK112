@@ -1,5 +1,8 @@
 # AI_SYS iOS (SwiftUI)
 
+최종 업데이트: 2026-05-07
+현재 상태: 앱 빌드 가능, 단위 테스트 2건 실패로 운영 배포 전 테스트 정비 필요
+
 이 폴더는 `xcodegen`으로 생성되는 iOS SwiftUI 프로젝트입니다.
 
 ## 빠른 실행
@@ -53,7 +56,7 @@ xcodegen generate
 xcodebuild test \
   -project AISYS.xcodeproj \
   -scheme AISYSApp \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 ```
 
@@ -81,3 +84,9 @@ xcodebuild test \
 ```bash
 xcrun simctl list devices
 ```
+
+## 현재 알려진 테스트 이슈 (2026-05-07)
+
+- `AISYSAppTests.testSaveWrongAnswerAddsItemToTop` 실패
+- `AISYSAppTests.testRecommendedCasesExist` 실패
+- 내부 시연/개발 실행은 가능하나 운영 배포 전 테스트 기대값 정비 권장
