@@ -98,8 +98,13 @@ enum LLMPromptTemplate {
         사건번호: \(caseNumber)
         사건명: \(caseName)
         핵심문장: \(keySentences.prefix(300))
+        핵심키워드: \(keywords)
 
-        규칙: O와 X를 섞어라. 구분자는 --- 이다.
+        규칙:
+        1) O와 X를 섞어라.
+        2) 핵심문장 또는 핵심키워드에서 근거를 가져와라.
+        3) 문장은 100자 이내로 간결하게 써라.
+        4) 구분자는 --- 이다.
 
         출력형식:
         - statement: 한국어 진술

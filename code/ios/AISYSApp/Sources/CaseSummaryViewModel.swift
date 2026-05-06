@@ -25,8 +25,18 @@ final class CaseSummaryViewModel: ObservableObject {
     @Published private(set) var isGeneratingQuiz = false
     @Published private(set) var isGeneratingOXQuiz = false
     @Published private(set) var llmState: LLMState = .idle
+    @Published private(set) var activeEngineName: String = "준비 전"
+    @Published private(set) var isUsingFallbackEngine = true
+    @Published private(set) var llmLoadMessage: String?
+    @Published private(set) var selectedModelSource: String?
+    @Published private(set) var selectedModelPath: String?
+    @Published private(set) var bundleModelPath: String?
+    @Published private(set) var documentsModelPath: String?
+    @Published private(set) var modelSelectionReason: String?
+    @Published private(set) var ignoreDocumentsModel = false
     @Published private(set) var errorMessage: String?
     @Published private(set) var backendConnected = false
+    @Published private(set) var hasAttemptedBackendSearch = false
     @Published private(set) var hasLoadedInitialCases = false
 
     // IR 파이프라인 결과 (백엔드 /ir/extract 응답 캐시)
@@ -49,6 +59,69 @@ final class CaseSummaryViewModel: ObservableObject {
                 self.llmState = state
             }
         }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await name in llm.$activeEngineName.values {
+                self.activeEngineName = name
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await useFallback in llm.$isUsingFallbackEngine.values {
+                self.isUsingFallbackEngine = useFallback
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await message in llm.$lastLoadMessage.values {
+                self.llmLoadMessage = message
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await value in llm.$selectedModelSource.values {
+                self.selectedModelSource = value
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await value in llm.$selectedModelPath.values {
+                self.selectedModelPath = value
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await value in llm.$bundleModelPath.values {
+                self.bundleModelPath = value
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await value in llm.$documentsModelPath.values {
+                self.documentsModelPath = value
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await value in llm.$modelSelectionReason.values {
+                self.modelSelectionReason = value
+            }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            for await value in llm.$ignoreDocumentsModel.values {
+                self.ignoreDocumentsModel = value
+            }
+        }
     }
 
     convenience init() {
@@ -61,12 +134,17 @@ final class CaseSummaryViewModel: ObservableObject {
         irKeySentences = keySentences
     }
 
+    func setIgnoreDocumentsModel(_ ignore: Bool) async {
+        await llm.setIgnoreDocumentsModel(ignore)
+    }
+
     // MARK: - Search
 
     /// 키워드/사건번호로 백엔드 검색
     func search(query: String) async {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isSearching = true
+        hasAttemptedBackendSearch = true
         errorMessage = nil
         defer { isSearching = false }
         do {
@@ -110,6 +188,8 @@ final class CaseSummaryViewModel: ObservableObject {
 
         // IR 추출과 LLM 요약을 병렬로 시작
         async let irTask: Void = fetchIRExtract(caseItem: caseItem)
+        // 화면 진입 직후 가장 먼저 모델 준비 상태를 보장합니다.
+        // 여기서 ready가 되면 아래 performSummarize가 실제 프롬프트 생성으로 이어집니다.
         guard await ensureModelReady() else {
             _ = await irTask
             return
@@ -159,6 +239,7 @@ final class CaseSummaryViewModel: ObservableObject {
     // MARK: - Private
 
     private func ensureModelReady() async -> Bool {
+        // idle/error 상태면 llama 엔진 로드 또는 fallback 전환을 다시 시도합니다.
         switch llm.state {
         case .idle, .error:
             await llm.load()

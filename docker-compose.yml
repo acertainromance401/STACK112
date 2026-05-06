@@ -3,11 +3,11 @@ services:
     image: pgvector/pgvector:pg17
     container_name: aisys-db
     environment:
-      POSTGRES_DB: aisys
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-aisys}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./code/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
@@ -22,7 +22,11 @@ services:
       context: ./code/backend
     container_name: aisys-api
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/aisys
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-aisys}
+      DB_POOL_MIN_SIZE: ${DB_POOL_MIN_SIZE:-1}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
+      DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT:-10}
+      DB_CONNECT_TIMEOUT: ${DB_CONNECT_TIMEOUT:-5}
     depends_on:
       db:
         condition: service_healthy

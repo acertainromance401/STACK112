@@ -12,9 +12,21 @@ ir_pipeline.py
 
 from __future__ import annotations
 
+import re
+from collections import Counter
+from typing import Any
+
 import numpy as np
-import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
+
+try:
+    import pandas as pd
+except Exception:
+    pd = None  # type: ignore[assignment]
+
+try:
+    from sklearn.metrics.pairwise import cosine_similarity
+except Exception:
+    cosine_similarity = None  # type: ignore[assignment]
 
 try:
     from konlpy.tag import Okt
@@ -31,6 +43,111 @@ _STOPWORDS: frozenset[str] = frozenset({
     "그", "및", "또는", "등", "위", "위한", "따라", "대한", "관한",
     "있다", "없다", "된다", "한다", "것", "수", "바", "때", "경우",
 })
+
+_LEGAL_TERM_HINTS: tuple[str, ...] = (
+    "위법", "적법", "고의", "과실", "구성요건", "책임", "정당방위",
+    "긴급피난", "상당", "필요", "영장", "압수", "수색", "증거",
+    "공소", "기소", "무죄", "유죄", "양형", "재심", "항소", "상고",
+    "체포", "구속", "자백", "진술", "피고인", "피의자",
+)
+
+_LEGAL_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"제\s*\d+\s*조(?:\s*의\s*\d+)?(?:\s*제\s*\d+\s*항)?(?:\s*제\s*\d+\s*호)?"),
+    re.compile(r"\d{2,4}\s*[가-힣]{1,3}\s*\d+"),
+    re.compile(r"\d{4}\s*[.년]\s*\d{1,2}\s*[.월]\s*\d{1,2}\s*[.일]?"),
+    re.compile(r"(대법원|헌법재판소|고등법원|지방법원|가정법원|행정법원|특허법원)"),
+)
+
+
+def normalize_legal_text(text: str) -> str:
+    """판례 분석에 불필요한 노이즈를 줄여 핵심 문자 신호를 살립니다."""
+    if not text:
+        return ""
+
+    cleaned = text
+    cleaned = re.sub(r"https?://\S+", " ", cleaned)
+    cleaned = re.sub(r"www\.\S+", " ", cleaned)
+    cleaned = re.sub(r"portal\.scourt\.go\.kr\S*", " ", cleaned)
+    cleaned = re.sub(
+        r"\[\s*(판시사항|판결요지|참조조문|참조판례|전문|주문|원심판결|이유)\s*\]",
+        r"\n[\1]\n",
+        cleaned,
+    )
+    cleaned = re.sub(r"[\t\r\f\v]", " ", cleaned)
+    cleaned = re.sub(r"\n{2,}", "\n", cleaned)
+    cleaned = re.sub(r"[ ]{2,}", " ", cleaned)
+    return cleaned.strip()
+
+
+def extract_legal_keyphrases(text: str, top_n: int = 10) -> list[str]:
+    """법률 문서에서 조문/사건번호/쟁점어를 우선 추출합니다."""
+    normalized = normalize_legal_text(text)
+    if not normalized:
+        return []
+
+    ranked: list[str] = []
+    seen: set[str] = set()
+
+    def push(term: str) -> None:
+        cleaned = term.strip()
+        if not cleaned or cleaned in seen:
+            return
+        seen.add(cleaned)
+        ranked.append(cleaned)
+
+    for pattern in _LEGAL_PATTERNS:
+        for m in pattern.findall(normalized):
+            if isinstance(m, tuple):
+                value = "".join(x for x in m if x)
+            else:
+                value = m
+            push(re.sub(r"\s+", "", value))
+            if len(ranked) >= top_n:
+                return ranked[:top_n]
+
+    hangul_terms = re.findall(r"[가-힣]{2,14}", normalized)
+    counts = Counter(hangul_terms)
+    scored: list[tuple[str, float]] = []
+    for term, freq in counts.items():
+        if term in _STOPWORDS:
+            continue
+        if len(term) < 2:
+            continue
+        score = float(freq)
+        if any(hint in term for hint in _LEGAL_TERM_HINTS):
+            score += 1.5
+        if term.endswith("죄") or term.endswith("조"):
+            score += 0.8
+        scored.append((term, score))
+
+    scored.sort(key=lambda x: x[1], reverse=True)
+    for term, _ in scored:
+        push(term)
+        if len(ranked) >= top_n:
+            break
+
+    return ranked[:top_n]
+
+
+def count_legal_signals(text: str) -> dict[str, int]:
+    """텍스트 내 법률 신호(조문/사건번호/법원명/날짜) 개수를 집계합니다."""
+    normalized = normalize_legal_text(text)
+    if not normalized:
+        return {
+            "article_refs": 0,
+            "case_numbers": 0,
+            "date_refs": 0,
+            "court_refs": 0,
+            "term_hints": 0,
+        }
+
+    return {
+        "article_refs": len(_LEGAL_PATTERNS[0].findall(normalized)),
+        "case_numbers": len(_LEGAL_PATTERNS[1].findall(normalized)),
+        "date_refs": len(_LEGAL_PATTERNS[2].findall(normalized)),
+        "court_refs": len(_LEGAL_PATTERNS[3].findall(normalized)),
+        "term_hints": sum(1 for hint in _LEGAL_TERM_HINTS if hint in normalized),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -58,7 +175,7 @@ def build_tfidf_matrix(
     cases: list[dict],
     text_field: str = "full_text",
     id_field: str = "case_id",
-) -> tuple[pd.DataFrame, pd.Series]:
+) -> tuple[Any, Any]:
     """
     판례 리스트로부터 TF-IDF 행렬을 구성합니다.
 
@@ -71,6 +188,9 @@ def build_tfidf_matrix(
         tfidf_df: (문서 수 × 어휘집 크기) TF-IDF DataFrame, index=case_id
         idf_series: 어휘집 기준 IDF 값 Series
     """
+    if pd is None:
+        raise RuntimeError("pandas is required for TF-IDF features. Install backend requirements first.")
+
     case_df = pd.DataFrame(cases)
     case_df["tokens"] = case_df[text_field].fillna("").apply(tokenize)
     case_df["token_str"] = case_df["tokens"].apply(lambda t: " ".join(t))
@@ -123,7 +243,7 @@ def build_tfidf_matrix(
 
 def find_similar_cases(
     query_case_id: str,
-    tfidf_df: pd.DataFrame,
+    tfidf_df: Any,
     top_k: int = 5,
 ) -> list[dict]:
     """
@@ -137,6 +257,9 @@ def find_similar_cases(
     Returns:
         [{"case_id": str, "similarity": float, "rank": int}, ...]
     """
+    if pd is None or cosine_similarity is None:
+        raise RuntimeError("pandas and scikit-learn are required for similarity search.")
+
     if query_case_id not in tfidf_df.index:
         return []
 
@@ -156,8 +279,8 @@ def find_similar_cases(
 
 def search_by_query(
     query_text: str,
-    tfidf_df: pd.DataFrame,
-    idf_series: pd.Series,
+    tfidf_df: Any,
+    idf_series: Any,
     top_k: int = 5,
 ) -> list[dict]:
     """
@@ -172,6 +295,9 @@ def search_by_query(
     Returns:
         [{"case_id": str, "similarity": float, "rank": int}, ...]
     """
+    if pd is None or cosine_similarity is None:
+        raise RuntimeError("pandas and scikit-learn are required for query search.")
+
     query_tokens = tokenize(query_text)
     if not query_tokens:
         return []
@@ -206,7 +332,7 @@ def search_by_query(
 
 def extract_keywords(
     text: str,
-    idf_series: pd.Series,
+    idf_series: Any,
     top_n: int = 10,
 ) -> list[str]:
     """
@@ -258,9 +384,13 @@ def extract_key_sentences(
     Returns:
         핵심 문장을 줄바꿈으로 연결한 문자열
     """
+    normalized = normalize_legal_text(text)
+
     # 문장 분리 (한국어 종결어미 기준)
-    import re
-    sentences = re.split(r"(?<=[다요니])\s+", text.strip())
+    sentences = re.split(
+        r"(?<=[다요니!?])\s+|(?<=\.)\s+(?=[가-힣\[])|\n+",
+        normalized.strip(),
+    )
     sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
 
     if len(sentences) <= top_n:
@@ -291,7 +421,19 @@ def extract_key_sentences(
             break
         scores = new_scores
 
+    # 법률 신호가 강한 문장(조문, 사건번호 등)을 우선 반영
+    priority_scores = np.zeros(n)
+    for idx, sentence in enumerate(sentences):
+        bonus = 0.0
+        for pattern in _LEGAL_PATTERNS:
+            bonus += len(pattern.findall(sentence)) * 0.15
+        if any(h in sentence for h in _LEGAL_TERM_HINTS):
+            bonus += 0.2
+        priority_scores[idx] = bonus
+
+    combined_scores = scores + priority_scores
+
     top_indices = sorted(
-        np.argsort(scores)[-top_n:].tolist()
+        np.argsort(combined_scores)[-top_n:].tolist()
     )  # 원문 순서 유지
     return "\n".join(sentences[i] for i in top_indices)

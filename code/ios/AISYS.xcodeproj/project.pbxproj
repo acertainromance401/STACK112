@@ -276,10 +276,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
-				INFOPLIST_KEY_API_BASE_URL = "http://localhost:8000";
+				INFOPLIST_KEY_API_BASE_URL = "http://172.27.30.76:8000";
 				INFOPLIST_KEY_CFBundleDisplayName = AI_SYS;
 				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIFileSharingEnabled = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -304,10 +306,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
-				INFOPLIST_KEY_API_BASE_URL = "http://localhost:8000";
+				INFOPLIST_KEY_API_BASE_URL = "http://172.27.30.76:8000";
 				INFOPLIST_KEY_CFBundleDisplayName = AI_SYS;
 				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIFileSharingEnabled = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

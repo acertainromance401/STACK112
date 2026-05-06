@@ -259,6 +259,34 @@ final class ReviewStore: ObservableObject {
 
     @Published private(set) var isRemoteDashboardLoaded = false
 
+    // MARK: - 저장된 판례 (검색/스캔 이력)
+    @Published var savedCases: [APICase] = []
+    private static let savedCasesKey = "com.aisys.savedCases"
+
+    init() {
+        if let data = UserDefaults.standard.data(forKey: Self.savedCasesKey),
+           let decoded = try? JSONDecoder().decode([APICase].self, from: data) {
+            savedCases = decoded
+        }
+    }
+
+    func saveCase(_ apiCase: APICase) {
+        guard !savedCases.contains(where: { $0.id == apiCase.id }) else { return }
+        savedCases.insert(apiCase, at: 0)
+        persistSavedCases()
+    }
+
+    func removeCase(id: String) {
+        savedCases.removeAll { $0.id == id }
+        persistSavedCases()
+    }
+
+    private func persistSavedCases() {
+        if let data = try? JSONEncoder().encode(savedCases) {
+            UserDefaults.standard.set(data, forKey: Self.savedCasesKey)
+        }
+    }
+
     func saveWrongAnswer(note: WrongAnswerNote) {
         let item = WrongAnswerItem(
             title: note.title,

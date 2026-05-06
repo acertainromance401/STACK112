@@ -5,6 +5,7 @@ struct HomeView: View {
     @State private var isLoadingDashboard = false
     @State private var dashboardError: String?
     @State private var currentAPIBaseURL = ""
+    @State private var apiConnectionHint: String?
     @State private var showAPISettings = false
     @State private var apiURLInput = ""
 
@@ -37,6 +38,13 @@ struct HomeView: View {
                         .foregroundStyle(.blue)
                     }
                     .contentShape(Rectangle())
+
+                    if let apiConnectionHint {
+                        Text(apiConnectionHint)
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 HStack(spacing: 12) {
@@ -120,6 +128,9 @@ struct HomeView: View {
                             Button("저장") {
                                 NetworkService.shared.configureBaseURL(apiURLInput)
                                 currentAPIBaseURL = apiURLInput
+                                Task {
+                                    apiConnectionHint = await NetworkService.shared.deviceConnectionHint()
+                                }
                                 showAPISettings = false
                             }
                             .frame(maxWidth: .infinity)
@@ -129,6 +140,10 @@ struct HomeView: View {
                                 NetworkService.shared.configureBaseURL("")
                                 currentAPIBaseURL = ""
                                 apiURLInput = ""
+                                Task {
+                                    currentAPIBaseURL = await NetworkService.shared.currentBaseURLString()
+                                    apiConnectionHint = await NetworkService.shared.deviceConnectionHint()
+                                }
                                 showAPISettings = false
                             }
                             .frame(maxWidth: .infinity)
@@ -165,6 +180,7 @@ struct HomeView: View {
         defer { isLoadingDashboard = false }
 
         currentAPIBaseURL = await NetworkService.shared.currentBaseURLString()
+        apiConnectionHint = await NetworkService.shared.deviceConnectionHint()
 
         let isHealthy = await NetworkService.shared.healthCheck()
         guard isHealthy else {

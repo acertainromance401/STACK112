@@ -4,9 +4,10 @@ import Foundation
 import LlamaSwift
 #endif
 
-protocol LocalLLMEngine {
+protocol LocalLLMEngine: AnyObject {
     var name: String { get }
     func loadModel() async throws
+    func resetModel() async
     func generate(prompt: String, maxTokens: Int) async throws -> String
 }
 
@@ -27,32 +28,115 @@ enum LocalLLMEngineError: LocalizedError {
     }
 }
 
+enum LocalLLMModelSource: String {
+    case bundle = "번들"
+    case documents = "Documents/models"
+}
+
+struct LocalLLMModelResolution {
+    let selectedURL: URL?
+    let selectedSource: LocalLLMModelSource?
+    let bundleURL: URL?
+    let documentsURL: URL?
+    let configuredFileName: String?
+    let selectionReason: String
+}
+
 enum LocalLLMModelLocator {
     private static let fallbackFileNames = [
         "llama-3.2-1b-instruct-q4_k_m.gguf",
         "Llama-3.2-1B-Instruct-Q4_K_M.gguf"
     ]
 
-    static func resolveModelURL() -> URL? {
+    static func resolveModel(ignoreDocuments: Bool) -> LocalLLMModelResolution {
         let candidates = candidateFileNames()
+        let configuredFileName = candidates.first
+        let bundleURL = resolveFromBundle(candidates: candidates)
+        let documentsURL = resolveFromDocuments(candidates: candidates)
 
-        if let inDocuments = resolveFromDocuments(candidates: candidates) {
-            return inDocuments
+        if ignoreDocuments {
+            return LocalLLMModelResolution(
+                selectedURL: bundleURL,
+                selectedSource: bundleURL == nil ? nil : .bundle,
+                bundleURL: bundleURL,
+                documentsURL: documentsURL,
+                configuredFileName: configuredFileName,
+                selectionReason: bundleURL == nil
+                    ? "Documents 무시 설정이 켜져 있고 번들 모델을 찾지 못했습니다."
+                    : "Documents 무시 설정이 켜져 있어 번들 모델을 선택했습니다."
+            )
         }
 
-        guard let bundled = resolveFromBundle(candidates: candidates) else {
-            return nil
+        if let bundleURL, let documentsURL {
+            if isDocumentsModelPreferred(documentsURL: documentsURL, bundleURL: bundleURL) {
+                return LocalLLMModelResolution(
+                    selectedURL: documentsURL,
+                    selectedSource: .documents,
+                    bundleURL: bundleURL,
+                    documentsURL: documentsURL,
+                    configuredFileName: configuredFileName,
+                    selectionReason: "Documents 모델이 번들 모델보다 최신이라 선택했습니다."
+                )
+            }
+
+            return LocalLLMModelResolution(
+                selectedURL: bundleURL,
+                selectedSource: .bundle,
+                bundleURL: bundleURL,
+                documentsURL: documentsURL,
+                configuredFileName: configuredFileName,
+                selectionReason: "번들 모델이 더 최신이거나 동일하여 선택했습니다."
+            )
         }
 
-        // 번들에 모델이 있을 경우 Documents/models로 복사해 두면 실기기에서 교체/업데이트가 쉬워집니다.
-        if let copied = copyBundledModelToDocuments(
-            bundledURL: bundled,
-            preferredName: candidates.first ?? bundled.lastPathComponent
-        ) {
-            return copied
+        if let bundled = bundleURL {
+            return LocalLLMModelResolution(
+                selectedURL: bundled,
+                selectedSource: .bundle,
+                bundleURL: bundled,
+                documentsURL: documentsURL,
+                configuredFileName: configuredFileName,
+                selectionReason: "번들 모델만 발견되어 선택했습니다."
+            )
         }
 
-        return bundled
+        if let inDocuments = documentsURL {
+            return LocalLLMModelResolution(
+                selectedURL: inDocuments,
+                selectedSource: .documents,
+                bundleURL: bundleURL,
+                documentsURL: inDocuments,
+                configuredFileName: configuredFileName,
+                selectionReason: "번들 모델이 없어 Documents 모델을 선택했습니다."
+            )
+        }
+
+        return LocalLLMModelResolution(
+            selectedURL: nil,
+            selectedSource: nil,
+            bundleURL: bundleURL,
+            documentsURL: documentsURL,
+            configuredFileName: configuredFileName,
+            selectionReason: "번들과 Documents 어디에서도 GGUF 모델을 찾지 못했습니다."
+        )
+    }
+
+    private static func isDocumentsModelPreferred(documentsURL: URL, bundleURL: URL) -> Bool {
+        let documentsDate = modificationDate(of: documentsURL)
+        let bundleDate = modificationDate(of: bundleURL)
+
+        guard let documentsDate else {
+            return false
+        }
+        guard let bundleDate else {
+            return true
+        }
+        return documentsDate > bundleDate
+    }
+
+    private static func modificationDate(of url: URL) -> Date? {
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
+        return values?.contentModificationDate ?? values?.creationDate
     }
 
     private static func candidateFileNames() -> [String] {
@@ -145,6 +229,15 @@ final class LlamaCppEngine: LocalLLMEngine {
     let name = "llama.cpp"
     private(set) var isLoaded = false
     private var modelURL: URL?
+    var ignoreDocumentsModel = false
+    private(set) var modelResolution = LocalLLMModelResolution(
+        selectedURL: nil,
+        selectedSource: nil,
+        bundleURL: nil,
+        documentsURL: nil,
+        configuredFileName: nil
+        ,selectionReason: "초기 상태"
+    )
 
     #if canImport(LlamaSwift)
     private var model: OpaquePointer?
@@ -158,35 +251,50 @@ final class LlamaCppEngine: LocalLLMEngine {
     }
 
     deinit {
+        cleanupRuntime()
+    }
+
+    func resetModel() async {
+        cleanupRuntime()
+        modelURL = nil
+    }
+
+    private func cleanupRuntime() {
         #if canImport(LlamaSwift)
         if let sampler {
             llama_sampler_free(sampler)
+            self.sampler = nil
         }
         if let context {
             llama_free(context)
+            self.context = nil
         }
         if let model {
             llama_model_free(model)
+            self.model = nil
         }
+        self.vocab = nil
         #endif
+        isLoaded = false
     }
 
     func loadModel() async throws {
         if modelURL == nil {
-            modelURL = LocalLLMModelLocator.resolveModelURL()
+            modelResolution = LocalLLMModelLocator.resolveModel(ignoreDocuments: ignoreDocumentsModel)
+            modelURL = modelResolution.selectedURL
         }
 
-        guard modelURL != nil else {
+        guard let modelURL else {
+            let configured = modelResolution.configuredFileName ?? "LLAMA_MODEL_FILE 미설정"
+            let bundlePath = modelResolution.bundleURL?.path ?? "없음"
+            let documentsPath = modelResolution.documentsURL?.path ?? "없음"
             throw LocalLLMEngineError.modelNotFound(
-                "GGUF 모델 파일을 찾을 수 없습니다. Info.plist LLAMA_MODEL_FILE 또는 Documents/models 경로를 확인하세요."
+                "GGUF 모델 파일을 찾을 수 없습니다. configured=\(configured) / bundle=\(bundlePath) / documents=\(documentsPath) / reason=\(modelResolution.selectionReason)"
             )
         }
 
         #if canImport(LlamaSwift)
-        guard let modelURL else {
-            throw LocalLLMEngineError.modelNotLoaded
-        }
-
+        // llama.cpp 런타임 초기화 -> 모델 로드 -> 컨텍스트 생성 -> 샘플러 구성 순서입니다.
         llama_backend_init()
 
         var mparams = llama_model_default_params()
@@ -196,34 +304,46 @@ final class LlamaCppEngine: LocalLLMEngine {
 
         let modelPath = modelURL.path
         guard let loadedModel = modelPath.withCString({ llama_model_load_from_file($0, mparams) }) else {
-            throw LocalLLMEngineError.runtimeUnavailable("모델 로딩에 실패했습니다: \(modelURL.lastPathComponent)")
+            throw LocalLLMEngineError.runtimeUnavailable(
+                "모델 로딩에 실패했습니다: \(modelURL.lastPathComponent) / source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
+            )
         }
 
         var cparams = llama_context_default_params()
-        cparams.n_ctx = 2048
-        cparams.n_batch = 512
-        cparams.n_ubatch = 512
-        let threads = max(2, min(6, ProcessInfo.processInfo.activeProcessorCount))
-        cparams.n_threads = Int32(threads)
-        cparams.n_threads_batch = Int32(threads)
+        // 극단 최적화: 메모리/CPU 대폭 감소 (모바일 실기기 맞춤)
+        // n_ctx 2048 -> 512: 메모리 사용량 75% 감소, CPU 집약성 감소
+        // n_batch 512 -> 128: 배치 처리 단순화, decode 루프 최소화
+        // n_ubatch 512 -> 128: CPU 부하 최소화
+        // threads 2-3개만: 컨텍스트 스위칭 오버헤드 제거
+        cparams.n_ctx = 512
+        cparams.n_batch = 128
+        cparams.n_ubatch = 128
+        cparams.n_threads = 2
+        cparams.n_threads_batch = 2
 
         guard let loadedContext = llama_init_from_model(loadedModel, cparams) else {
             llama_model_free(loadedModel)
-            throw LocalLLMEngineError.runtimeUnavailable("추론 컨텍스트 초기화에 실패했습니다.")
+            throw LocalLLMEngineError.runtimeUnavailable(
+                "추론 컨텍스트 초기화에 실패했습니다. source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
+            )
         }
 
         let loadedVocab = llama_model_get_vocab(loadedModel)
         guard loadedVocab != nil else {
             llama_free(loadedContext)
             llama_model_free(loadedModel)
-            throw LocalLLMEngineError.runtimeUnavailable("어휘 사전 로딩에 실패했습니다.")
+            throw LocalLLMEngineError.runtimeUnavailable(
+                "어휘 사전 로딩에 실패했습니다. source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
+            )
         }
 
         let chainParams = llama_sampler_chain_default_params()
         guard let loadedSampler = llama_sampler_chain_init(chainParams) else {
             llama_free(loadedContext)
             llama_model_free(loadedModel)
-            throw LocalLLMEngineError.runtimeUnavailable("샘플러 초기화에 실패했습니다.")
+            throw LocalLLMEngineError.runtimeUnavailable(
+                "샘플러 초기화에 실패했습니다. source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
+            )
         }
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_k(40))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_p(0.9, 1))
@@ -252,56 +372,69 @@ final class LlamaCppEngine: LocalLLMEngine {
             throw LocalLLMEngineError.modelNotLoaded
         }
 
-        let memory = llama_get_memory(context)
-        llama_memory_clear(memory, true)
-        llama_sampler_reset(sampler)
+        // 무거운 llama_decode 연산을 백그라운드 스레드에서 실행하여 메인 스레드 블로킹 방지
+        // 이는 Objective-C 타입 정보 경고를 해결하고 UI 렉을 개선합니다.
+        let result = try await Task.detached(priority: .userInitiated) { () -> String in
+            // llama_memory_clear를 매번 호출하면 CPU 비용이 큼 - 제거
+            // llama_sampler_reset만 호출하여 샘플링 상태 초기화 (가볍고 필수)
+            llama_sampler_reset(sampler)
 
-        var promptTokens = try tokenize(text: prompt, vocab: vocab)
-        guard !promptTokens.isEmpty else {
-            throw LocalLLMEngineError.runtimeUnavailable("프롬프트 토큰화 결과가 비어 있습니다.")
-        }
-
-        // n_batch(512)를 초과하면 llama_decode가 SIGABRT로 크래시.
-        // 뒤쪽(최신 내용)을 우선 보존하여 트리밍.
-        let batchLimit = 480
-        if promptTokens.count > batchLimit {
-            promptTokens = Array(promptTokens.suffix(batchLimit))
-        }
-
-        let promptBatch = promptTokens.withUnsafeMutableBufferPointer {
-            llama_batch_get_one($0.baseAddress, Int32($0.count))
-        }
-        let prefillResult = llama_decode(context, promptBatch)
-        guard prefillResult == 0 else {
-            throw LocalLLMEngineError.runtimeUnavailable("프롬프트 디코딩에 실패했습니다. code=\(prefillResult)")
-        }
-
-        let maxOut = max(1, min(maxTokens, 512))
-        var generated: [llama_token] = []
-        generated.reserveCapacity(maxOut)
-
-        for _ in 0..<maxOut {
-            let token = llama_sampler_sample(sampler, context, -1)
-            if llama_vocab_is_eog(vocab, token) || token == llama_vocab_eos(vocab) {
-                break
+            // 1. 프롬프트 전체를 토큰화
+            // 2. prefill decode로 컨텍스트에 주입
+            // 3. sampler가 다음 토큰을 하나씩 선택
+            // 4. 선택한 토큰을 다시 decode 하며 maxTokens까지 반복
+            var promptTokens = try self.tokenize(text: prompt, vocab: vocab)
+            guard !promptTokens.isEmpty else {
+                throw LocalLLMEngineError.runtimeUnavailable("프롬프트 토큰화 결과가 비어 있습니다.")
             }
 
-            generated.append(token)
-            llama_sampler_accept(sampler, token)
-
-            var one = [token]
-            let nextBatch = one.withUnsafeMutableBufferPointer {
-                llama_batch_get_one($0.baseAddress, 1)
+            // n_batch(128)를 초과하면 llama_decode가 SIGABRT로 크래시.
+            // 뒤쪽(최신 내용)을 우선 보존하여 트리밍.
+            let batchLimit = 120
+            if promptTokens.count > batchLimit {
+                promptTokens = Array(promptTokens.suffix(batchLimit))
             }
-            let nextResult = llama_decode(context, nextBatch)
-            if nextResult != 0 {
-                break
-            }
-        }
 
-        let text = decodeTokens(generated, vocab: vocab)
-        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return cleaned.isEmpty ? "- one_line_summary: \(prompt.prefix(80))" : cleaned
+            let promptBatch = promptTokens.withUnsafeMutableBufferPointer {
+                llama_batch_get_one($0.baseAddress, Int32($0.count))
+            }
+            let prefillResult = llama_decode(context, promptBatch)
+            guard prefillResult == 0 else {
+                throw LocalLLMEngineError.runtimeUnavailable("프롬프트 디코딩에 실패했습니다. code=\(prefillResult)")
+            }
+
+            // 모바일 환경에서 최대 토큰 생성 수 대폭 제한 (배터리/CPU/메모리 최소화)
+            let maxOut = max(1, min(maxTokens, 160))
+            var generated: [llama_token] = []
+            generated.reserveCapacity(maxOut)
+
+            for _ in 0..<maxOut {
+                // 현재 컨텍스트를 바탕으로 다음 토큰 1개를 샘플링합니다.
+                let token = llama_sampler_sample(sampler, context, -1)
+                if llama_vocab_is_eog(vocab, token) || token == llama_vocab_eos(vocab) {
+                    break
+                }
+
+                generated.append(token)
+                llama_sampler_accept(sampler, token)
+
+                // 방금 뽑은 토큰을 다시 컨텍스트에 반영해야 다음 토큰을 이어서 생성할 수 있습니다.
+                var one = [token]
+                let nextBatch = one.withUnsafeMutableBufferPointer {
+                    llama_batch_get_one($0.baseAddress, 1)
+                }
+                let nextResult = llama_decode(context, nextBatch)
+                if nextResult != 0 {
+                    break
+                }
+            }
+
+            let text = self.decodeTokens(generated, vocab: vocab)
+            let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return cleaned.isEmpty ? "- one_line_summary: \(prompt.prefix(80))" : cleaned
+        }.value
+
+        return result
         #else
         throw LocalLLMEngineError.runtimeUnavailable(
             "llama.cpp 생성 루틴이 아직 연결되지 않았습니다."
@@ -404,6 +537,10 @@ final class RuleBasedLocalEngine: LocalLLMEngine {
 
     func loadModel() async throws {
         // 별도 모델 로딩 없음
+    }
+
+    func resetModel() async {
+        // 재설정할 상태 없음
     }
 
     /// 프롬프트에서 필드 값을 추출해 구조화된 응답을 생성합니다.

@@ -37,7 +37,11 @@ actor NetworkService {
     static let shared = NetworkService()
     static let overrideKey = "API_BASE_URL_OVERRIDE"
     static let userIDKey = "AISYS_USER_ID"
-    private static let fallbackBaseURL = "http://172.27.212.232:8000"
+#if DEBUG
+    private static let fallbackBaseURL = "http://172.27.30.76:8000"
+#else
+    private static let fallbackBaseURL = "https://api.example.com"
+#endif
 
     private var baseURL: URL
     private let session: URLSession
@@ -81,6 +85,18 @@ actor NetworkService {
         baseURL.absoluteString
     }
 
+    func deviceConnectionHint() -> String? {
+        guard let host = baseURL.host?.lowercased() else { return nil }
+#if targetEnvironment(simulator)
+        return nil
+#else
+        if host == "127.0.0.1" || host == "localhost" {
+            return "실기기에서는 127.0.0.1/localhost가 아이폰 자신을 가리킵니다. 맥의 LAN IP(예: http://192.168.x.x:8000)로 변경하세요."
+        }
+        return nil
+#endif
+    }
+
     static func currentUserID() -> String {
         if let existing = UserDefaults.standard.string(forKey: userIDKey), !existing.isEmpty {
             return existing
@@ -102,7 +118,13 @@ actor NetworkService {
         ]
         let (data, response) = try await session.data(from: components.url!)
         try validate(response)
-        return try decoder.decode(SearchAPIResponse.self, from: data).items
+        
+        // JSON 디코딩을 백그라운드 스레드에서 실행 (메인 스레드 블로킹 방지)
+        return try await Task.detached(priority: .userInitiated) { [weak self] () -> [APICase] in
+            guard let self else { throw NetworkError.emptyResponse }
+            let response = try self.decoder.decode(SearchAPIResponse.self, from: data)
+            return response.items
+        }.value
     }
 
     /// /cases?limit=... → 최신 published 케이스 목록
@@ -116,7 +138,13 @@ actor NetworkService {
         ]
         let (data, response) = try await session.data(from: components.url!)
         try validate(response)
-        return try decoder.decode(SearchAPIResponse.self, from: data).items
+        
+        // JSON 디코딩을 백그라운드 스레드에서 실행 (메인 스레드 블로킹 방지)
+        return try await Task.detached(priority: .userInitiated) { [weak self] () -> [APICase] in
+            guard let self else { throw NetworkError.emptyResponse }
+            let response = try self.decoder.decode(SearchAPIResponse.self, from: data)
+            return response.items
+        }.value
     }
 
     /// /health 상태 점검

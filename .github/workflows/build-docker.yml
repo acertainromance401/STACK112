@@ -12,78 +12,34 @@ on:
       - main--code
     paths:
       - 'code/backend/**'
-      - 'docker-c      - 'docker-c      - 'docker-c ows/build-docker.      - 'docker-c      - 'dockeread
+      - 'docker-compose.yml'
+      - '.github/workflows/build-docker.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
-                                                                            Checkout
-        uses: acti        uses:v4
+    name: Build Docker Image
+    runs-on: ubuntu-latest
 
-      - name: Set up Docker Buildx      - name: Set up Docker Buildx      - name: Set u name: Build Docker image
-        uses: doc        uses: doc        uses: doc  h:        u  cont        uses: doc        uses: doc        uses: doc  h:        u  cont        uses: doc     ad:         uses: doc        uses: docd:test
-          cache-from: type=gha
-               -to: type=gha,mode=max
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Test Docker image
-        run: |
-          docker run --rm ai-sy          docker run --rm ai-sy          docker run --rm ai-sy     rson          docker rus/pr-va     ion.yml <<      
-name: PR Validation
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-on:
-  pull  puuest:
-    branches:
-      - main
-      - main--code
-
-permissions:
-  contents: read
-  pull-requests: read
-
-jobs:
-  validate-pr:
-    name: PR Checklist
-    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on          fet    rpth:    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on    runs-on    rth:
-          script: |
-            const title = context.payload.pull_request.title;
-            const validPrefixes = ['feat', 'fix', 'docs', 'refact            const validPrefixes = ['feat', 'fix', 'docs', 'refact            const validPrefixes = ['feat', 'fix', 'docs', 'refact            const validPrefixes = ['feat', 'fix', 'docs', 'refact           s            const validPrefixoi            const validPrefixe    - nam            const validPrefixe            ons/g            const validPrefixes = ['feat', 'fix', 'docs', 'refact            const validPrefixes = ['feat', 'fix', 'docs', 'refact            cons10) {
-              core.setF           escri       s too short (minimum 10 characters)');
-            }
-
-      - name: Ch      - name: Ch           s: actions/github      - name: Ch     th:
-          script: |
-            const branch = context.payload.pull_request.head.ref;
-            const validPatterns = [
-              /^feature\/.+/,
-              /^bugfix\/.+/,
-              /^hotfix\/.+/
-            ];
-            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isValid = validPatterns.some(pattern => pattern.test(bra            const isVworkflows/documentation.yml'
-
-permissions:
-  contents: read
-
-jobs:
-  check-docs:
-    name: Documentati    name: Documentati    name: Documentati    name: Documentati    name: Documentat: actions/checkout@v4
-
-      - name: Check README exists
-        run: |
-          if [ ! -f README.md ]; then
-            ec            ec            e               ec            e
-
-
-           ec            wn           ec   uses: nosborn/github-action-markdown-cli@v3.3.0
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
         with:
-          files: .
-          config_file: .markdownlint.json
+          context: ./code/backend
+          push: false
+          load: true
+          tags: ai-sys-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Verify Project Descriptions
+      - name: Smoke test image
         run: |
-          required_docs=("PRD_AI_SYS.md" "Technology_Stack_AI_SYS.md" "WBS_AI_SYS.md")
-          for doc in "${required_docs[@]}"; do
-            if [ ! -f "Project_Descriptions/$doc" ]; then
-              echo "Missing: Project_Descriptions/$doc"
-              exit 1
-            fi
-          done
-          echo "✓ All required documentation present"
+          docker run --rm ai-sys-api:test python -m compileall app
