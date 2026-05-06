@@ -109,23 +109,34 @@ struct OCRView: View {
             return
         }
 
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
-        request.recognitionLanguages = ["ko-KR"]
-
-        let handler = VNImageRequestHandler(data: data)
+        // Vision OCR을 백그라운드 스레드에서 실행 (메인 스레드 블로킹 방지)
         do {
-            try handler.perform([request])
-            let lines = (request.results ?? [])
-                .compactMap { $0.topCandidates(1).first?.string }
-            recognizedText = lines.joined(separator: "\n")
-            if recognizedText.isEmpty {
-                ocrError = "인식된 텍스트가 없습니다. 다른 사진으로 시도해 주세요."
-            }
+            let text = try await Task.detached(priority: .userInitiated) { () throws -> String in
+                let request = VNRecognizeTextRequest()
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                request.recognitionLanguages = ["ko-KR"]
+
+                let handler = VNImageRequestHandler(data: data)
+                try handler.perform([request])
+                let lines = (request.results ?? [])
+                    .compactMap { $0.topCandidates(1).first?.string }
+                let text = lines.joined(separator: "\n")
+                if text.isEmpty {
+                    throw OCRRecognitionError.emptyText
+                }
+                return text
+            }.value
+            recognizedText = text
+        } catch OCRRecognitionError.emptyText {
+            ocrError = "인식된 텍스트가 없습니다. 다른 사진으로 시도해 주세요."
         } catch {
             ocrError = "OCR 처리 중 오류가 발생했습니다: \(error.localizedDescription)"
         }
+    }
+
+    private enum OCRRecognitionError: Error {
+        case emptyText
     }
 
     // MARK: - IR 추출 → 임시 APICase 생성 → 암기수첩 이동

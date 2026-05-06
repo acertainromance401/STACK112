@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 // MARK: - LLM State
 
@@ -32,10 +33,25 @@ enum LLMError: LocalizedError {
 @MainActor
 final class LLMService: ObservableObject {
     static let shared = LLMService()
+    private let logger = Logger(subsystem: "com.acertainromance401.aisys", category: "LLMService")
+    private let primaryLoadAttempts = 3
+    private let primaryGenerateAttempts = 2
+    private let oneLineLimit = 140
+    private let keyIssueLimit = 220
+    private let rulingLimit = 260
+    private let examLimit = 180
 
     @Published private(set) var state: LLMState = .idle
     @Published private(set) var loadProgress: Double = 0
     @Published private(set) var activeEngineName: String = "준비 전"
+    @Published private(set) var isUsingFallbackEngine = true
+    @Published private(set) var lastLoadMessage: String?
+    @Published private(set) var selectedModelSource: String?
+    @Published private(set) var selectedModelPath: String?
+    @Published private(set) var bundleModelPath: String?
+    @Published private(set) var documentsModelPath: String?
+    @Published private(set) var modelSelectionReason: String?
+    @Published private(set) var ignoreDocumentsModel = false
 
     private let primaryEngine: LocalLLMEngine
     private let fallbackEngine: LocalLLMEngine
@@ -58,6 +74,12 @@ final class LLMService: ObservableObject {
 
     func load() async {
         state = .loading(progress: 0)
+        lastLoadMessage = nil
+        selectedModelSource = nil
+        selectedModelPath = nil
+        bundleModelPath = nil
+        documentsModelPath = nil
+        modelSelectionReason = nil
         for step in [0.2, 0.45, 0.7] {
             loadProgress = step
             state = .loading(progress: step)
@@ -65,18 +87,20 @@ final class LLMService: ObservableObject {
         }
 
         do {
-            try await primaryEngine.loadModel()
-            useFallback = false
-            activeEngineName = primaryEngine.name
+            try await activatePrimaryEngine()
         } catch {
-            // llama.cpp 연결 전 단계에서는 폴백 엔진으로 즉시 전환
-            try? await fallbackEngine.loadModel()
-            useFallback = true
-            activeEngineName = fallbackEngine.name
+            await activateFallback(reason: error.localizedDescription)
         }
 
         loadProgress = 1.0
         state = .ready
+    }
+
+    func setIgnoreDocumentsModel(_ ignore: Bool) async {
+        guard ignoreDocumentsModel != ignore else { return }
+        ignoreDocumentsModel = ignore
+        await primaryEngine.resetModel()
+        await load()
     }
 
     // MARK: - Inference
@@ -90,6 +114,8 @@ final class LLMService: ObservableObject {
             if case .inferring = state { state = .ready }
         }
 
+        // APICase의 판례 필드를 PromptTemplates.summarize 형식으로 직렬화합니다.
+        // 여기서 만든 문자열이 그대로 llama 엔진의 입력 프롬프트가 됩니다.
         let prompt = LLMPromptTemplate.summarize(
             caseNumber: caseItem.caseNumber,
             caseName: caseItem.caseName,
@@ -100,13 +126,18 @@ final class LLMService: ObservableObject {
 
         let rawOutput: String
         do {
-            rawOutput = try await activeEngine.generate(prompt: prompt, maxTokens: 256)
+            rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 256, purpose: "summarize")
         } catch {
             let fallbackRaw = buildSummaryOutput(caseItem: caseItem)
             return LLMSummary(rawOutput: fallbackRaw)
         }
         if let summary = LLMSummary(rawOutput: rawOutput) {
-            return summary
+            return postprocessSummary(summary, caseItem: caseItem)
+        }
+
+        let normalizedOutput = normalizeSummaryOutput(rawOutput, caseItem: caseItem)
+        if let summary = LLMSummary(rawOutput: normalizedOutput) {
+            return postprocessSummary(summary, caseItem: caseItem)
         }
 
         // 모델 출력 형식이 달라도 UX가 깨지지 않도록 안전 폴백
@@ -138,7 +169,8 @@ final class LLMService: ObservableObject {
         )
 
         do {
-            let rawOutput = try await activeEngine.generate(prompt: prompt, maxTokens: 320)
+            // 객관식도 요약과 동일하게 prompt -> engine.generate -> 파서 순서로 흐릅니다.
+            let rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 320, purpose: "quiz")
             if let question = QuizQuestion(
                 rawOutput: rawOutput,
                 title: caseItem.caseName,
@@ -168,13 +200,205 @@ final class LLMService: ObservableObject {
         let prompt = LLMPromptTemplate.compare(question: question, evidenceBlock: evidenceBlock)
 
         do {
-            return try await activeEngine.generate(prompt: prompt, maxTokens: 320)
+            return try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 320, purpose: "compare")
         } catch {
             return buildComparisonOutput(question: question, cases: cases)
         }
     }
 
     // MARK: - Private
+
+    private func activatePrimaryEngine() async throws {
+        var lastError: Error?
+
+        for attempt in 1...primaryLoadAttempts {
+            do {
+                applyPrimaryEnginePreferences()
+                await primaryEngine.resetModel()
+                // 1순위는 실제 llama.cpp 엔진입니다. 성공하면 이후 generate 호출이 GGUF 모델로 들어갑니다.
+                try await primaryEngine.loadModel()
+                useFallback = false
+                isUsingFallbackEngine = false
+                activeEngineName = primaryEngine.name
+                updateModelDiagnosticsFromPrimaryEngine()
+                lastLoadMessage = attempt == 1
+                    ? "GGUF 모델 로드 성공: \(primaryEngine.name) / source=\(selectedModelSource ?? "알 수 없음")"
+                    : "GGUF 모델 로드 성공: \(primaryEngine.name) (재시도 \(attempt)회차) / source=\(selectedModelSource ?? "알 수 없음")"
+                logger.info("Active engine: \(self.activeEngineName, privacy: .public)")
+                return
+            } catch {
+                lastError = error
+                updateModelDiagnosticsFromPrimaryEngine()
+                logger.error("Primary engine load attempt \(attempt) failed: \(error.localizedDescription, privacy: .public)")
+                if attempt < primaryLoadAttempts {
+                    lastLoadMessage = "llama.cpp 재시도 중: \(error.localizedDescription)"
+                    try? await Task.sleep(nanoseconds: 150_000_000)
+                }
+            }
+        }
+
+        throw lastError ?? LLMError.notReady
+    }
+
+    private func activateFallback(reason: String) async {
+        try? await fallbackEngine.loadModel()
+        useFallback = true
+        isUsingFallbackEngine = true
+        activeEngineName = fallbackEngine.name
+        lastLoadMessage = "fallback 전환: \(reason)"
+        logger.error("Fallback engine activated: \(self.activeEngineName, privacy: .public), reason: \(reason, privacy: .public)")
+    }
+
+    private func updateModelDiagnosticsFromPrimaryEngine() {
+        guard let llamaEngine = primaryEngine as? LlamaCppEngine else { return }
+        selectedModelSource = llamaEngine.modelResolution.selectedSource?.rawValue
+        selectedModelPath = llamaEngine.modelResolution.selectedURL?.path
+        bundleModelPath = llamaEngine.modelResolution.bundleURL?.path
+        documentsModelPath = llamaEngine.modelResolution.documentsURL?.path
+        modelSelectionReason = llamaEngine.modelResolution.selectionReason
+    }
+
+    private func applyPrimaryEnginePreferences() {
+        guard let llamaEngine = primaryEngine as? LlamaCppEngine else { return }
+        llamaEngine.ignoreDocumentsModel = ignoreDocumentsModel
+    }
+
+    private func generateUsingBestAvailableEngine(prompt: String, maxTokens: Int, purpose: String) async throws -> String {
+        // 모바일 환경에서 프롬프트 길이가 길수록 CPU 사용량 급증 - 미리 제한
+        let maxPromptLength = 1200
+        let truncatedPrompt = prompt.count > maxPromptLength 
+            ? prompt.prefix(maxPromptLength) + "..." 
+            : prompt
+        
+        if useFallback {
+            logger.debug("\(purpose, privacy: .public) using fallback engine: \(self.activeEngineName, privacy: .public)")
+            return try await fallbackEngine.generate(prompt: String(truncatedPrompt), maxTokens: maxTokens)
+        }
+
+        var lastError: Error?
+        for attempt in 1...primaryGenerateAttempts {
+            do {
+                logger.debug("\(purpose, privacy: .public) using primary engine: \(self.activeEngineName, privacy: .public), attempt \(attempt)")
+                return try await primaryEngine.generate(prompt: String(truncatedPrompt), maxTokens: maxTokens)
+            } catch {
+                lastError = error
+                logger.error("Primary generate failure for \(purpose, privacy: .public), attempt \(attempt): \(error.localizedDescription, privacy: .public)")
+                if attempt < primaryGenerateAttempts {
+                    try? await recoverPrimaryEngine(after: error, purpose: purpose)
+                }
+            }
+        }
+
+        await activateFallback(reason: "\(purpose) 생성 실패: \(lastError?.localizedDescription ?? "알 수 없는 오류")")
+        return try await fallbackEngine.generate(prompt: String(truncatedPrompt), maxTokens: maxTokens)
+    }
+
+    private func recoverPrimaryEngine(after error: Error, purpose: String) async throws {
+        lastLoadMessage = "llama.cpp 복구 중: \(purpose) / \(error.localizedDescription)"
+        await primaryEngine.resetModel()
+        try? await Task.sleep(nanoseconds: 120_000_000)
+        try await primaryEngine.loadModel()
+        useFallback = false
+        isUsingFallbackEngine = false
+        activeEngineName = primaryEngine.name
+        lastLoadMessage = "llama.cpp 복구 성공: \(purpose) 재시도"
+        logger.info("Primary engine recovered for \(purpose, privacy: .public)")
+    }
+
+    private func normalizeSummaryOutput(_ rawOutput: String, caseItem: APICase) -> String {
+        let cleaned = rawOutput
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard !cleaned.isEmpty else {
+            return buildSummaryOutput(caseItem: caseItem)
+        }
+
+        let oneLine = cleaned.first ?? caseItem.caseName
+        let detail = cleaned.dropFirst().joined(separator: " ")
+        let keyIssue = caseItem.issueSummary?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let ruling = detail.isEmpty ? (caseItem.holdingSummary ?? "판결 결론 정보가 부족합니다") : detail
+        let exam = caseItem.examPoints?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return """
+        - one_line_summary: \(oneLine)
+        - key_issue: \((keyIssue?.isEmpty == false) ? keyIssue! : "핵심 쟁점 정보가 부족합니다")
+        - ruling_point: \(ruling)
+        - exam_takeaway: \((exam?.isEmpty == false) ? exam! : "시험 포인트 정보가 부족합니다")
+        """
+    }
+
+    private func postprocessSummary(_ summary: LLMSummary, caseItem: APICase) -> LLMSummary? {
+        var oneLine = shrink(summary.oneLineSummary, limit: oneLineLimit)
+        var keyIssue = shrink(summary.keyIssue, limit: keyIssueLimit)
+        var ruling = shrink(summary.rulingPoint, limit: rulingLimit)
+        var exam = shrink(summary.examTakeaway, limit: examLimit)
+
+        // 필드 간 중복이 크면 사례 메타 정보로 대체해 카드별 의미를 분리합니다.
+        if isTooSimilar(oneLine, keyIssue) {
+            keyIssue = shrink(caseItem.issueSummary ?? keyIssue, limit: keyIssueLimit)
+        }
+        if isTooSimilar(keyIssue, ruling) {
+            ruling = shrink(caseItem.holdingSummary ?? ruling, limit: rulingLimit)
+        }
+        if isTooSimilar(exam, keyIssue) || isTooSimilar(exam, ruling) {
+            let fallbackExam = caseItem.examPoints?.trimmingCharacters(in: .whitespacesAndNewlines)
+            exam = shrink(fallbackExam?.isEmpty == false ? fallbackExam! : exam, limit: examLimit)
+        }
+
+        return LLMSummary(rawOutput: canonicalSummaryRaw(oneLine: oneLine, keyIssue: keyIssue, ruling: ruling, exam: exam))
+    }
+
+    private func shrink(_ text: String, limit: Int) -> String {
+        let cleaned = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+
+        guard cleaned.count > limit else {
+            return cleaned
+        }
+
+        let idx = cleaned.index(cleaned.startIndex, offsetBy: limit)
+        var clipped = String(cleaned[..<idx])
+        if let lastPunctuation = clipped.lastIndex(where: { ".!?".contains($0) }) {
+            clipped = String(clipped[...lastPunctuation])
+        }
+        return clipped.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func isTooSimilar(_ a: String, _ b: String) -> Bool {
+        let na = normalizeForCompare(a)
+        let nb = normalizeForCompare(b)
+        if na.isEmpty || nb.isEmpty { return false }
+        if na == nb { return true }
+        if na.contains(nb) || nb.contains(na) { return true }
+
+        let sa = Set(na.split(separator: " "))
+        let sb = Set(nb.split(separator: " "))
+        guard !sa.isEmpty && !sb.isEmpty else { return false }
+        let common = sa.intersection(sb).count
+        let denom = max(sa.count, sb.count)
+        return Double(common) / Double(denom) >= 0.7
+    }
+
+    private func normalizeForCompare(_ s: String) -> String {
+        s.lowercased()
+            .replacingOccurrences(of: #"[^0-9a-zA-Z가-힣\s]"#, with: " ", options: .regularExpression)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func canonicalSummaryRaw(oneLine: String, keyIssue: String, ruling: String, exam: String) -> String {
+        """
+        - one_line_summary: \(oneLine)
+        - key_issue: \(keyIssue)
+        - ruling_point: \(ruling)
+        - exam_takeaway: \(exam)
+        """
+    }
 
     private func buildSummaryOutput(caseItem: APICase) -> String {
         // 줄바꿈 제거: LLMSummary 정규식이 단일 줄만 캡처하므로 sanitize 필요
@@ -280,7 +504,8 @@ final class LLMService: ObservableObject {
         )
 
         do {
-            let rawOutput = try await activeEngine.generate(prompt: prompt, maxTokens: 512)
+            // OX 퀴즈는 IR 추출 결과를 먼저 압축한 뒤 프롬프트에 넣고 생성합니다.
+            let rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 512, purpose: "ox_quiz")
             let parsed = OXQuizQuestion.parseList(rawOutput: rawOutput)
             if !parsed.isEmpty { return parsed }
         } catch {}
@@ -340,6 +565,7 @@ final class LLMService: ObservableObject {
     }
 
     private var activeEngine: LocalLLMEngine {
+        // 실제 추론 호출 직전 어느 엔진을 탈지 결정하는 단일 분기점입니다.
         useFallback ? fallbackEngine : primaryEngine
     }
 }

@@ -15,6 +15,9 @@ __pycache__/
 *.xcuserstate
 **/xcuserdata/
 
+# Generated evaluation artifacts
+code/backend/tmp/
+
 # AI_SYS data workspace (keep structure only)
 code/data/raw/*
 code/data/normalized/*

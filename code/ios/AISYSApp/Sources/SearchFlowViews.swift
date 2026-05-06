@@ -6,9 +6,20 @@ struct SearchView: View {
     @EnvironmentObject private var runtime: AppRuntimeState
     @StateObject private var viewModel = CaseSummaryViewModel()
     @State private var keyword = ""
+    @State private var showAllScannedCases = false
+    @State private var apiConnectionHint: String?
+
+    private let defaultScannedCaseLimit = 20
 
     @Query(sort: \ScannedCase.scannedAt, order: .reverse)
     private var scannedCases: [ScannedCase]
+
+    private var visibleScannedCases: [ScannedCase] {
+        if showAllScannedCases {
+            return scannedCases
+        }
+        return Array(scannedCases.prefix(defaultScannedCaseLimit))
+    }
 
     var body: some View {
         ScrollView {
@@ -31,6 +42,13 @@ struct SearchView: View {
                     .disabled(viewModel.isSearching || keyword.isEmpty)
                 }
 
+                if let apiConnectionHint {
+                    Text(apiConnectionHint)
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 Text("추천 키워드")
                     .font(.headline)
                 HStack {
@@ -44,7 +62,7 @@ struct SearchView: View {
                 Text("검색 결과")
                     .font(.title3.bold())
 
-                if !viewModel.backendConnected {
+                if viewModel.hasAttemptedBackendSearch && !viewModel.backendConnected {
                     Text("백엔드(DB) 연결이 없어 검색 결과를 불러오지 못했습니다.")
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -58,9 +76,10 @@ struct SearchView: View {
                     Text("검색 결과가 없습니다. 다른 키워드로 시도해보세요.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 } else if !viewModel.searchResults.isEmpty {
-                    ForEach(viewModel.searchResults) { apiCase in
+                    // List + .lazy로 렌더링 성능 개선 (화면 에 보이는 항목만 렌더링)
+                    List(viewModel.searchResults) { apiCase in
                         NavigationLink {
-                            CaseSummaryView(apiCase: apiCase, viewModel: viewModel, shouldAutoSave: true)
+                            LazyView(CaseSummaryView(apiCase: apiCase, viewModel: viewModel, shouldAutoSave: true))
                         } label: {
                             SearchResultCard(
                                 title: apiCase.caseName,
@@ -71,6 +90,8 @@ struct SearchView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    .listStyle(.plain)
+                    .frame(maxHeight: .infinity)
                 } else {
                     Text("표시할 판례가 없습니다. 백엔드 연결 또는 키워드를 확인해주세요.")
                         .font(.subheadline)
@@ -87,28 +108,27 @@ struct SearchView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    ForEach(scannedCases) { scanned in
+                    List(visibleScannedCases) { scanned in
                         NavigationLink {
-                            CaseSummaryView(
-                                apiCase: scanned.toAPICase(),
-                                viewModel: {
-                                    let vm = CaseSummaryViewModel()
-                                    vm.injectIRResult(
-                                        keywords: scanned.keywords,
-                                        keySentences: scanned.keySentences
-                                    )
-                                    return vm
-                                }()
-                            )
+                            LazyView(buildScannedCaseSummaryView(scanned))
                         } label: {
                             SearchResultCard(
                                 title: scanned.caseName,
                                 subtitle: "스캔 \(DateFormatter.shortDate.string(from: scanned.scannedAt))",
                                 tags: scanned.keywords.prefix(3).map { "#\($0)" },
-                                summary: scanned.keySentences
+                                summary: String(scanned.keySentences.prefix(140))
                             )
                         }
                         .buttonStyle(.plain)
+                    }
+                    .listStyle(.plain)
+                    .frame(maxHeight: .infinity)
+
+                    if scannedCases.count > defaultScannedCaseLimit {
+                        Button(showAllScannedCases ? "접기" : "더보기") {
+                            showAllScannedCases.toggle()
+                        }
+                        .buttonStyle(.bordered)
                     }
                 }
             }
@@ -116,9 +136,6 @@ struct SearchView: View {
         }
         .navigationTitle("Search")
         .withSmallBackButton()
-        .task {
-            await viewModel.loadInitialCasesIfNeeded()
-        }
         .onChange(of: runtime.pendingSearchQuery) { newValue in
             guard let query = newValue?.trimmingCharacters(in: .whitespacesAndNewlines), !query.isEmpty else {
                 return
@@ -127,6 +144,33 @@ struct SearchView: View {
             runtime.pendingSearchQuery = nil
             Task { await viewModel.search(query: query) }
         }
+        .task(priority: .utility) {
+            apiConnectionHint = await NetworkService.shared.deviceConnectionHint()
+        }
+    }
+
+    private func buildScannedCaseSummaryView(_ scanned: ScannedCase) -> CaseSummaryView {
+        let vm = CaseSummaryViewModel()
+        vm.injectIRResult(
+            keywords: scanned.keywords,
+            keySentences: scanned.keySentences
+        )
+        return CaseSummaryView(
+            apiCase: scanned.toAPICase(),
+            viewModel: vm
+        )
+    }
+}
+
+private struct LazyView<Content: View>: View {
+    private let build: () -> Content
+
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+
+    var body: some View {
+        build()
     }
 }
 
@@ -148,6 +192,69 @@ struct CaseSummaryView: View {
                     // ── 제목 ──────────────────────────────────────
                     Text(resolved.title)
                         .font(.title2.bold())
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(viewModel.isUsingFallbackEngine
+                             ? "LLM 엔진: \(viewModel.activeEngineName) fallback"
+                             : "LLM 엔진: \(viewModel.activeEngineName)")
+                            .font(.caption.bold())
+                            .foregroundStyle(viewModel.isUsingFallbackEngine ? .orange : .green)
+
+                        Toggle(
+                            "Documents 모델 무시",
+                            isOn: Binding(
+                                get: { viewModel.ignoreDocumentsModel },
+                                set: { newValue in
+                                    Task { await viewModel.setIgnoreDocumentsModel(newValue) }
+                                }
+                            )
+                        )
+                        .font(.caption)
+
+                        if let source = viewModel.selectedModelSource, !source.isEmpty {
+                            Text("선택 소스: \(source)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let reason = viewModel.modelSelectionReason, !reason.isEmpty {
+                            Text("선택 기준: \(reason)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if let message = viewModel.llmLoadMessage, !message.isEmpty {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if let selectedPath = viewModel.selectedModelPath, !selectedPath.isEmpty {
+                            Text("사용 경로: \(selectedPath)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if let bundlePath = viewModel.bundleModelPath, !bundlePath.isEmpty {
+                            Text("Bundle 경로: \(bundlePath)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if let documentsPath = viewModel.documentsModelPath, !documentsPath.isEmpty {
+                            Text("Documents 경로: \(documentsPath)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
 
                     // ── LLM 추론 상태 ──────────────────────────────
                     if viewModel.isSummarizing {
