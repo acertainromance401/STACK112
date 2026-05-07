@@ -19,11 +19,13 @@ final class CaseSummaryViewModel: ObservableObject {
     @Published private(set) var summary: LLMSummary?
     @Published private(set) var quizQuestion: QuizQuestion?
     @Published private(set) var oxQuizItems: [OXQuizQuestion] = []
+    @Published private(set) var similarCases: [APICase] = []
 
     @Published private(set) var isSearching = false
     @Published private(set) var isSummarizing = false
     @Published private(set) var isGeneratingQuiz = false
     @Published private(set) var isGeneratingOXQuiz = false
+    @Published private(set) var isLoadingSimilarCases = false
     @Published private(set) var llmState: LLMState = .idle
     @Published private(set) var activeEngineName: String = "준비 전"
     @Published private(set) var isUsingFallbackEngine = true
@@ -42,6 +44,8 @@ final class CaseSummaryViewModel: ObservableObject {
     // IR 파이프라인 결과 (백엔드 /ir/extract 응답 캐시)
     private(set) var irKeywords: [String] = []
     private(set) var irKeySentences: String = ""
+    @Published private(set) var irDomain: String = "general_legal"
+    @Published private(set) var irStudyFocus: [String] = []
 
     // MARK: - Dependencies
 
@@ -129,9 +133,16 @@ final class CaseSummaryViewModel: ObservableObject {
     }
 
     /// OCRView에서 미리 추출한 IR 결과를 주입합니다 (DB 없이 테스트할 때 사용).
-    func injectIRResult(keywords: [String], keySentences: String) {
+    func injectIRResult(
+        keywords: [String],
+        keySentences: String,
+        domain: String? = nil,
+        studyFocus: [String] = []
+    ) {
         irKeywords = keywords
         irKeySentences = keySentences
+        irDomain = (domain?.isEmpty == false) ? domain! : "general_legal"
+        irStudyFocus = studyFocus
     }
 
     func setIgnoreDocumentsModel(_ ignore: Bool) async {
@@ -183,19 +194,31 @@ final class CaseSummaryViewModel: ObservableObject {
         summary = nil
         quizQuestion = nil
         oxQuizItems = []
-        irKeywords = []
-        irKeySentences = ""
+        similarCases = []
+
+        // OCR 경로에서 미리 주입된 IR 결과가 있다면 화면 진입 시 초기화하지 않습니다.
+        let hasInjectedIR = !irKeywords.isEmpty || !irKeySentences.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !irStudyFocus.isEmpty
+        let shouldPreserveInjectedIR = caseItem.caseNumber.hasPrefix("OCR-") && hasInjectedIR
+        if !shouldPreserveInjectedIR {
+            irKeywords = []
+            irKeySentences = ""
+            irDomain = "general_legal"
+            irStudyFocus = []
+        }
 
         // IR 추출과 LLM 요약을 병렬로 시작
         async let irTask: Void = fetchIRExtract(caseItem: caseItem)
+        async let similarTask: Void = fetchSimilarCases(caseItem: caseItem)
         // 화면 진입 직후 가장 먼저 모델 준비 상태를 보장합니다.
         // 여기서 ready가 되면 아래 performSummarize가 실제 프롬프트 생성으로 이어집니다.
         guard await ensureModelReady() else {
             _ = await irTask
+            _ = await similarTask
             return
         }
         await performSummarize(caseItem: caseItem)
         _ = await irTask
+        _ = await similarTask
     }
 
     func generateQuizForSelectedCase() async {
@@ -285,6 +308,14 @@ final class CaseSummaryViewModel: ObservableObject {
 
     /// 백엔드 /ir/extract 호출 — 실패해도 UX 차단 없이 폴백(빈 값)으로 진행
     private func fetchIRExtract(caseItem: APICase) async {
+        // OCR 임시 케이스는 OCRView에서 이미 IR을 주입한 값을 우선 신뢰합니다.
+        if caseItem.caseNumber.hasPrefix("OCR-") {
+            let hasInjectedIR = !irKeywords.isEmpty || !irKeySentences.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            if hasInjectedIR {
+                return
+            }
+        }
+
         let combinedText = [
             caseItem.issueSummary,
             caseItem.holdingSummary,
@@ -297,10 +328,36 @@ final class CaseSummaryViewModel: ObservableObject {
             let result = try await network.irExtract(text: combinedText)
             irKeywords = result.keywords
             irKeySentences = result.keySentences
+            irDomain = (result.domain?.isEmpty == false) ? result.domain! : "general_legal"
+            irStudyFocus = result.studyFocus ?? []
         } catch {
             // IR 추출 실패 시 DB 데이터를 폴백으로 사용 (LLM은 계속 동작)
             irKeywords = caseItem.subject.isEmpty ? [] : [caseItem.subject]
             irKeySentences = caseItem.issueSummary ?? ""
+            irDomain = "general_legal"
+            irStudyFocus = [
+                "핵심 쟁점-결론-시험포인트 순서로 1회 요약",
+                "헷갈리는 문장은 OX로 바꿔 반복 확인",
+            ]
+        }
+    }
+
+    /// 백엔드 /cases/{case_number}/similar 호출
+    private func fetchSimilarCases(caseItem: APICase) async {
+        // OCR 임시 케이스는 유사 판례 API 대상이 아님
+        guard !caseItem.caseNumber.hasPrefix("OCR-") else {
+            similarCases = []
+            return
+        }
+
+        isLoadingSimilarCases = true
+        defer { isLoadingSimilarCases = false }
+
+        do {
+            similarCases = try await network.listSimilarCases(caseNumber: caseItem.caseNumber, topK: 5)
+        } catch {
+            // 유사 판례 로딩 실패는 상세 요약 UX를 막지 않음
+            similarCases = []
         }
     }
 }

@@ -17,6 +17,54 @@ struct WrongAnswersAPIResponse: Decodable {
     let items: [APIWrongAnswerItem]
 }
 
+struct SimilarCasesAPIResponse: Decodable {
+    let caseNumber: String
+    let total: Int
+    let items: [SimilarCaseRef]
+}
+
+struct SimilarCaseRef: Decodable {
+    let caseId: String
+    let similarity: Double
+    let rank: Int
+}
+
+struct GroundedAnswerAPIRequest: Encodable {
+    let question: String
+    let intent: String
+    let topK: Int
+}
+
+struct GroundedCitationAPI: Decodable {
+    let caseNumber: String
+    let caseName: String
+    let quotedText: String
+    let reason: String
+}
+
+struct GroundedAnswerAPIResponse: Decodable {
+    let question: String
+    let answer: String
+    let citations: [GroundedCitationAPI]
+    let safetyFlags: [String]
+}
+
+struct ServerOXQuizItem: Decodable {
+    let statement: String
+    let answer: Bool
+    let explanation: String
+}
+
+struct LLMSummarizeAPIResponse: Decodable {
+    let caseNumber: String
+    let oneLineSummary: String
+    let keyIssue: String
+    let rulingPoint: String
+    let examTakeaway: String
+    let quiz: [ServerOXQuizItem]
+    let citations: [String]
+}
+
 // MARK: - Network Errors
 
 enum NetworkError: LocalizedError {
@@ -38,7 +86,7 @@ actor NetworkService {
     static let overrideKey = "API_BASE_URL_OVERRIDE"
     static let userIDKey = "AISYS_USER_ID"
 #if DEBUG
-    private static let fallbackBaseURL = "http://172.27.30.76:8000"
+    private static let fallbackBaseURL = "http://172.27.134.228:8000"
 #else
     private static let fallbackBaseURL = "https://api.example.com"
 #endif
@@ -200,6 +248,34 @@ actor NetworkService {
         return try decoder.decode(APICase.self, from: data)
     }
 
+    /// /cases/{caseNumber}/similar?top_k=... → 유사 판례 상세 목록
+    func listSimilarCases(caseNumber: String, topK: Int = 5) async throws -> [APICase] {
+        var components = URLComponents(
+            url: baseURL
+                .appendingPathComponent("cases")
+                .appendingPathComponent(caseNumber)
+                .appendingPathComponent("similar"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "top_k", value: String(topK))
+        ]
+
+        let (data, response) = try await session.data(from: components.url!)
+        try validate(response)
+        let similar = try decoder.decode(SimilarCasesAPIResponse.self, from: data)
+
+        var resolved: [APICase] = []
+        resolved.reserveCapacity(similar.items.count)
+
+        for item in similar.items.sorted(by: { $0.rank < $1.rank }) {
+            if let detail = try? await getCase(caseNumber: item.caseId) {
+                resolved.append(detail)
+            }
+        }
+        return resolved
+    }
+
     /// POST /ir/extract — OCR 텍스트 → 키워드 + 핵심문장
     func irExtract(text: String, topKeywords: Int = 10, topSentences: Int = 5) async throws -> APIIRExtractResponse {
         let url = baseURL.appendingPathComponent("ir/extract")
@@ -211,6 +287,48 @@ actor NetworkService {
         let (data, response) = try await session.data(for: request)
         try validate(response)
         return try decoder.decode(APIIRExtractResponse.self, from: data)
+    }
+
+    /// POST /grounded/answer — 고난도 질문(비교/퀴즈) 서버 근거 기반 응답
+    func groundedAnswer(question: String, intent: String, topK: Int = 4) async throws -> GroundedAnswerAPIResponse {
+        let url = baseURL.appendingPathComponent("grounded/answer")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let payload = GroundedAnswerAPIRequest(question: question, intent: intent, topK: topK)
+        request.httpBody = try JSONEncoder().encode(payload)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
+        return try decoder.decode(GroundedAnswerAPIResponse.self, from: data)
+    }
+
+    /// POST /llm/summarize — 서버 규칙 기반 OX 퀴즈 생성 폴백
+    func serverGenerateOXQuiz(
+        caseNumber: String,
+        caseName: String,
+        keySentences: String,
+        keywords: [String],
+        quizCount: Int = 3
+    ) async throws -> [OXQuizQuestion] {
+        let url = baseURL.appendingPathComponent("llm/summarize")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "case_number": caseNumber,
+            "case_name": caseName,
+            "key_sentences": keySentences,
+            "keywords": keywords,
+            "generate_quiz": true,
+            "quiz_count": quizCount
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await session.data(for: request)
+        try validate(response)
+        let parsed = try decoder.decode(LLMSummarizeAPIResponse.self, from: data)
+        return parsed.quiz.map {
+            OXQuizQuestion(statement: $0.statement, answer: $0.answer, explanation: $0.explanation)
+        }
     }
 
     private func validate(_ response: URLResponse) throws {

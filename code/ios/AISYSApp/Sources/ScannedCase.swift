@@ -49,7 +49,7 @@ final class ScannedCase {
     func toAPICase() -> APICase {
         APICase(
             id: id,
-            caseNumber: "스캔 \(DateFormatter.shortDate.string(from: scannedAt))",
+            caseNumber: caseName,
             caseName: caseName,
             courtName: "스캔 문서",
             subject: keywords.prefix(3).joined(separator: " · "),

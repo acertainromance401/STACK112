@@ -10,6 +10,7 @@
 		0134EB00FCADE9C6760E94C3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71F7EC6215383E28B8504D6 /* Models.swift */; };
 		0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */; };
 		0D8B09BABDDB4ECA59B0D5F9 /* ScannedCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */; };
+		0EA7792179855573B3E6849D /* Llama-3.2-3B-Instruct-Q4_K_M.gguf in Resources */ = {isa = PBXBuildFile; fileRef = AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */; };
 		17842704C3A11AEB56ED1DAA /* AISYSAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */; };
 		1C43007E9CD651F2878094CB /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EB6CEDE58FD30A4BC467BE /* LLMService.swift */; };
 		24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE170875E59DB4941C4441FB /* NetworkService.swift */; };
@@ -47,6 +48,7 @@
 		80EB6CEDE58FD30A4BC467BE /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		A012500B9935794B1603D393 /* AISYSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AISYSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedCase.swift; sourceTree = "<group>"; };
+		AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Llama-3.2-3B-Instruct-Q4_K_M.gguf"; sourceTree = "<group>"; };
 		BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeState.swift; sourceTree = "<group>"; };
 		D71F7EC6215383E28B8504D6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngines.swift; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 				FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */,
 				F408ACC8D034B72FF9346C76 /* HomeView.swift */,
 				694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */,
+				AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */,
 				80EB6CEDE58FD30A4BC467BE /* LLMService.swift */,
 				E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */,
 				D71F7EC6215383E28B8504D6 /* Models.swift */,
@@ -206,6 +209,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */,
+				0EA7792179855573B3E6849D /* Llama-3.2-3B-Instruct-Q4_K_M.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -276,9 +280,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
-				INFOPLIST_KEY_API_BASE_URL = "http://172.27.30.76:8000";
+				INFOPLIST_KEY_API_BASE_URL = "http://172.27.134.228:8000";
 				INFOPLIST_KEY_CFBundleDisplayName = AI_SYS;
-				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
+				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-3B-Instruct-Q4_K_M.gguf";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
@@ -306,9 +310,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
-				INFOPLIST_KEY_API_BASE_URL = "http://172.27.30.76:8000";
+				INFOPLIST_KEY_API_BASE_URL = "http://172.27.134.228:8000";
 				INFOPLIST_KEY_CFBundleDisplayName = AI_SYS;
-				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
+				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-3B-Instruct-Q4_K_M.gguf";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;

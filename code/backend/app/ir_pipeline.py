@@ -58,6 +58,24 @@ _LEGAL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(대법원|헌법재판소|고등법원|지방법원|가정법원|행정법원|특허법원)"),
 )
 
+_DOMAIN_HINTS: dict[str, tuple[str, ...]] = {
+    "criminal_law": (
+        "형법", "총론", "각론", "구성요건", "위법성", "책임", "죄형법정주의", "죄수", "고의", "과실",
+    ),
+    "criminal_procedure_evidence": (
+        "형사소송법", "증거", "전문법칙", "자백", "압수", "수색", "영장", "증거능력", "위법수집증거", "유류물",
+    ),
+    "criminal_procedure_investigation": (
+        "수사", "체포", "구속", "재수사", "사법경찰관", "검사", "수사준칙", "재체포", "재구속",
+    ),
+    "constitutional_law": (
+        "헌법", "위헌", "합헌", "과잉금지원칙", "목적", "수단", "최소침해", "법익균형", "헌법재판소",
+    ),
+    "police_committees": (
+        "위원회", "국가경찰위원회", "자치경찰위원회", "정보공개위원회", "징계위원회", "소청심사위원회", "심의위원회",
+    ),
+}
+
 
 def normalize_legal_text(text: str) -> str:
     """판례 분석에 불필요한 노이즈를 줄여 핵심 문자 신호를 살립니다."""
@@ -437,3 +455,76 @@ def extract_key_sentences(
         np.argsort(combined_scores)[-top_n:].tolist()
     )  # 원문 순서 유지
     return "\n".join(sentences[i] for i in top_indices)
+
+
+def infer_study_domain(text: str, keywords: list[str] | None = None) -> str:
+    """수험 과목 관점의 대분류 도메인을 추정합니다."""
+    normalized = normalize_legal_text(text)
+    corpus = f"{normalized} {' '.join(keywords or [])}".lower()
+
+    # 동점 시 더 구체적인 도메인이 우선되도록 명시적 우선순위 사용
+    priority = (
+        "police_committees",
+        "constitutional_law",
+        "criminal_procedure_evidence",
+        "criminal_procedure_investigation",
+        "criminal_law",
+    )
+
+    best_domain = "general_legal"
+    best_score = 0
+    for domain in priority:
+        hints = _DOMAIN_HINTS.get(domain, ())
+        score = sum(1 for hint in hints if hint.lower() in corpus)
+        if score > best_score:
+            best_score = score
+            best_domain = domain
+
+    return best_domain
+
+
+def build_study_focus(domain: str, keywords: list[str], key_sentences: str) -> list[str]:
+    """도메인별 학습 체크포인트를 생성합니다. 강의 대체가 아닌 복습 가이드 용도입니다."""
+    top_keywords = ", ".join(keywords[:4]) if keywords else "핵심 키워드 재확인"
+    first_line = key_sentences.split("\n")[0].strip() if key_sentences.strip() else "핵심 문장 재확인"
+
+    if domain == "constitutional_law":
+        return [
+            "위헌/합헌 결론을 먼저 암기하고, 판례 번호와 연결해서 복습",
+            "위헌 사유를 목적·수단·최소침해·법익균형 순서로 분류",
+            f"핵심 문장 체크: {first_line[:90]}",
+        ]
+
+    if domain == "criminal_procedure_evidence":
+        return [
+            "증거능력 인정/배제 기준을 OX로 반복 훈련",
+            "영장 필요 여부와 예외 사유를 숫자·요건으로 분리 암기",
+            f"쟁점 키워드: {top_keywords}",
+        ]
+
+    if domain == "criminal_procedure_investigation":
+        return [
+            "체포·구속·영장 관련 기한/절차 숫자를 우선 암기",
+            "재수사 요청 가능 요건을 주체·시점·범위로 나눠 복습",
+            f"핵심 문장 체크: {first_line[:90]}",
+        ]
+
+    if domain == "criminal_law":
+        return [
+            "유무죄 결론을 사실관계 포인트와 함께 연결 암기",
+            "총론이면 학설별 결론 차이를 표로 정리해 반복",
+            f"쟁점 키워드: {top_keywords}",
+        ]
+
+    if domain == "police_committees":
+        return [
+            "위원회별 인원 범위·구성 요건·기한 숫자를 OX로 반복",
+            "한 글자/숫자 함정 지문을 중심으로 오답노트 축적",
+            f"핵심 키워드 묶음: {top_keywords}",
+        ]
+
+    return [
+        "핵심 쟁점-결론-시험포인트 3단 구조로 요약 후 복습",
+        "헷갈리는 판례는 유사판례 2~3개와 비교하여 차이 암기",
+        f"핵심 문장 체크: {first_line[:90]}",
+    ]

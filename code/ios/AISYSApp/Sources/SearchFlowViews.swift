@@ -303,6 +303,47 @@ struct CaseSummaryView: View {
                         }
                     }
 
+                    if !viewModel.irStudyFocus.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("학습 가이드")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            HStack(spacing: 6) {
+                                Image(systemName: localizedDomainIcon)
+                                    .font(.caption)
+                                    .foregroundStyle(localizedDomainAccent)
+                                Text(localizedDomainLabel)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(localizedDomainAccent)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(localizedDomainAccent.opacity(0.14))
+                                    .clipShape(Capsule())
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                ForEach(Array(viewModel.irStudyFocus.enumerated()), id: \.offset) { idx, item in
+                                    Text("\(idx + 1). \(item)")
+                                        .font(.subheadline)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+
+                            Button {
+                                Task { await viewModel.generateOXQuizForSelectedCase() }
+                            } label: {
+                                Label("이 가이드로 OX 생성", systemImage: "bolt.circle")
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.indigo)
+                            .disabled(viewModel.isSummarizing || viewModel.isGeneratingOXQuiz)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
                     if let err = viewModel.errorMessage {
                         Text(err).foregroundStyle(.red).font(.caption)
                     }
@@ -332,8 +373,12 @@ struct CaseSummaryView: View {
 
                     if !viewModel.oxQuizItems.isEmpty {
                         NavigationLink {
+                            let caseNumber = apiCase?.caseNumber ?? resolved.title
+                            let caseSummary = "쟁점: \(viewModel.summary?.keyIssue ?? resolved.issue)\n결론: \(viewModel.summary?.rulingPoint ?? resolved.conclusion)\n시험포인트: \(viewModel.summary?.examTakeaway ?? resolved.examPoint)"
                             OXQuizView(
+                                caseNumber: caseNumber,
                                 caseTitle: resolved.title,
+                                caseSummary: caseSummary,
                                 items: viewModel.oxQuizItems
                             )
                         } label: {
@@ -343,11 +388,38 @@ struct CaseSummaryView: View {
                         .tint(.indigo)
                     }
 
+                    Divider()
+
                     // 유사 판례
-                    if !resolved.similarCases.isEmpty {
-                        Text("유사 판례 리스트").font(.title2.bold())
-                        ForEach(resolved.similarCases, id: \.self) { item in
-                            InfoCard(title: item, detail: "유사 쟁점 비교 학습용")
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("유사 판례")
+                            .font(.title3.bold())
+
+                        if viewModel.isLoadingSimilarCases {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                Text("유사 판례를 찾는 중...")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else if viewModel.similarCases.isEmpty {
+                            Text("유사 판례를 찾지 못했습니다.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(viewModel.similarCases) { similar in
+                                NavigationLink {
+                                    CaseSummaryView(apiCase: similar, shouldAutoSave: true)
+                                } label: {
+                                    SearchResultCard(
+                                        title: similar.caseNumber,
+                                        subtitle: similar.caseName,
+                                        tags: similar.subject.isEmpty ? [] : ["#\(similar.subject)"],
+                                        summary: similar.issueSummary ?? ""
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
                 }
@@ -361,6 +433,57 @@ struct CaseSummaryView: View {
                 await viewModel.select(caseItem: c)
                 if shouldAutoSave { store.saveCase(c) }
             }
+        }
+    }
+
+    private var localizedDomainLabel: String {
+        switch viewModel.irDomain {
+        case "criminal_law":
+            return "형법"
+        case "criminal_procedure_evidence":
+            return "형소-증거"
+        case "criminal_procedure_investigation":
+            return "형소-수사"
+        case "constitutional_law":
+            return "헌법"
+        case "police_committees":
+            return "경찰학-위원회"
+        default:
+            return "일반"
+        }
+    }
+
+    private var localizedDomainIcon: String {
+        switch viewModel.irDomain {
+        case "criminal_law":
+            return "building.columns"
+        case "criminal_procedure_evidence":
+            return "doc.text.magnifyingglass"
+        case "criminal_procedure_investigation":
+            return "person.text.rectangle"
+        case "constitutional_law":
+            return "scale.3d"
+        case "police_committees":
+            return "person.3"
+        default:
+            return "book"
+        }
+    }
+
+    private var localizedDomainAccent: Color {
+        switch viewModel.irDomain {
+        case "criminal_law":
+            return .orange
+        case "criminal_procedure_evidence":
+            return .teal
+        case "criminal_procedure_investigation":
+            return .indigo
+        case "constitutional_law":
+            return .red
+        case "police_committees":
+            return .mint
+        default:
+            return .secondary
         }
     }
 }
@@ -399,7 +522,11 @@ private struct StudyNoteCard: View {
 // MARK: - OX 퀴즈 뷰
 
 struct OXQuizView: View {
+    @EnvironmentObject private var store: ReviewStore
+
+    let caseNumber: String
     let caseTitle: String
+    let caseSummary: String
     let items: [OXQuizQuestion]
 
     @State private var currentIndex = 0
@@ -463,12 +590,12 @@ struct OXQuizView: View {
                         OXButton(label: "O", color: .teal, selected: selectedAnswer == true) {
                             guard !showResult else { return }
                             selectedAnswer = true
-                            commitAnswer(correct: q.answer)
+                            commitAnswer(question: q, chosenAnswer: true)
                         }
                         OXButton(label: "X", color: .red, selected: selectedAnswer == false) {
                             guard !showResult else { return }
                             selectedAnswer = false
-                            commitAnswer(correct: !q.answer)
+                            commitAnswer(question: q, chosenAnswer: false)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -502,9 +629,21 @@ struct OXQuizView: View {
         .withSmallBackButton()
     }
 
-    private func commitAnswer(correct: Bool) {
+    private func commitAnswer(question: OXQuizQuestion, chosenAnswer: Bool) {
+        let correct = chosenAnswer == question.answer
         showResult = true
         if correct { correctCount += 1 }
+        if !correct {
+            store.saveWrongQuizRecord(
+                caseNumber: caseNumber,
+                caseTitle: caseTitle,
+                question: question.statement,
+                userAnswer: chosenAnswer,
+                correctAnswer: question.answer,
+                explanation: question.explanation,
+                caseSummary: caseSummary
+            )
+        }
     }
 
     private func advance() {
@@ -699,7 +838,7 @@ struct ReviewView: View {
                             CaseSummaryView(apiCase: apiCase)
                         } label: {
                             SearchResultCard(
-                                title: apiCase.caseName,
+                                title: apiCase.caseNumber,
                                 subtitle: "\(apiCase.courtName)  \(apiCase.caseNumber)",
                                 tags: apiCase.subject.isEmpty ? [] : ["#\(apiCase.subject)"],
                                 summary: apiCase.issueSummary ?? ""
@@ -739,7 +878,7 @@ struct ReviewView: View {
                             )
                         } label: {
                             SearchResultCard(
-                                title: scanned.caseName,
+                                title: scanned.toAPICase().caseNumber,
                                 subtitle: "스캔 \(DateFormatter.shortDate.string(from: scanned.scannedAt))",
                                 tags: scanned.keywords.prefix(3).map { "#\($0)" },
                                 summary: scanned.keySentences
