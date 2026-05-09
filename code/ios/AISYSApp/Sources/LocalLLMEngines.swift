@@ -273,7 +273,7 @@ final class LlamaCppEngine: LocalLLMEngine {
     let name = "llama.cpp"
     private(set) var isLoaded = false
     private var modelURL: URL?
-    var ignoreDocumentsModel = false
+    var ignoreDocumentsModel = true
     private(set) var modelResolution = LocalLLMModelResolution(
         selectedURL: nil,
         selectedSource: nil,

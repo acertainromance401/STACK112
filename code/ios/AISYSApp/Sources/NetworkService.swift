@@ -7,16 +7,6 @@ struct SearchAPIResponse: Decodable {
     let items: [APICase]
 }
 
-struct RecommendedCasesAPIResponse: Decodable {
-    let total: Int
-    let items: [APIRecommendedCase]
-}
-
-struct WrongAnswersAPIResponse: Decodable {
-    let total: Int
-    let items: [APIWrongAnswerItem]
-}
-
 struct SimilarCasesAPIResponse: Decodable {
     let caseNumber: String
     let total: Int
@@ -129,10 +119,6 @@ actor NetworkService {
         }
     }
 
-    func currentBaseURLString() -> String {
-        baseURL.absoluteString
-    }
-
     func deviceConnectionHint() -> String? {
         guard let host = baseURL.host?.lowercased() else { return nil }
 #if targetEnvironment(simulator)
@@ -207,35 +193,6 @@ actor NetworkService {
         } catch {
             return false
         }
-    }
-
-    /// /dashboard/recommended?limit=... → 추천 복습 카드
-    func listRecommendedCases(limit: Int = 7) async throws -> [APIRecommendedCase] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("dashboard/recommended"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
-        let (data, response) = try await session.data(from: components.url!)
-        try validate(response)
-        return try decoder.decode(RecommendedCasesAPIResponse.self, from: data).items
-    }
-
-    /// /dashboard/wrong-answers?user_id=...&limit=... → 최근 오답 노트
-    func listWrongAnswers(userID: String, limit: Int = 20) async throws -> [APIWrongAnswerItem] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("dashboard/wrong-answers"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "user_id", value: userID),
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
-        let (data, response) = try await session.data(from: components.url!)
-        try validate(response)
-        return try decoder.decode(WrongAnswersAPIResponse.self, from: data).items
     }
 
     /// /cases/{caseNumber} → APICase

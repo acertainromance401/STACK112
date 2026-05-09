@@ -216,6 +216,8 @@ struct OCRView: View {
         if keywords.isEmpty {
             keywords = extractLocalKeywords(from: keySentences.isEmpty ? recognizedText : keySentences)
         }
+        // IR API 키워드에도 시간/장소 표기를 같은 규칙으로 제거 ("00경부터", "08경")
+        keywords = sanitizeKeywords(keywords)
 
         // 학습카드 품질을 위해 OCR 텍스트에서 사건 정보(번호·사건명·도메인·쟁점·결론)를 분리 추출
         let digest = extractCaseDigest(rawText: recognizedText, keySentences: keySentences, keywords: keywords)
@@ -252,6 +254,29 @@ struct OCRView: View {
             sourceUrl: nil
         )
 
+        // 1B Llama 분류 트리로 "과목 > 카테고리 > 세부유형" 경로 산출
+        // 결과는 subject 필드 prefix로 주입 (실패 시 기존 subject 유지)
+        let classifyText = [digest.issueSentence, digest.holdingSentence, keySentences]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        let taxonomyPath = await summaryViewModel.classifyByTaxonomy(text: classifyText)
+        let finalCase: APICase
+        if !taxonomyPath.isEmpty {
+            finalCase = APICase(
+                id: ocrCase.id,
+                caseNumber: ocrCase.caseNumber,
+                caseName: ocrCase.caseName,
+                courtName: ocrCase.courtName,
+                subject: taxonomyPath + (ocrCase.subject.isEmpty ? "" : " · " + ocrCase.subject),
+                issueSummary: ocrCase.issueSummary,
+                holdingSummary: ocrCase.holdingSummary,
+                examPoints: ocrCase.examPoints,
+                sourceUrl: ocrCase.sourceUrl
+            )
+        } else {
+            finalCase = ocrCase
+        }
+
         // ViewModel IR 결과 주입 (재생성 없이 기존 인스턴스 재사용)
         summaryViewModel.injectIRResult(
             keywords: keywords,
@@ -269,7 +294,7 @@ struct OCRView: View {
         )
         modelContext.insert(record)
 
-        runtime.pendingOCRCase = ocrCase
+        runtime.pendingOCRCase = finalCase
         navigateToSummary = true
     }
 
@@ -345,6 +370,14 @@ struct OCRView: View {
                       !stopwords.contains(cleaned),
                       cleaned.unicodeScalars.contains(where: { $0.value >= 0xAC00 && $0.value <= 0xD7A3 })
                 else { return nil }
+                // 시간/장소 표기 노이즈 제외 ("00경부터", "08경", "경부터")
+                if cleaned.range(of: #"^\d+경"#, options: .regularExpression) != nil { return nil }
+                if cleaned.hasPrefix("경부터") || cleaned.hasPrefix("경까지") { return nil }
+                // 순수 숫자+한자 1자 조합 ("00경", "5월") 제외
+                if cleaned.range(of: #"^\d{1,3}[가-힣]{1,2}$"#, options: .regularExpression) != nil,
+                   !cleaned.hasSuffix("조") && !cleaned.hasSuffix("항") && !cleaned.hasSuffix("호") {
+                    return nil
+                }
                 return cleaned
             }
 
@@ -530,6 +563,13 @@ struct OCRView: View {
                 if line.range(of: #"^[\s\d\-:]+$"#, options: .regularExpression) != nil { return false }
                 // "공YYYY ..." 같은 출처 헤더 라인은 제외
                 if line.range(of: #"^\s*공\s*\d{4}"#, options: .regularExpression) != nil { return false }
+                // "(2024. 5. 10. 선고 2024도4422 판결)" 같은 인용표기만 단독으로 넘어온 경우 제외
+                if line.range(of: #"^[\s\(]*\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?\s*선고"#, options: .regularExpression) != nil { return false }
+                if line.range(of: #"^\s*선고\s+\d{2,4}[가-힣]{1,3}\d+\s*판결"#, options: .regularExpression) != nil { return false }
+                // OCR이 앞말을 잘라 "게 ", "고 ", "지 ", "서 ", "는 ", "다 " 같은 어미 조각으로 시작하는 문장 거부
+                let firstWord = line.prefix(2)
+                let leadingFragments: Set<String> = ["게 ", "고 ", "지 ", "서 ", "며 ", "어 ", "아 ", "워 ", "다 ", "라 ", "나 "]
+                if leadingFragments.contains(String(firstWord)) { return false }
                 return true
             }
         // 중복 제거
@@ -571,35 +611,71 @@ struct OCRView: View {
             "원심을 파기", "원심을 유지",
             "성립하지 않는다", "성립한다",
             "인정되지 않는다", "인정된다",
-            "정당하다", "부당하다"
+            "정당하다", "부당하다",
+            "(적극)", "(소극)"  // 판례집 스타일 결론 표기
         ]
-        // 쟁점과 동일한 문장은 제외
+        // 1순위: 쟁점에 (적극)/(소극) 마커가 있으면 합성 결론 우선 — 다른 판례 인용에서 동일 마커가
+        //        끼어들어 결론 자리에 잘못 들어가는 것을 방지
+        let activeMarker = issueSentence.range(of: #"\(\s*적\s*극\s*\)"#, options: .regularExpression) != nil
+        let passiveMarker = issueSentence.range(of: #"\(\s*소\s*극\s*\)"#, options: .regularExpression) != nil
+        if activeMarker {
+            return "관련 쟁점 모두 적극적으로 인정(적극)되었다."
+        }
+        if passiveMarker {
+            return "관련 쟁점 모두 소극적으로 부정(소극)되었다."
+        }
+        // 2순위: 쟁점과 다른 본문 중 결론 동사 포함 문장
         let pool = sentences.filter { $0 != issueSentence }
         if let picked = pool.first(where: { line in verdicts.contains(where: { line.contains($0) }) }) {
             return finalizeKoreanSentence(stripBracketNoise(picked), limit: 130)
         }
-        // 쟁점 본문에 결론 동사가 함께 있으면 그것을 결론 문장으로 사용
+        // 3순위: 쟁점에 결론 동사가 들어가 있으면 그대로
         if verdicts.contains(where: { issueSentence.contains($0) }) {
             return finalizeKoreanSentence(issueSentence, limit: 130)
         }
-        return pool.first.map { finalizeKoreanSentence(stripBracketNoise($0), limit: 130) }
+        // 결론 후보 없음 — nil 반환 (호출부 placeholder)
+        return nil
     }
 
     /// `[ ... ]` 같은 출처/제목 잡음과 페이지 마커 제거 — 학습카드용 본문 정제
     private func stripBracketNoise(_ text: String) -> String {
         var s = text
-        // 닫힌 대괄호: [ ... ] 형태
-        s = s.replacingOccurrences(of: #"\[[^\]]{1,80}\]"#, with: "", options: .regularExpression)
+        // 닫힌 대괄호: [ ... ] 형태 (길이 제한 없음, 사건명 전체 제거 가능하도록)
+        s = s.replacingOccurrences(of: #"\[[^\]]+\]"#, with: "", options: .regularExpression)
         // OCR이 닫는 ] 를 인식 못한 경우: [공YYYY ... 또는 [공보 ... 끝까지 제거
         s = s.replacingOccurrences(of: #"\[\s*공\s*\d{2,4}.*$"#, with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: #"\[공보[^\]]*$"#, with: "", options: .regularExpression)
+        // 미닫힌 [ 상황 — 사건명이 "[ 강제추행·..." 식으로 잘려 넘어온 경우 있음. ] 없으면 끝까지 제거
+        if s.contains("[") && !s.contains("]") {
+            s = s.replacingOccurrences(of: #"\[[^\[]*$"#, with: "", options: .regularExpression)
+        }
         // 전각 꺾쇠 안의 출처 표기 〉 / 〈 잔여 문자
         s = s.replacingOccurrences(of: "〉", with: " ")
         s = s.replacingOccurrences(of: "〈", with: " ")
-        s = s.replacingOccurrences(of: #"\(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\s*선고\s*\d{2,4}[가-힣]{1,3}\d+\)"#, with: "", options: .regularExpression)
+        // "(2024. 5. 10. 선고 2024도4422 판결)" 완전 형
+        s = s.replacingOccurrences(of: #"\(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?\s*선고\s*\d{2,4}[가-힣]{1,3}\d+\s*판결\)"#, with: "", options: .regularExpression)
+        // OCR 미닫힌 인용: "선고 2025도4422 판결" / "...선고 ... 판결" 잔재 패턴
+        s = s.replacingOccurrences(of: #"선고\s+\d{2,4}[가-힣]{1,3}\d+\s*판결"#, with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: #"-\s*\d+\s*-"#, with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
         return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// IR API가 돌려준 키워드에서 시간/장소 표기 같은 경찰고시용으로 부적절한 항목을 걸러낸다.
+    private func sanitizeKeywords(_ keywords: [String]) -> [String] {
+        return keywords.compactMap { kw -> String? in
+            let t = kw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard t.count >= 2 else { return nil }
+            // "00경부터", "08경", "경부터", "경까지"
+            if t.range(of: #"^\d+경"#, options: .regularExpression) != nil { return nil }
+            if t.hasPrefix("경부터") || t.hasPrefix("경까지") { return nil }
+            // 수자+한자 1-2자 대부분 시간/날짜 잘린 결과 — 조/항/호는 유지
+            if t.range(of: #"^\d{1,3}[가-힣]{1,2}$"#, options: .regularExpression) != nil,
+               !t.hasSuffix("조") && !t.hasSuffix("항") && !t.hasSuffix("호") {
+                return nil
+            }
+            return t
+        }
     }
 
     /// 한국어 문장을 종결어미 직후에서 자르고, 마무리 표시(. 또는 …)를 붙인다.

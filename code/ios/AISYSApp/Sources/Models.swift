@@ -37,24 +37,6 @@ struct APICase: Codable, Identifiable {
     }
 }
 
-struct APIRecommendedCase: Codable {
-    let caseNumber: String
-    let caseName: String
-    let subject: String
-    let issue: String
-    let accuracy: Int
-
-    func toCaseStudy() -> CaseStudy {
-        CaseStudy(
-            caseNumber: caseNumber,
-            subject: subject,
-            title: caseName,
-            issue: issue,
-            accuracy: accuracy
-        )
-    }
-}
-
 struct APIWrongAnswerItem: Codable {
     let title: String
     let memo: String
@@ -179,15 +161,6 @@ struct LLMSummary: Equatable {
         self.rulingPoint = ruling
         self.examTakeaway = exam
     }
-}
-
-struct CaseStudy: Identifiable, Equatable {
-    let id = UUID()
-    let caseNumber: String
-    let subject: String
-    let title: String
-    let issue: String
-    let accuracy: Int
 }
 
 struct WrongAnswerItem: Identifiable, Equatable {
@@ -370,15 +343,9 @@ struct QuizQuestion: Equatable {
 }
 
 final class ReviewStore: ObservableObject {
-    @Published var recommendedCases: [CaseStudy] = []
-
     @Published var wrongAnswers: [WrongAnswerItem] = []
 
     @Published var wrongQuizRecords: [WrongQuizRecord] = []
-
-    @Published var searchResults: [SearchResultItem] = []
-
-    @Published private(set) var isRemoteDashboardLoaded = false
 
     // MARK: - 저장된 판례 (검색/스캔 이력)
     @Published var savedCases: [APICase] = []
@@ -481,16 +448,6 @@ final class ReviewStore: ObservableObject {
         if let data = try? JSONEncoder().encode(wrongQuizRecords) {
             UserDefaults.standard.set(data, forKey: Self.wrongQuizRecordsKey)
         }
-    }
-
-    func applyRemoteDashboard(recommended: [APIRecommendedCase], wrong: [APIWrongAnswerItem]) {
-        if !recommended.isEmpty {
-            recommendedCases = recommended.map { $0.toCaseStudy() }
-        }
-        if !wrong.isEmpty {
-            wrongAnswers = wrong.map { $0.toWrongAnswerItem() }
-        }
-        isRemoteDashboardLoaded = true
     }
 
     private static var todayString: String {

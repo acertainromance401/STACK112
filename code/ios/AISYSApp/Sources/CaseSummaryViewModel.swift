@@ -35,11 +35,10 @@ final class CaseSummaryViewModel: ObservableObject {
     @Published private(set) var bundleModelPath: String?
     @Published private(set) var documentsModelPath: String?
     @Published private(set) var modelSelectionReason: String?
-    @Published private(set) var ignoreDocumentsModel = false
+    @Published private(set) var ignoreDocumentsModel = true
     @Published private(set) var errorMessage: String?
     @Published private(set) var backendConnected = false
     @Published private(set) var hasAttemptedBackendSearch = false
-    @Published private(set) var hasLoadedInitialCases = false
 
     // IR 파이프라인 결과 (백엔드 /ir/extract 응답 캐시)
     private(set) var irKeywords: [String] = []
@@ -149,6 +148,12 @@ final class CaseSummaryViewModel: ObservableObject {
         await llm.setIgnoreDocumentsModel(ignore)
     }
 
+    /// 경찰시험 분류 트리로 텍스트 분류 ("형법 > 재산범죄 > 절도" 형태 반환).
+    /// LLM 미준비/실패 시 빈 문자열 또는 부분 경로.
+    func classifyByTaxonomy(text: String) async -> String {
+        await llm.classifyByTaxonomy(text: text)
+    }
+
     // MARK: - Search
 
     /// 키워드/사건번호로 백엔드 검색
@@ -164,25 +169,6 @@ final class CaseSummaryViewModel: ObservableObject {
         } catch {
             backendConnected = false
             errorMessage = error.localizedDescription
-        }
-    }
-
-    /// 앱 시작 시 DB 기반 더미/시드 데이터를 우선 로드합니다.
-    func loadInitialCasesIfNeeded() async {
-        guard !hasLoadedInitialCases else { return }
-        hasLoadedInitialCases = true
-        isSearching = true
-        defer { isSearching = false }
-
-        backendConnected = await network.healthCheck()
-        guard backendConnected else {
-            return
-        }
-
-        do {
-            searchResults = try await network.listCases(limit: 20)
-        } catch {
-            backendConnected = false
         }
     }
 

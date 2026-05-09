@@ -234,27 +234,6 @@ def extract_legal_keyphrases(text: str, top_n: int = 10) -> list[str]:
     return ranked[:top_n]
 
 
-def count_legal_signals(text: str) -> dict[str, int]:
-    """텍스트 내 법률 신호(조문/사건번호/법원명/날짜) 개수를 집계합니다."""
-    normalized = normalize_legal_text(text)
-    if not normalized:
-        return {
-            "article_refs": 0,
-            "case_numbers": 0,
-            "date_refs": 0,
-            "court_refs": 0,
-            "term_hints": 0,
-        }
-
-    return {
-        "article_refs": len(_LEGAL_PATTERNS[0].findall(normalized)),
-        "case_numbers": len(_LEGAL_PATTERNS[1].findall(normalized)),
-        "date_refs": len(_LEGAL_PATTERNS[2].findall(normalized)),
-        "court_refs": len(_LEGAL_PATTERNS[3].findall(normalized)),
-        "term_hints": sum(1 for hint in _LEGAL_TERM_HINTS if hint in normalized),
-    }
-
-
 # ---------------------------------------------------------------------------
 # 형태소 분석 / 토크나이징
 # ---------------------------------------------------------------------------
