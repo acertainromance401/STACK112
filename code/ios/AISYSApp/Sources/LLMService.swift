@@ -524,26 +524,70 @@ final class LLMService: ObservableObject {
     }
 
     private func buildSummaryOutput(caseItem: APICase) -> String {
-        // 줄바꿈 제거: LLMSummary 정규식이 단일 줄만 캡처하므로 sanitize 필요
-        func sanitize(_ s: String) -> String {
-            s.components(separatedBy: .newlines)
-             .map { $0.trimmingCharacters(in: .whitespaces) }
-             .filter { !$0.isEmpty }
-             .joined(separator: " ")
-             .prefix(200)
-             .description
+        // 줄바꿈 제거 + 종결어미 보정으로 카드에 어색하게 잘리지 않게 한다.
+        func sanitize(_ s: String, limit: Int) -> String {
+            let cleaned = s.components(separatedBy: .newlines)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+            return smartTruncateKorean(cleaned, limit: limit)
         }
-        let name = sanitize(caseItem.caseName)
-        let issue = sanitize(caseItem.issueSummary ?? "주요 쟁점 정보가 부족합니다")
-        let holding = sanitize(caseItem.holdingSummary ?? "판결 결론 정보가 부족합니다")
-        let examPoint = sanitize(caseItem.examPoints ?? "시험 포인트 정보가 부족합니다")
+        let name = sanitize(caseItem.caseName, limit: 80)
+        let nameTopic = josa(after: name, eun: "은", neun: "는")
+        let issue = sanitize(caseItem.issueSummary ?? "주요 쟁점 정보가 부족하다.", limit: keyIssueLimit)
+        let holding = sanitize(caseItem.holdingSummary ?? "판결 결론 정보가 부족하다.", limit: rulingLimit)
+        let examPoint = sanitize(caseItem.examPoints ?? "시험 포인트 정보가 부족하다.", limit: examLimit)
+
+        let oneLine: String = {
+            let trimmedIssue = String(issue.prefix(70)).trimmingCharacters(in: .whitespaces)
+            if trimmedIssue.isEmpty {
+                return "\(name)\(nameTopic) 핵심 쟁점이 정리된 판례이다."
+            }
+            return "\(name)\(nameTopic) \(trimmedIssue) 쟁점을 다룬 판례이다."
+        }()
 
         return """
-        - one_line_summary: \(name)은(는) \(issue) 중심으로 판단한 판례입니다.
-        - key_issue: \(issue)
-        - ruling_point: \(holding)
-        - exam_takeaway: \(examPoint)
+        - one_line_summary: \(oneLine)
+        - key_issue: \(ensureKoreanTerminal(issue))
+        - ruling_point: \(ensureKoreanTerminal(holding))
+        - exam_takeaway: \(ensureKoreanTerminal(examPoint))
         """
+    }
+
+    /// 한국어 종결어미 직후에서 자르고, 없으면 ‘…’ 표시.
+    private func smartTruncateKorean(_ text: String, limit: Int) -> String {
+        let collapsed = text.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard collapsed.count > limit else { return collapsed }
+        let snippet = String(collapsed.prefix(limit))
+        let endings = ["다.", "다 ", "요.", "임.", "니다.", "였다.", "한다.", "된다.", "이다."]
+        var bestIdx: String.Index? = nil
+        for ending in endings {
+            if let r = snippet.range(of: ending, options: .backwards) {
+                if bestIdx == nil || r.upperBound > bestIdx! {
+                    bestIdx = r.upperBound
+                }
+            }
+        }
+        if let idx = bestIdx, snippet.distance(from: snippet.startIndex, to: idx) >= max(20, limit / 3) {
+            return String(snippet[..<idx]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if let space = snippet.range(of: " ", options: .backwards),
+           snippet.distance(from: snippet.startIndex, to: space.lowerBound) >= max(20, limit / 3) {
+            return String(snippet[..<space.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+        }
+        return snippet.trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+    }
+
+    private func ensureKoreanTerminal(_ text: String) -> String {
+        let stripped = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if stripped.isEmpty { return stripped }
+        let okEndings = ["다.", "요.", "음.", "임.", "였다.", "한다.", "된다.", "이다.", "?", "!", ".", "…"]
+        if okEndings.contains(where: { stripped.hasSuffix($0) }) { return stripped }
+        if stripped.hasSuffix("다") || stripped.hasSuffix("요") {
+            return stripped + "."
+        }
+        return stripped + "…"
     }
 
     private func buildComparisonOutput(question: String, cases: [APICase]) -> String {
@@ -681,15 +725,98 @@ final class LLMService: ObservableObject {
     }
 
     private func serverGroundedSummary(caseItem: APICase) async throws -> LLMSummary? {
-        let question = "다음 판례를 강의 대체 없이 복습용으로 요약: 사건번호=\(caseItem.caseNumber), 사건명=\(caseItem.caseName), 쟁점=\(caseItem.issueSummary ?? ""), 결론=\(caseItem.holdingSummary ?? "")"
+        let question = "다음 판례를 강의 대체 없이 복습용으로 한 줄로 요약: 사건번호=\(caseItem.caseNumber), 사건명=\(caseItem.caseName), 쟁점=\(caseItem.issueSummary ?? ""), 결론=\(caseItem.holdingSummary ?? "")"
         let answer = try await serverGroundedAnswer(question: question, intent: "summary")
 
-        let oneLine = shrink(answer, limit: oneLineLimit)
-        let keyIssue = shrink(caseItem.issueSummary ?? oneLine, limit: keyIssueLimit)
-        let ruling = shrink(caseItem.holdingSummary ?? oneLine, limit: rulingLimit)
-        let exam = shrink(caseItem.examPoints ?? "핵심 키워드와 결론을 함께 암기", limit: examLimit)
+        // 백엔드 응답이 멀티라인일 가능성에 대비해 첫 한국어 문장만 추려 한 줄로 만든다.
+        let cleanedOneLine = extractFirstKoreanSentence(from: answer)
+        let oneLine = cleanedOneLine.isEmpty
+            ? buildFallbackOneLine(caseItem: caseItem)
+            : shrink(cleanedOneLine, limit: oneLineLimit)
+        let keyIssue = shrink(caseItem.issueSummary?.isEmpty == false
+                              ? caseItem.issueSummary!
+                              : "핵심 쟁점 정보 부족", limit: keyIssueLimit)
+        let ruling = shrink(caseItem.holdingSummary?.isEmpty == false
+                            ? caseItem.holdingSummary!
+                            : "판결 결론 정보 부족", limit: rulingLimit)
+        let exam = shrink(caseItem.examPoints?.isEmpty == false
+                          ? caseItem.examPoints!
+                          : "시험 포인트 정보 부족", limit: examLimit)
 
         return LLMSummary(rawOutput: canonicalSummaryRaw(oneLine: oneLine, keyIssue: keyIssue, ruling: ruling, exam: exam))
+    }
+
+    /// 멀티라인/리스트형 답변에서 첫 자연 한국어 문장만 골라낸다.
+    /// 예: "근거 기반 요약(강의 대체 아님): - 사건: [...] - 쟁점: ..." 형태에서
+    /// 의미있는 한 문장만 추출해 oneLineSummary 슬롯에 안전하게 넣는다.
+    private func extractFirstKoreanSentence(from text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        // 1. "[case_number] case_name 사건은 ... 라고 판단한 판례이다." 형태가 들어오면 그대로 사용
+        if trimmed.contains("판례이다") || trimmed.contains("판단한 판례") {
+            // 줄바꿈 하나 이내, 단일 문장이라면 그대로 반환
+            let lines = trimmed.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            if lines.count == 1 {
+                return lines[0]
+            }
+        }
+
+        // 2. "- 결론:" 라인이 있으면 결론을 우선 추출 (가장 핵심 한 줄)
+        let lines = trimmed.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        for line in lines {
+            if line.hasPrefix("- 결론:") || line.hasPrefix("결론:") {
+                let v = line.replacingOccurrences(of: #"^[-\s]*결론\s*:\s*"#,
+                                                  with: "",
+                                                  options: .regularExpression)
+                if !v.isEmpty { return v }
+            }
+        }
+        // 3. 첫 번째로 한국어 + 종결어미가 포함된 라인 사용
+        for line in lines {
+            if line.hasPrefix("-") || line.hasPrefix("[") { continue }
+            if hasKoreanTerminal(line) {
+                return line
+            }
+        }
+        // 4. 폴백: 비스캐폴딩 첫 라인
+        for line in lines {
+            if line.hasPrefix("- 사건:") || line.hasPrefix("- 쟁점:") || line.hasPrefix("- 결론:") || line.hasPrefix("- 복습:") {
+                continue
+            }
+            if !line.isEmpty { return line }
+        }
+        return trimmed.replacingOccurrences(of: "\n", with: " ")
+    }
+
+    private func hasKoreanTerminal(_ text: String) -> Bool {
+        let endings = ["다.", "다 ", "요.", "임.", "다고 한다.", "였다.", "이다.", "한다.", "된다."]
+        return endings.contains(where: { text.contains($0) }) || text.hasSuffix("다") || text.hasSuffix("요")
+    }
+
+    private func buildFallbackOneLine(caseItem: APICase) -> String {
+        let nameTopic = josa(after: caseItem.caseName, eun: "은", neun: "는")
+        let issueShort = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if issueShort.isEmpty {
+            return "[\(caseItem.caseNumber)] \(caseItem.caseName)\(nameTopic) 핵심 쟁점이 정리된 판례이다."
+        }
+        let trimmedIssue = String(issueShort.prefix(70))
+        return "[\(caseItem.caseNumber)] \(caseItem.caseName)\(nameTopic) \(trimmedIssue) 쟁점을 다룬 판례이다."
+    }
+
+    /// 한국어 받침 유무에 따른 조사 자동 선택 (은/는, 이/가, 을/를, 와/과 등)
+    /// - Parameters:
+    ///   - word: 조사 앞 단어
+    ///   - eun: 받침 있을 때 사용할 조사
+    ///   - neun: 받침 없을 때 사용할 조사
+    private func josa(after word: String, eun: String, neun: String) -> String {
+        guard let last = word.unicodeScalars.last else { return neun }
+        let v = last.value
+        guard v >= 0xAC00 && v <= 0xD7A3 else { return neun }
+        let jongseong = (v - 0xAC00) % 28
+        return jongseong == 0 ? neun : eun
     }
 
     private func buildRAGEvidence(caseItem: APICase) async -> String {

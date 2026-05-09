@@ -45,11 +45,63 @@ _STOPWORDS: frozenset[str] = frozenset({
 })
 
 _LEGAL_TERM_HINTS: tuple[str, ...] = (
+    # 형법 총론·각론
     "위법", "적법", "고의", "과실", "구성요건", "책임", "정당방위",
     "긴급피난", "상당", "필요", "영장", "압수", "수색", "증거",
     "공소", "기소", "무죄", "유죄", "양형", "재심", "항소", "상고",
-    "체포", "구속", "자백", "진술", "피고인", "피의자",
+    "체포", "구속", "자백", "진술", "피고인", "피의자", "교사", "방조",
+    "미수", "기수", "정범", "공범", "공동정범", "간접정범", "처벌", "법정형",
+    # 형사소송법
+    "전문법칙", "위법수집증거", "임의성", "전문진술", "임의수사", "강제수사",
+    "압수수색", "사법경찰관", "수사준칙", "재수사", "재체포", "재구속",
+    # 헌법
+    "위헌", "합헌", "기본권", "과잉금지", "최소침해", "법익균형",
+    "평등권", "표현의자유", "신체의자유", "행복추구권", "직업선택",
+    "헌법불합치", "한정위헌", "헌법재판소",
+    # 행정법·행정심판
+    "행정처분", "행정행위", "취소", "무효", "재량", "기속", "신뢰보호",
+    "법치행정", "허가", "특허", "인가", "신고",
+    # 경찰학·위원회
+    "위원회", "국가경찰위원회", "자치경찰위원회", "정보공개", "징계",
+    "소청심사", "심의위원회",
+    # 일반 판단어
+    "판단", "판시", "인정", "부정", "허용", "금지", "효력", "성립",
+    "해당", "적용", "위반",
 )
+
+# 한국어 조사/어미 — 추출된 토큰 끝에서 제거하여 명사형으로 정규화
+_KO_PARTICLE_SUFFIXES: tuple[str, ...] = (
+    "으로서", "으로써", "이라고", "라고", "이라는", "라는",
+    "에서", "으로", "에게", "에서의", "에서는", "에서도",
+    "이라", "이며", "이고", "이다", "이나", "이든", "이라도",
+    "은", "는", "이", "가", "을", "를", "의", "에", "도", "만",
+    "와", "과", "로", "께", "께서", "한테",
+    # 어미 — OCR 노이즈에서 흔한 동사 활용형
+    "하였다", "되었다", "되었으며", "하였으며", "되었고", "하였고",
+    "한다", "했다", "되며", "하며", "하고", "되고",
+    "하여", "되어", "하자", "하는", "되는", "있는", "없는",
+    "있다", "없다", "이다", "였다",
+    # 인용·간접·의문형 어미
+    "다고", "라고", "이라고", "는지", "은지", "였는지", "였다고",
+    "하다고", "한다고", "된다고", "되다고",
+    "하는지", "되는지", "있는지", "없는지",
+    "하다고", "이라는", "라는", "다는",
+    # 부사형
+    "하게", "되게",
+)
+
+
+def _strip_korean_endings(token: str) -> str:
+    """한국어 조사/어미를 제거해 명사 키워드로 정규화한다.
+    OCR 키워드 추출 품질이 낮은 가장 큰 원인이 이 처리 누락이므로 핵심 보정."""
+    cleaned = token.strip()
+    if len(cleaned) < 3:
+        return cleaned
+    # 길이가 긴 어미부터 우선 매칭
+    for suffix in sorted(_KO_PARTICLE_SUFFIXES, key=len, reverse=True):
+        if cleaned.endswith(suffix) and len(cleaned) - len(suffix) >= 2:
+            return cleaned[: -len(suffix)]
+    return cleaned
 
 _LEGAL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"제\s*\d+\s*조(?:\s*의\s*\d+)?(?:\s*제\s*\d+\s*항)?(?:\s*제\s*\d+\s*호)?"),
@@ -98,7 +150,14 @@ def normalize_legal_text(text: str) -> str:
 
 
 def extract_legal_keyphrases(text: str, top_n: int = 10) -> list[str]:
-    """법률 문서에서 조문/사건번호/쟁점어를 우선 추출합니다."""
+    """법률 문서에서 조문/사건번호/쟁점어를 우선 추출합니다.
+
+    OCR 입력에 대한 키워드 품질이 학습 보조 앱 전체 품질을 좌우하므로
+    1) 조문/사건번호/날짜/법원명 등 정형 신호를 먼저 수집한 뒤
+    2) KoNLPy 명사 추출(가능 시)로 어휘를 잡고
+    3) 한국어 조사/어미를 제거해 명사형으로 정규화한 뒤
+    4) 법률 힌트 가산점/빈도 기반으로 정렬한다.
+    """
     normalized = normalize_legal_text(text)
     if not normalized:
         return []
@@ -110,21 +169,44 @@ def extract_legal_keyphrases(text: str, top_n: int = 10) -> list[str]:
         cleaned = term.strip()
         if not cleaned or cleaned in seen:
             return
+        # 빈 그룹 캡처/특수 문자만 있는 토큰은 거부
+        if not any(ch.isalnum() or ('가' <= ch <= '힣') for ch in cleaned):
+            return
+        if len(cleaned) < 2:
+            return
         seen.add(cleaned)
         ranked.append(cleaned)
 
+    # 1) 정형 법률 신호 (조문, 사건번호, 날짜, 법원명)
     for pattern in _LEGAL_PATTERNS:
         for m in pattern.findall(normalized):
             if isinstance(m, tuple):
                 value = "".join(x for x in m if x)
             else:
                 value = m
+            if not value:
+                continue
             push(re.sub(r"\s+", "", value))
             if len(ranked) >= top_n:
                 return ranked[:top_n]
 
-    hangul_terms = re.findall(r"[가-힣]{2,14}", normalized)
-    counts = Counter(hangul_terms)
+    # 2) 명사 추출 — KoNLPy 가능하면 명사만 사용해 어미/조사 노이즈 차단
+    candidate_terms: list[str] = []
+    if _USE_OKT:
+        try:
+            nouns = _okt.nouns(normalized)
+            candidate_terms.extend(n for n in nouns if 2 <= len(n) <= 14)
+        except Exception:
+            candidate_terms = []
+
+    # 3) 폴백/보강 — 정규식으로 한글 토큰을 추가 수집한 뒤 어미 제거
+    fallback_tokens = re.findall(r"[가-힣]{2,14}", normalized)
+    for raw in fallback_tokens:
+        cleaned = _strip_korean_endings(raw)
+        if 2 <= len(cleaned) <= 14:
+            candidate_terms.append(cleaned)
+
+    counts = Counter(candidate_terms)
     scored: list[tuple[str, float]] = []
     for term, freq in counts.items():
         if term in _STOPWORDS:
@@ -132,10 +214,15 @@ def extract_legal_keyphrases(text: str, top_n: int = 10) -> list[str]:
         if len(term) < 2:
             continue
         score = float(freq)
+        # 법률 힌트 가산
         if any(hint in term for hint in _LEGAL_TERM_HINTS):
-            score += 1.5
-        if term.endswith("죄") or term.endswith("조"):
-            score += 0.8
+            score += 1.8
+        # 죄/조/법/권/위/형/처/심/소 등 법률 어미를 가진 명사 가산
+        if term.endswith(("죄", "조", "법", "권", "위", "형", "심", "소", "처분", "결정", "판결")):
+            score += 1.0
+        # 너무 일반적인 동사형 잔재 패널티
+        if term.endswith(("하", "되", "하여", "되며", "하며")):
+            score -= 0.5
         scored.append((term, score))
 
     scored.sort(key=lambda x: x[1], reverse=True)
@@ -404,12 +491,19 @@ def extract_key_sentences(
     """
     normalized = normalize_legal_text(text)
 
-    # 문장 분리 (한국어 종결어미 기준)
-    sentences = re.split(
-        r"(?<=[다요니!?])\s+|(?<=\.)\s+(?=[가-힣\[])|\n+",
-        normalized.strip(),
+    # 한국어 종결 패턴 + 다음 문장 시작 신호로만 분리해 단어 중간이 잘리지 않게 한다.
+    # - "...다.", "...다 ", "...요.", "...니다." 뒤에 공백이 오고 다음에 한글/대괄호/숫자가 오면 분리
+    # - 명시적 마침표/물음표/느낌표 뒤 공백 + 다음 문장 시작
+    # - 줄바꿈은 항상 분리
+    sentence_split_pattern = re.compile(
+        r"(?<=[다요죠음임])[\.。]\s+(?=[가-힣\[\d])"  # 종결어미 + 마침표 + 다음 시작
+        r"|(?<=[다요죠음임])\s+(?=\[)"                # 종결어미 + [판시사항] 등 섹션
+        r"|(?<=[\.!?])\s+(?=[가-힣\[\d])"             # 일반 마침표/!?
+        r"|\n+"
     )
-    sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
+    sentences = sentence_split_pattern.split(normalized.strip())
+    # 잘라낸 끝부분이 마침표 없이 끝나는 경우 보정 (정보 손실 방지를 위해 그대로 유지)
+    sentences = [s.strip() for s in sentences if len(s.strip()) >= 12]
 
     if len(sentences) <= top_n:
         return "\n".join(sentences)
@@ -479,6 +573,11 @@ def infer_study_domain(text: str, keywords: list[str] | None = None) -> str:
         if score > best_score:
             best_score = score
             best_domain = domain
+
+    # 단일 키워드 우연 매칭으로 잘못된 도메인이 잡히는 것을 방지.
+    # 일반 판례에 "위원회" 한 번 등장만으로 police_committees 로 분류되는 문제 등을 차단.
+    if best_score < 2:
+        return "general_legal"
 
     return best_domain
 

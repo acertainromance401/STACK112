@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import re
 from threading import Lock
 from time import time
 
@@ -61,10 +62,56 @@ def _escape_like(value: str) -> str:
 
 
 def _build_case_snippet(issue: str | None, holding: str | None, exam: str | None, limit: int = 220) -> str:
-    joined = " ".join(x.strip() for x in [issue or "", holding or "", exam or ""] if x and x.strip())
-    if not joined:
+    parts = [x.strip() for x in [issue or "", holding or "", exam or ""] if x and x.strip()]
+    if not parts:
         return "요약 정보 부족"
-    return joined[:limit]
+    joined = " / ".join(parts)
+    if len(joined) <= limit:
+        return joined
+    # 종결어미 직후에서 잘라 한국어 자연스러움 유지
+    clipped = joined[:limit]
+    cut_idx = -1
+    for ending in ("다.", "다 ", "요.", "임.", "니다."):
+        idx = clipped.rfind(ending)
+        if idx > cut_idx:
+            cut_idx = idx + len(ending)
+    if cut_idx >= 40:
+        return clipped[:cut_idx].strip()
+    return clipped.rstrip() + "…"
+
+
+def _smart_truncate_korean(text: str, limit: int) -> str:
+    """한국어 종결어미 직후에서 자르고, 없으면 ‘…’ 표시한다."""
+    if not text:
+        return ""
+    cleaned = re.sub(r"\s+", " ", text).strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    snippet = cleaned[:limit]
+    cut_idx = -1
+    for ending in ("다.", "다 ", "요.", "임.", "니다.", "였다.", "한다.", "된다.", "이다."):
+        idx = snippet.rfind(ending)
+        if idx > cut_idx:
+            cut_idx = idx + len(ending)
+    if cut_idx >= max(20, limit // 3):
+        return snippet[:cut_idx].strip()
+    # 마지막 공백에서 자르되 너무 짧으면 그대로 쓴다
+    space_idx = snippet.rfind(" ")
+    if space_idx >= max(20, limit // 3):
+        return snippet[:space_idx].rstrip() + "…"
+    return snippet.rstrip() + "…"
+
+
+def _ensure_korean_terminal(text: str) -> str:
+    """문장 끝이 한국어 종결어미가 아니면 ‘…’ 로 마무리해 어색한 잘림을 표시."""
+    if not text:
+        return ""
+    stripped = text.strip()
+    if not stripped:
+        return ""
+    if stripped.endswith(("다.", "요.", "다", "음.", "임.", "다고 한다.", "였다.", "다고 판시하였다.", "…", "다고 판단하였다.", "?", "!", "."))  :
+        return stripped
+    return stripped + "…"
 
 
 def _retrieve_grounded_cases(question: str, top_k: int) -> list[dict[str, str]]:
@@ -512,6 +559,12 @@ def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
         top_n=5,
     )
     sentences = [s.strip() for s in body.key_sentences.split("\n") if s.strip()]
+    # 매끄럽지 못한 단어 중간 잘림을 줄이기 위해 길이/종결 보정
+    sentences = [
+        _ensure_korean_terminal(_smart_truncate_korean(s, 110))
+        for s in sentences
+        if len(s) >= 14
+    ]
     key_issue = fallback_keywords[0] if fallback_keywords else "핵심 쟁점 확인 필요"
     ruling_point = sentences[0] if sentences else "핵심 문장 정보가 부족합니다."
 
@@ -519,11 +572,11 @@ def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
     # 추후 LlamaCppEngine 서버 사이드 연동 시 이 블록을 교체합니다.
     if fallback_keywords:
         summary_text = (
-            f"{body.case_name} 판례는 다음 핵심 쟁점을 다룹니다: "
-            f"{', '.join(fallback_keywords[:3])}."
+            f"{body.case_name} 판례는 "
+            f"{', '.join(fallback_keywords[:3])} 등을 핵심 쟁점으로 다룬 판례이다."
         )
     else:
-        summary_text = f"{body.case_name} 판례의 핵심 쟁점은 제공된 문장 중심으로 확인이 필요합니다."
+        summary_text = f"{body.case_name} 판례의 핵심 쟁점은 제공된 문장에서 직접 확인이 필요하다."
 
     quiz_items: list[OXQuizItem] = []
     # O/X를 섞어 출제 — 모두 정답이면 학습 가치가 없음
@@ -534,6 +587,13 @@ def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
         ("성립한다", "성립하지 않는다"),
         ("위법하다", "적법하다"),
         ("적법하다", "위법하다"),
+        ("허용된다", "허용되지 않는다"),
+        ("필요하다", "필요하지 않는다"),
+        ("가능하다", "불가능하다"),
+        ("타당하다", "타당하지 않는다"),
+        ("포함된다", "포함되지 않는다"),
+        ("있다.", "없다."),
+        ("없다.", "있다."),
     )
 
     def _safe_negate(text: str) -> str | None:
@@ -543,14 +603,14 @@ def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
         return None
 
     for i, sentence in enumerate(sentences[: body.quiz_count]):
-        statement = sentence[:120]
+        statement = _ensure_korean_terminal(_smart_truncate_korean(sentence, 110))
         # 짝수 인덱스는 원문 그대로(O), 홀수 인덱스는 안전 부정(X)
         if i % 2 == 0:
             quiz_items.append(
                 OXQuizItem(
                     statement=statement,
                     answer=True,
-                    explanation=f"[{body.case_number}] 판결문 핵심 문장에서 직접 도출된 내용입니다.",
+                    explanation=f"[{body.case_number}] 판결문 핵심 문장에서 직접 도출된 내용이다.",
                 )
             )
         else:
@@ -558,31 +618,32 @@ def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
             if negated is not None:
                 quiz_items.append(
                     OXQuizItem(
-                        statement=negated[:120],
+                        statement=_ensure_korean_terminal(_smart_truncate_korean(negated, 110)),
                         answer=False,
-                        explanation=f"[{body.case_number}] 판결의 결론과 반대 방향의 진술입니다.",
+                        explanation=f"[{body.case_number}] 판결의 결론과 반대 방향의 진술이다.",
                     )
                 )
             else:
-                # 안전한 부정 패턴이 없으면 명백히 거짓인 메타 진술로 X 출제
+                # 안전 부정 패턴이 없으면 키워드 함정형 X 진술로 대체
+                primary_kw = fallback_keywords[0] if fallback_keywords else "핵심 쟁점"
                 quiz_items.append(
                     OXQuizItem(
-                        statement=f"본 판례의 결론은 「{statement[:60]}」와 정반대이다",
+                        statement=f"본 판례는 {primary_kw} 와 무관한 사안에 대한 판단이다.",
                         answer=False,
-                        explanation=f"[{body.case_number}] 원문 결론을 뒤집은 함정 진술입니다.",
+                        explanation=f"[{body.case_number}] 핵심 쟁점이 {primary_kw} 임을 부정하는 함정 진술이다.",
                     )
                 )
 
     if not quiz_items and fallback_keywords:
         quiz_items = [
             OXQuizItem(
-                statement=f"{fallback_keywords[0]}는(은) 본 판례의 핵심 쟁점이다.",
+                statement=f"{fallback_keywords[0]} 은(는) 본 판례의 핵심 쟁점이다.",
                 answer=True,
-                explanation=f"[{body.case_number}] 키워드 기반으로 도출된 핵심 쟁점입니다.",
+                explanation=f"[{body.case_number}] 키워드 기반으로 도출된 핵심 쟁점이다.",
             )
         ]
 
-    citations = [s[:180] for s in sentences[:3]]
+    citations = [_smart_truncate_korean(s, 180) for s in sentences[:3]]
 
     return LLMSummarizeResponse(
         case_number=body.case_number,
@@ -634,29 +695,54 @@ def grounded_answer(body: GroundedAnswerRequest) -> GroundedAnswerResponse:
     if body.intent == "compare" and len(retrieved) >= 2:
         left = retrieved[0]
         right = retrieved[1]
+        left_holding = _smart_truncate_korean(str(left["holding_summary"]), 70)
+        right_holding = _smart_truncate_korean(str(right["holding_summary"]), 70)
         answer = (
             "비교 요약(강의 대체 아님):\n"
-            f"- 공통점: {left['subject']} 범위에서 쟁점 판단 구조가 유사합니다.\n"
-            f"- 차이점: [{left['case_number']}]는 {str(left['holding_summary'])[:70]} / "
-            f"[{right['case_number']}]는 {str(right['holding_summary'])[:70]}\n"
-            "- 복습 포인트: 결론만 외우지 말고 쟁점-근거-결론 순서로 암기하세요."
+            f"- 공통점: {left['subject']} 범위에서 쟁점 판단 구조가 유사하다.\n"
+            f"- 차이점: [{left['case_number']}] {left_holding} / "
+            f"[{right['case_number']}] {right_holding}\n"
+            "- 복습 포인트: 결론만 외우지 말고 쟁점-근거-결론 순서로 암기한다."
         )
     elif body.intent == "quiz":
         pivot = retrieved[0]
         answer = (
             "훈련용 체크포인트:\n"
-            f"- [{pivot['case_number']}]에서 핵심 쟁점을 한 문장으로 말해보기\n"
-            "- 유사 판례와 결론이 달라지는 요건 1개 찾기\n"
-            "- OX로 변형: 결론 문장을 한 글자 바꿔 틀린 지문 만들기"
+            f"- [{pivot['case_number']}]에서 핵심 쟁점을 한 문장으로 정리한다.\n"
+            "- 유사 판례와 결론이 달라지는 요건을 한 가지 찾는다.\n"
+            "- 결론 문장의 한 글자만 바꾸어 OX 함정 지문을 만든다."
         )
+    elif body.intent == "summary":
+        # iOS oneLineSummary 슬롯에 그대로 들어가도 어색하지 않도록 한 줄 한국어로 구성
+        pivot = retrieved[0]
+        issue_short = _smart_truncate_korean(str(pivot["issue_summary"]), 70)
+        holding_short = _smart_truncate_korean(str(pivot["holding_summary"]), 70)
+        if issue_short and holding_short:
+            answer = (
+                f"[{pivot['case_number']}] {pivot['case_name']} 사건은 "
+                f"{_ensure_korean_terminal(issue_short)} 쟁점에 대해 "
+                f"{_ensure_korean_terminal(holding_short)} 라고 판단한 판례이다."
+            )
+        elif holding_short:
+            answer = (
+                f"[{pivot['case_number']}] {pivot['case_name']} 사건은 "
+                f"{_ensure_korean_terminal(holding_short)} 라고 판단한 판례이다."
+            )
+        else:
+            answer = (
+                f"[{pivot['case_number']}] {pivot['case_name']} 판례 — "
+                "근거 문장이 부족하여 한 줄 요약이 어렵다."
+            )
     else:
         pivot = retrieved[0]
+        issue_short = _smart_truncate_korean(str(pivot["issue_summary"]), 90)
+        holding_short = _smart_truncate_korean(str(pivot["holding_summary"]), 90)
         answer = (
             "근거 기반 요약(강의 대체 아님):\n"
             f"- 사건: [{pivot['case_number']}] {pivot['case_name']}\n"
-            f"- 쟁점: {str(pivot['issue_summary'])[:90]}\n"
-            f"- 결론: {str(pivot['holding_summary'])[:90]}\n"
-            "- 복습: 헷갈리는 포인트는 유사판례 비교/OX 반복으로 확인"
+            f"- 쟁점: {issue_short}\n"
+            f"- 결론: {holding_short}\n"
+            "- 복습: 헷갈리는 포인트는 유사판례 비교 또는 OX 반복으로 확인한다."
         )
 
     retrieved_case_set = {c["case_number"] for c in retrieved}
