@@ -431,7 +431,7 @@ final class LLMService: ObservableObject {
         let semanticLines = cleaned
             .filter { !isScaffolding($0) && hasKorean($0) }
             .map(stripLabelTokens)
-            .filter { !$0.isEmpty }
+            .filter { !$0.isEmpty && $0.count >= 8 }
 
         // Always use caseItem fields for structured content — LLM output used only for oneLine hint
         let keyIssue = caseItem.issueSummary?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -442,13 +442,36 @@ final class LLMService: ObservableObject {
             return buildSummaryOutput(caseItem: caseItem)
         }
 
-        let oneLine = semanticLines.first ?? caseItem.caseName
+        // 1B 모델이 만든 첫 한 줄이 너무 짧거나 의미없으면 학습카드 스타일을 직접 합성한다.
+        let llmHint = semanticLines.first ?? ""
+        let composed = composeStudyCardOneLine(
+            caseItem: caseItem,
+            issueShort: keyIssue ?? "",
+            holdingShort: ruling ?? ""
+        )
+        let oneLine: String
+        if llmHint.count >= 24 && hasKoreanTerminal(llmHint) {
+            // 모델 출력이 충분히 길고 종결어미가 있으면 그쪽을 우선 사용
+            oneLine = shrink(llmHint, limit: oneLineLimit)
+        } else {
+            oneLine = composed
+        }
+
+        let finalKeyIssue = (keyIssue?.isEmpty == false)
+            ? ensureKoreanTerminal(shrink(scrubResidualNoise(keyIssue!), limit: 130))
+            : "핵심 쟁점 정보가 부족합니다."
+        let finalRuling = (ruling?.isEmpty == false)
+            ? ensureKoreanTerminal(shrink(scrubResidualNoise(ruling!), limit: 130))
+            : "판결 결론 정보가 부족합니다."
+        let finalExam = (exam?.isEmpty == false)
+            ? ensureKoreanTerminal(shrink(exam!, limit: examLimit))
+            : "시험 포인트 정보가 부족합니다."
 
         return """
         - one_line_summary: \(oneLine)
-        - key_issue: \((keyIssue?.isEmpty == false) ? keyIssue! : "핵심 쟁점 정보가 부족합니다")
-        - ruling_point: \((ruling?.isEmpty == false) ? ruling! : "판결 결론 정보가 부족합니다")
-        - exam_takeaway: \((exam?.isEmpty == false) ? exam! : "시험 포인트 정보가 부족합니다")
+        - key_issue: \(finalKeyIssue)
+        - ruling_point: \(finalRuling)
+        - exam_takeaway: \(finalExam)
         """
     }
 
@@ -533,18 +556,10 @@ final class LLMService: ObservableObject {
             return smartTruncateKorean(cleaned, limit: limit)
         }
         let name = sanitize(caseItem.caseName, limit: 80)
-        let nameTopic = josa(after: name, eun: "은", neun: "는")
         let issue = sanitize(caseItem.issueSummary ?? "주요 쟁점 정보가 부족하다.", limit: keyIssueLimit)
         let holding = sanitize(caseItem.holdingSummary ?? "판결 결론 정보가 부족하다.", limit: rulingLimit)
         let examPoint = sanitize(caseItem.examPoints ?? "시험 포인트 정보가 부족하다.", limit: examLimit)
-
-        let oneLine: String = {
-            let trimmedIssue = String(issue.prefix(70)).trimmingCharacters(in: .whitespaces)
-            if trimmedIssue.isEmpty {
-                return "\(name)\(nameTopic) 핵심 쟁점이 정리된 판례이다."
-            }
-            return "\(name)\(nameTopic) \(trimmedIssue) 쟁점을 다룬 판례이다."
-        }()
+        let oneLine = composeStudyCardOneLine(caseItem: caseItem, issueShort: issue, holdingShort: holding)
 
         return """
         - one_line_summary: \(oneLine)
@@ -552,6 +567,151 @@ final class LLMService: ObservableObject {
         - ruling_point: \(ensureKoreanTerminal(holding))
         - exam_takeaway: \(ensureKoreanTerminal(examPoint))
         """
+    }
+
+    /// 경찰고시 학습카드 스타일의 한 줄 요약 생성기.
+    /// 형식: "[도메인] {사건명} 사건. {핵심 쟁점 짧게}에 관해 {결론 방향} 판단한 사례."
+    /// 결론 방향이 없으면 마지막 절을 생략한다.
+    private func composeStudyCardOneLine(caseItem: APICase, issueShort: String, holdingShort: String) -> String {
+        // 1) 도메인 라벨 — caseItem.subject 앞부분에 "민사 ·", "형법 ·" 등 라벨이 들어와 있으면 그것을 사용
+        let domainLabel: String = {
+            let subject = caseItem.subject.trimmingCharacters(in: .whitespacesAndNewlines)
+            if subject.contains("·") {
+                let head = subject.components(separatedBy: "·").first ?? ""
+                let h = head.trimmingCharacters(in: .whitespacesAndNewlines)
+                if h.count <= 4 { return h }
+            }
+            // subject 자체가 짧은 도메인 라벨 같으면 그대로
+            if subject.count > 0 && subject.count <= 5 { return subject }
+            return ""
+        }()
+
+        // 2) 사건명 정리 — 타임스탬프 형태(OCR-...) 면 사건번호로 대체
+        var name = caseItem.caseName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if name.hasPrefix("OCR-") || name.isEmpty {
+            name = caseItem.caseNumber
+        }
+        if name.count > 40 {
+            name = String(name.prefix(40))
+        }
+
+        // 3) 쟁점 핵심구 추출 — "...여부" / "...에 관한 사건" 패턴이면 그 절만 떼어 사용
+        let issueCore = extractIssueCore(issueShort)
+
+        // 4) 결론 방향어 추출 — 위법/적법/포함/배제/유죄/무죄 등
+        let verdict = extractVerdictPhrase(holdingShort)
+
+        // 5) 조립
+        var parts: [String] = []
+        if !domainLabel.isEmpty {
+            parts.append("[\(domainLabel)]")
+        }
+        if !name.isEmpty {
+            parts.append("\(name) 사건.")
+        }
+        if !issueCore.isEmpty {
+            if !verdict.isEmpty {
+                parts.append("\(issueCore)에 관해 \(verdict) 판단한 사례.")
+            } else {
+                parts.append("\(issueCore)을(를) 다툰 판례.")
+            }
+        } else if !verdict.isEmpty {
+            parts.append("\(verdict) 판단한 사례.")
+        } else {
+            parts.append("핵심 쟁점이 정리된 판례이다.")
+        }
+        let line = parts.joined(separator: " ")
+        return smartTruncateKorean(line, limit: oneLineLimit)
+    }
+
+    /// LLMService 단계에서 한 번 더 OCR 잔재(닫히지 않은 [공YYYY..., 〉/〈, 잘못된 띄어쓰기)를 제거한다.
+    /// OCRView의 stripBracketNoise를 통과하지 못한 케이스 대비 안전장치.
+    private func scrubResidualNoise(_ text: String) -> String {
+        var s = text
+        s = s.replacingOccurrences(of: #"\[[^\]]{1,80}\]"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\[\s*공\s*\d{2,4}.*$"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\[공보[^\]]*$"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: "〉", with: " ")
+        s = s.replacingOccurrences(of: "〈", with: " ")
+        for pair in [("하 는", "하는"), ("되 는", "되는"), ("이 다", "이다"), ("한 다", "한다"),
+                     ("된 다", "된다"), ("하 다", "하다"), ("있 다", "있다"), ("없 다", "없다")] {
+            s = s.replacingOccurrences(of: pair.0, with: pair.1)
+        }
+        s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 쟁점 문장에서 핵심 명사구만 추출. "...의 ...여부" 패턴이면 "여부"까지 포함해서 반환.
+    /// 반환된 구는 "...에 관해 Y 판단한 사례" 합성에 자연스럽게 끼워진다.
+    private func extractIssueCore(_ issue: String) -> String {
+        var s = issue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return "" }
+        // 노이즈 잔재 제거 (학습카드 합성용)
+        s = s.replacingOccurrences(of: #"^\[[^\]]*\]\s*"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"〉|〈"#, with: " ", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+
+        // 마커를 포함해 잘라내기 — 끝이 "...되는지" / "...여부" 형태가 되도록
+        let markers = ["문제 된 사건", "문제된 사건", "여부", "되는지", "할 수 있는지", "해당하는지", "허용되는지"]
+        for marker in markers {
+            if let r = s.range(of: marker) {
+                let head = String(s[s.startIndex..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if head.count >= 8 && head.count <= 90 {
+                    let cleaned = head.replacingOccurrences(of: #"^[\s,.;:\-]+"#, with: "", options: .regularExpression)
+                    // "문제 된 사건"이 끝나는 경우 → "...이 문제 된" 만 남기는 게 자연스러움
+                    if cleaned.hasSuffix("문제 된 사건") {
+                        return String(cleaned.dropLast(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                    if cleaned.hasSuffix("문제된 사건") {
+                        return String(cleaned.dropLast(2)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                    return cleaned
+                }
+            }
+        }
+        // 그 외엔 첫 70자 정도
+        if s.count <= 70 { return s }
+        let snippet = String(s.prefix(70))
+        if let space = snippet.range(of: " ", options: .backwards) {
+            return String(snippet[..<space.lowerBound])
+        }
+        return snippet
+    }
+
+    /// 결론 문장에서 결과 방향어만 추출 — "포함되지 않는다", "위법하다", "유죄로 본다" 등
+    private func extractVerdictPhrase(_ holding: String) -> String {
+        let candidates: [(String, String)] = [
+            ("포함되지 않는다", "포함되지 않는다고"),
+            ("포함된다", "포함된다고"),
+            ("해당하지 않는다", "해당하지 않는다고"),
+            ("해당한다", "해당한다고"),
+            ("위법하다", "위법하다고"),
+            ("적법하다", "적법하다고"),
+            ("유죄", "유죄로"),
+            ("무죄", "무죄로"),
+            ("기각", "기각"),
+            ("인용한다", "인용"),
+            ("위반된다", "위반된다고"),
+            ("허용되지 않는다", "허용되지 않는다고"),
+            ("허용된다", "허용된다고"),
+            ("한정위헌", "한정위헌으로"),
+            ("헌법불합치", "헌법불합치로"),
+            ("위헌", "위헌으로"),
+            ("합헌", "합헌으로"),
+            ("파기환송", "파기환송"),
+            ("파기한다", "파기"),
+            ("환송한다", "환송"),
+            ("성립하지 않는다", "성립하지 않는다고"),
+            ("성립한다", "성립한다고"),
+            ("인정되지 않는다", "인정되지 않는다고"),
+            ("인정된다", "인정된다고")
+        ]
+        for (needle, phrase) in candidates {
+            if holding.contains(needle) {
+                return phrase
+            }
+        }
+        return ""
     }
 
     /// 한국어 종결어미 직후에서 자르고, 없으면 ‘…’ 표시.
@@ -660,10 +820,24 @@ final class LLMService: ObservableObject {
             .compactMap { $0 as? String }
             .filter { !$0.isEmpty }
 
+        // 퀴즈에 들어갈 본문은 OCR raw가 아닌 digest 결과(issueSummary/holdingSummary)를 우선 사용.
+        // 이렇게 해야 "[공YYYY..." 같은 출처 잡음과 두 문장 합쳐진 raw가 노출되지 않는다.
+        let digestIssue = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let digestHolding = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let quizBody: String = {
+            var parts: [String] = []
+            if !digestIssue.isEmpty { parts.append(digestIssue) }
+            if !digestHolding.isEmpty { parts.append(digestHolding) }
+            if parts.isEmpty {
+                return compactSentences.isEmpty ? (caseItem.issueSummary ?? "") : compactSentences
+            }
+            return parts.joined(separator: " ")
+        }()
+
         let prompt = LLMPromptTemplate.oxQuiz(
             caseNumber: caseItem.caseNumber,
             caseName: caseItem.caseName,
-            keySentences: compactSentences.isEmpty ? (caseItem.issueSummary ?? "") : compactSentences,
+            keySentences: quizBody,
             keywords: compactKeywords.isEmpty
                 ? [caseItem.subject, caseItem.issueSummary ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
                 : compactKeywords.prefix(8).joined(separator: ", "),
@@ -675,7 +849,7 @@ final class LLMService: ObservableObject {
             if let serverQuiz = try? await NetworkService.shared.serverGenerateOXQuiz(
                 caseNumber: caseItem.caseNumber,
                 caseName: caseItem.caseName,
-                keySentences: compactSentences.isEmpty ? (caseItem.issueSummary ?? "") : compactSentences,
+                keySentences: quizBody,
                 keywords: compactKeywords,
                 quizCount: count
             ), !serverQuiz.isEmpty {
@@ -696,15 +870,15 @@ final class LLMService: ObservableObject {
         if let serverQuiz = try? await NetworkService.shared.serverGenerateOXQuiz(
             caseNumber: caseItem.caseNumber,
             caseName: caseItem.caseName,
-            keySentences: compactSentences.isEmpty ? (caseItem.issueSummary ?? "") : compactSentences,
+            keySentences: quizBody,
             keywords: compactKeywords,
             quizCount: count
         ), !serverQuiz.isEmpty {
             return serverQuiz
         }
 
-        // 폴백: keySentences의 첫 문장들을 직접 OX 문항으로 구성
-        return buildFallbackOXQuiz(caseItem: caseItem, keySentences: keySentences, count: count)
+        // 폴백: digest 기반 quizBody를 우선 사용해 OX 문항을 직접 구성 (raw OCR 노이즈 회피)
+        return buildFallbackOXQuiz(caseItem: caseItem, keySentences: quizBody.isEmpty ? keySentences : quizBody, count: count)
     }
 
     private func isLowMemoryDevice() -> Bool {
@@ -728,20 +902,35 @@ final class LLMService: ObservableObject {
         let question = "다음 판례를 강의 대체 없이 복습용으로 한 줄로 요약: 사건번호=\(caseItem.caseNumber), 사건명=\(caseItem.caseName), 쟁점=\(caseItem.issueSummary ?? ""), 결론=\(caseItem.holdingSummary ?? "")"
         let answer = try await serverGroundedAnswer(question: question, intent: "summary")
 
-        // 백엔드 응답이 멀티라인일 가능성에 대비해 첫 한국어 문장만 추려 한 줄로 만든다.
+        // 백엔드가 멀티라인을 줄 수도 있으므로 핵심 한 줄만 추려낸다.
         let cleanedOneLine = extractFirstKoreanSentence(from: answer)
-        let oneLine = cleanedOneLine.isEmpty
-            ? buildFallbackOneLine(caseItem: caseItem)
-            : shrink(cleanedOneLine, limit: oneLineLimit)
-        let keyIssue = shrink(caseItem.issueSummary?.isEmpty == false
-                              ? caseItem.issueSummary!
-                              : "핵심 쟁점 정보 부족", limit: keyIssueLimit)
-        let ruling = shrink(caseItem.holdingSummary?.isEmpty == false
-                            ? caseItem.holdingSummary!
-                            : "판결 결론 정보 부족", limit: rulingLimit)
-        let exam = shrink(caseItem.examPoints?.isEmpty == false
+        // 학습카드 스타일 한 줄을 우리가 직접 합성한 결과와 비교해, 더 의미있는 쪽을 선택
+        let composedOneLine = composeStudyCardOneLine(
+            caseItem: caseItem,
+            issueShort: caseItem.issueSummary ?? "",
+            holdingShort: caseItem.holdingSummary ?? ""
+        )
+        let oneLine: String
+        if cleanedOneLine.count >= 20 && hasKoreanTerminal(cleanedOneLine) {
+            oneLine = shrink(cleanedOneLine, limit: oneLineLimit)
+        } else {
+            oneLine = composedOneLine
+        }
+
+        // 핵심 쟁점/결론은 OCR 원문 덤프가 들어가지 않도록 짧게 정제한 형태로 사용
+        let keyIssue: String = {
+            let raw = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if raw.isEmpty { return "핵심 쟁점 정보 부족" }
+            return ensureKoreanTerminal(shrink(scrubResidualNoise(raw), limit: 130))
+        }()
+        let ruling: String = {
+            let raw = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if raw.isEmpty { return "판결 결론 정보 부족" }
+            return ensureKoreanTerminal(shrink(scrubResidualNoise(raw), limit: 130))
+        }()
+        let exam = ensureKoreanTerminal(shrink(caseItem.examPoints?.isEmpty == false
                           ? caseItem.examPoints!
-                          : "시험 포인트 정보 부족", limit: examLimit)
+                          : "시험 포인트 정보 부족", limit: examLimit))
 
         return LLMSummary(rawOutput: canonicalSummaryRaw(oneLine: oneLine, keyIssue: keyIssue, ruling: ruling, exam: exam))
     }
