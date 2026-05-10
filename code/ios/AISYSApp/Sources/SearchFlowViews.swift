@@ -378,6 +378,7 @@ struct CaseSummaryView: View {
                             OXQuizView(
                                 caseNumber: caseNumber,
                                 caseTitle: resolved.title,
+                                caseSubject: apiCase?.subject,
                                 caseSummary: caseSummary,
                                 items: viewModel.oxQuizItems
                             )
@@ -526,6 +527,7 @@ struct OXQuizView: View {
 
     let caseNumber: String
     let caseTitle: String
+    let caseSubject: String?
     let caseSummary: String
     let items: [OXQuizQuestion]
 
@@ -641,7 +643,8 @@ struct OXQuizView: View {
                 userAnswer: chosenAnswer,
                 correctAnswer: question.answer,
                 explanation: question.explanation,
-                caseSummary: caseSummary
+                caseSummary: caseSummary,
+                subject: caseSubject
             )
         }
     }
@@ -810,6 +813,67 @@ struct ReviewView: View {
                     .font(.largeTitle.bold())
                 Text("검색하거나 스캔한 판례가 자동으로 저장됩니다.")
                     .foregroundStyle(.secondary)
+
+                // ── 약점 카테고리 (오답 패턴 분석) ──────────────
+                let weak = store.weakSubjects()
+                if !weak.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text("자주 틀리는 영역")
+                                .font(.headline)
+                        }
+                        ForEach(weak, id: \.label) { item in
+                            HStack {
+                                Text(item.label)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text("오답 \(item.count)회")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            .background(Color.orange.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                // ── 약점 영역 기반 유사 판례 추천 ────────────────
+                if !weak.isEmpty {
+                    let allCases: [APICase] = store.savedCases + scannedCases.map { $0.toAPICase() }
+                    let queryText = weak.map { $0.label }.joined(separator: " ")
+                    let similar = LocalSimilarityEngine.shared.findSimilar(query: queryText, in: allCases, topK: 3)
+                    if !similar.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "sparkles")
+                                    .foregroundStyle(.indigo)
+                                Text("약점 영역 추천 판례")
+                                    .font(.headline)
+                            }
+                            ForEach(similar) { c in
+                                NavigationLink {
+                                    CaseSummaryView(apiCase: c)
+                                } label: {
+                                    SearchResultCard(
+                                        title: c.caseNumber,
+                                        subtitle: c.subject,
+                                        tags: c.subject.isEmpty ? [] : ["#\(c.subject)"],
+                                        summary: c.issueSummary ?? ""
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
 
                 // ── 빈 상태 ────────────────────────────────────
                 if store.savedCases.isEmpty && scannedCases.isEmpty {

@@ -17,6 +17,7 @@
 		33B554E67648A09D2B3FA223 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FD11294844C01BF1B041A12 /* RootTabView.swift */; };
 		4E3AA712F44889CCA43FE258 /* AppRuntimeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */; };
 		69718A360E32436E7D1A3273 /* LocalLLMEngines.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* LocalSimilarityEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */; };
 		8996C6B976101B7FBEA8CD20 /* AISYSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB8550D7167F38BF77BC796 /* AISYSApp.swift */; };
 		A562AF02780501D1737514AE /* OCRView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188D4A67A763047523D31AE1 /* OCRView.swift */; };
 		B932ED19AEA38751B581B486 /* SearchFlowViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */; };
@@ -52,6 +53,7 @@
 		BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeState.swift; sourceTree = "<group>"; };
 		D71F7EC6215383E28B8504D6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngines.swift; sourceTree = "<group>"; };
+		B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSimilarityEngine.swift; sourceTree = "<group>"; };
 		EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFlowViews.swift; sourceTree = "<group>"; };
 		F408ACC8D034B72FF9346C76 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseSummaryViewModel.swift; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */,
 				80EB6CEDE58FD30A4BC467BE /* LLMService.swift */,
 				E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */,
+				B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */,
 				D71F7EC6215383E28B8504D6 /* Models.swift */,
 				FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */,
 				FE170875E59DB4941C4441FB /* NetworkService.swift */,
@@ -226,6 +229,7 @@
 				C4DABF681E9D0290768E3FB4 /* HomeView.swift in Sources */,
 				1C43007E9CD651F2878094CB /* LLMService.swift in Sources */,
 				69718A360E32436E7D1A3273 /* LocalLLMEngines.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* LocalSimilarityEngine.swift in Sources */,
 				0134EB00FCADE9C6760E94C3 /* Models.swift in Sources */,
 				F4D032582C2307BE5B20F222 /* NavigationBackButton.swift in Sources */,
 				24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */,
