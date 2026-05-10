@@ -999,8 +999,8 @@ struct ReviewView: View {
         }
         let allCases: [APICase] = store.savedCases + scannedCases.map { $0.toAPICase() }
         let queryText = weak.map { $0.label }.joined(separator: " ")
-        // NLEmbedding 호출은 첫 진입 시 무거우므로 detached Task 로 옮긴 뒤 메인에서 결과만 반영한다.
-        let result = await Task.detached(priority: .utility) { @MainActor in
+        // NLEmbedding 호출은 첫 진입 시 무거우므로 background priority detached Task 로 실제로 떼어낸다.
+        let result = await Task.detached(priority: .background) {
             LocalSimilarityEngine.shared.findSimilar(query: queryText, in: allCases, topK: 3)
         }.value
         similarRecommendations = result

@@ -9,17 +9,16 @@ import NaturalLanguage
 ///
 /// 사용 흐름:
 ///   let candidates = LocalSimilarityEngine.shared.findSimilar(query: text, in: cases, topK: 3)
-@MainActor
-final class LocalSimilarityEngine {
+///
+/// 스레드 안전: NLEmbedding 은 read-only 이므로 thread-safe.
+/// NLTokenizer 는 mutable string 이 있어 thread-safe 하지 않으므로 호출마다 새로 생성한다.
+final class LocalSimilarityEngine: @unchecked Sendable {
     static let shared = LocalSimilarityEngine()
 
     private let embedding: NLEmbedding?
-    private let tokenizer: NLTokenizer
 
     private init() {
         self.embedding = NLEmbedding.wordEmbedding(for: .korean)
-        self.tokenizer = NLTokenizer(unit: .word)
-        self.tokenizer.setLanguage(.korean)
     }
 
     /// 후보 케이스 중 query 와 가장 유사한 상위 topK 개를 반환.
@@ -49,6 +48,8 @@ final class LocalSimilarityEngine {
     private func vector(for text: String, using embedding: NLEmbedding) -> [Double] {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return [] }
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.setLanguage(.korean)
         tokenizer.string = cleaned
         var sum: [Double] = Array(repeating: 0, count: embedding.dimension)
         var count = 0
