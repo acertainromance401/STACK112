@@ -103,7 +103,6 @@ struct OCRView: View {
                 .padding()
             }
             .navigationTitle("OCR")
-            .withSmallBackButton()
             .navigationDestination(isPresented: $navigateToSummary) {
                 if let ocrCase = runtime.pendingOCRCase {
                     CaseSummaryView(apiCase: ocrCase, viewModel: summaryViewModel)
@@ -240,17 +239,29 @@ struct OCRView: View {
             ocrCaseName = digest.caseSubject.isEmpty ? auto : digest.caseSubject
         }
 
+        // examPoints — 단순 조항 나열 대신 "도메인 학습 가이드 + 핵심 본문 키워드" 합성으로 가독성 개선
+        let bodyKeywords = keywords.filter { kw in
+            // 조문/사건번호 형태(숫자가 들어가는 정형신호)는 시험 포인트 텍스트에서 제외
+            kw.range(of: #"(제\d+조|\d+[가-힣]\d+|\d{2,4}\.)"#, options: .regularExpression) == nil
+        }
+        let examPointText: String = {
+            let head = studyFocus.first ?? "핵심 쟁점·결론을 묶어 암기"
+            let kwTail = bodyKeywords.prefix(4).joined(separator: ", ")
+            if kwTail.isEmpty { return head }
+            return "\(head) — 본문 키워드: \(kwTail)"
+        }()
+
         let ocrCase = APICase(
             id: "ocr-\(Int(now.timeIntervalSince1970))",
             caseNumber: ocrCaseNumber,
             caseName: ocrCaseName,
             courtName: digest.court.isEmpty ? "스캔 문서" : digest.court,
             subject: digest.domainLabel.isEmpty
-                ? keywords.prefix(3).joined(separator: " · ")
-                : "\(digest.domainLabel) · " + keywords.prefix(2).joined(separator: " · "),
+                ? bodyKeywords.prefix(3).joined(separator: " · ")
+                : "\(digest.domainLabel) · " + bodyKeywords.prefix(2).joined(separator: " · "),
             issueSummary: digest.issueSentence,
             holdingSummary: digest.holdingSentence,
-            examPoints: keywords.prefix(6).joined(separator: ", "),
+            examPoints: examPointText,
             sourceUrl: nil
         )
 
@@ -549,9 +560,13 @@ struct OCRView: View {
         // OCR 잘못 띄어쓰기 보정 — 어간과 어미 사이 공백 제거 (보수적으로 빈도 높은 케이스만)
         for pair in [("하 는", "하는"), ("되 는", "되는"), ("이 다", "이다"), ("한 다", "한다"),
                      ("된 다", "된다"), ("하 다", "하다"), ("있 다", "있다"), ("없 다", "없다"),
-                     ("있 는", "있는"), ("없 는", "없는"), ("였 다", "였다"), ("이 라", "이라")] {
+                     ("있 는", "있는"), ("없 는", "없는"), ("였 다", "였다"), ("이 라", "이라"),
+                     ("담보하 는", "담보하는"), ("관 한", "관한"), ("대 한", "대한")] {
             normalized = normalized.replacingOccurrences(of: pair.0, with: pair.1)
         }
+        // 줄바꿈 직후가 조사로 시작하는 단편이면 직전 줄과 합친다 ("...담보하\n는 손해..." → "...담보하는 손해...")
+        let leadingParticleRegex = #"\n\s*(는|은|이|가|을|를|의|에|에서|에게|도|와|과|로|으로|및|또는)\s"#
+        normalized = normalized.replacingOccurrences(of: leadingParticleRegex, with: "$1 ", options: .regularExpression)
         let chunks = normalized
             .components(separatedBy: CharacterSet(charactersIn: "\n。"))
             .flatMap { $0.components(separatedBy: ". ") }
@@ -566,9 +581,12 @@ struct OCRView: View {
                 // "(2024. 5. 10. 선고 2024도4422 판결)" 같은 인용표기만 단독으로 넘어온 경우 제외
                 if line.range(of: #"^[\s\(]*\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?\s*선고"#, options: .regularExpression) != nil { return false }
                 if line.range(of: #"^\s*선고\s+\d{2,4}[가-힣]{1,3}\d+\s*판결"#, options: .regularExpression) != nil { return false }
-                // OCR이 앞말을 잘라 "게 ", "고 ", "지 ", "서 ", "는 ", "다 " 같은 어미 조각으로 시작하는 문장 거부
+                // OCR이 앞말을 잘라 "게 ", "고 ", "지 ", "서 ", "는 ", "다 " 같은 어미·조사 조각으로 시작하는 문장 거부
                 let firstWord = line.prefix(2)
-                let leadingFragments: Set<String> = ["게 ", "고 ", "지 ", "서 ", "며 ", "어 ", "아 ", "워 ", "다 ", "라 ", "나 "]
+                let leadingFragments: Set<String> = [
+                    "게 ", "고 ", "지 ", "서 ", "며 ", "어 ", "아 ", "워 ", "다 ", "라 ", "나 ",
+                    "는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 "
+                ]
                 if leadingFragments.contains(String(firstWord)) { return false }
                 return true
             }
@@ -587,13 +605,24 @@ struct OCRView: View {
         let strong = ["여부", "되는지", "할 수 있는지", "허용되는지", "해당하는지", "문제 된 사건", "문제된 사건"]
         let weak = ["기준", "판단 기준", "판단", "쟁점"]
 
+        // 결과 후처리: 조사·접속사로 시작하는 단편이면 prefix 제거
+        func cleanLeading(_ s: String) -> String {
+            var out = s
+            let leading = ["는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 ", "로 ", "으로 "]
+            for p in leading where out.hasPrefix(p) {
+                out = String(out.dropFirst(p.count))
+                break
+            }
+            return out
+        }
+
         if let picked = sentences.first(where: { line in strong.contains(where: { line.contains($0) }) }) {
-            return finalizeKoreanSentence(stripBracketNoise(picked), limit: 130)
+            return finalizeKoreanSentence(cleanLeading(stripBracketNoise(picked)), limit: 130)
         }
         if let picked = sentences.first(where: { line in weak.contains(where: { line.contains($0) }) }) {
-            return finalizeKoreanSentence(stripBracketNoise(picked), limit: 130)
+            return finalizeKoreanSentence(cleanLeading(stripBracketNoise(picked)), limit: 130)
         }
-        return sentences.first.map { finalizeKoreanSentence(stripBracketNoise($0), limit: 130) }
+        return sentences.first.map { finalizeKoreanSentence(cleanLeading(stripBracketNoise($0)), limit: 130) }
     }
 
     /// 결론 후보: 결과 동사 우선. 쟁점과 같은 문장이면 다음 후보를 찾는다.
@@ -614,15 +643,18 @@ struct OCRView: View {
             "정당하다", "부당하다",
             "(적극)", "(소극)"  // 판례집 스타일 결론 표기
         ]
-        // 1순위: 쟁점에 (적극)/(소극) 마커가 있으면 합성 결론 우선 — 다른 판례 인용에서 동일 마커가
-        //        끼어들어 결론 자리에 잘못 들어가는 것을 방지
-        let activeMarker = issueSentence.range(of: #"\(\s*적\s*극\s*\)"#, options: .regularExpression) != nil
-        let passiveMarker = issueSentence.range(of: #"\(\s*소\s*극\s*\)"#, options: .regularExpression) != nil
+        // 1순위: 쟁점 또는 후보 문장 어디에든 (적극)/(소극) 마커가 있으면 합성 결론 사용
+        let activeRegex = #"\(\s*적\s*극\s*\)"#
+        let passiveRegex = #"\(\s*소\s*극\s*\)"#
+        let activeMarker = issueSentence.range(of: activeRegex, options: .regularExpression) != nil
+            || sentences.contains { $0.range(of: activeRegex, options: .regularExpression) != nil }
+        let passiveMarker = issueSentence.range(of: passiveRegex, options: .regularExpression) != nil
+            || sentences.contains { $0.range(of: passiveRegex, options: .regularExpression) != nil }
         if activeMarker {
-            return "관련 쟁점 모두 적극적으로 인정(적극)되었다."
+            return "관련 쟁점이 적극적으로 인정되었다(적극)."
         }
         if passiveMarker {
-            return "관련 쟁점 모두 소극적으로 부정(소극)되었다."
+            return "관련 쟁점이 소극적으로 부정되었다(소극)."
         }
         // 2순위: 쟁점과 다른 본문 중 결론 동사 포함 문장
         let pool = sentences.filter { $0 != issueSentence }

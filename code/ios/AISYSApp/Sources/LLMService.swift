@@ -549,10 +549,16 @@ final class LLMService: ObservableObject {
     private func buildSummaryOutput(caseItem: APICase) -> String {
         // 줄바꿈 제거 + 종결어미 보정으로 카드에 어색하게 잘리지 않게 한다.
         func sanitize(_ s: String, limit: Int) -> String {
-            let cleaned = s.components(separatedBy: .newlines)
+            var cleaned = s.components(separatedBy: .newlines)
                 .map { $0.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
                 .joined(separator: " ")
+            // OCR 줄바꿈으로 조사·접속사로 시작하는 단편 보정
+            let leading = ["는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 ", "로 ", "으로 "]
+            for p in leading where cleaned.hasPrefix(p) {
+                cleaned = String(cleaned.dropFirst(p.count))
+                break
+            }
             return smartTruncateKorean(cleaned, limit: limit)
         }
         let name = sanitize(caseItem.caseName, limit: 80)
@@ -613,7 +619,7 @@ final class LLMService: ObservableObject {
             if !verdict.isEmpty {
                 parts.append("\(issueCore)에 관해 \(verdict) 판단한 사례.")
             } else {
-                parts.append("\(issueCore)을(를) 다툰 판례.")
+                parts.append("\(issueCore)\(koreanObjectMarker(issueCore)) 다툰 판례.")
             }
         } else if !verdict.isEmpty {
             parts.append("\(verdict) 판단한 사례.")
@@ -650,6 +656,14 @@ final class LLMService: ObservableObject {
         s = s.replacingOccurrences(of: #"^\[[^\]]*\]\s*"#, with: "", options: .regularExpression)
         s = s.replacingOccurrences(of: #"〉|〈"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+
+        // 조사·접속사로 시작하는 OCR 단편이면 첫 토큰을 떼어내 자연스럽게 만든다.
+        // 예) "는 손해의 범위에..." → "손해의 범위에..."
+        let leadingParticles = ["는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 ", "로 ", "으로 "]
+        for p in leadingParticles where s.hasPrefix(p) {
+            s = String(s.dropFirst(p.count))
+            break
+        }
 
         // 마커를 포함해 잘라내기 — 끝이 "...되는지" / "...여부" 형태가 되도록
         let markers = ["문제 된 사건", "문제된 사건", "여부", "되는지", "할 수 있는지", "해당하는지", "허용되는지"]
@@ -967,7 +981,7 @@ final class LLMService: ObservableObject {
             if !verdict.isEmpty {
                 parts.append("\(issueCore)에 관해 \(verdict) 판단한 사례.")
             } else {
-                parts.append("\(issueCore)을(를) 다툰 판례.")
+                parts.append("\(issueCore)\(koreanObjectMarker(issueCore)) 다툰 판례.")
             }
         } else if !verdict.isEmpty {
             parts.append("\(verdict) 판단한 사례.")
@@ -1009,11 +1023,23 @@ final class LLMService: ObservableObject {
         }
     }
 
-    /// 한국어 종결어미 직후에서 자르고, 없으면 ‘…’ 표시.
+    /// 한국어 받침 유무에 따라 "을/를", "은/는", "이/가" 자동 선택.
+    private func koreanObjectMarker(_ text: String) -> String {
+        guard let last = text.last else { return "을" }
+        let scalar = last.unicodeScalars.first!.value
+        // 한글 음절 범위 0xAC00..0xD7A3, (코드 - 0xAC00) % 28 != 0 이면 받침 있음
+        if scalar >= 0xAC00 && scalar <= 0xD7A3 {
+            return ((scalar - 0xAC00) % 28 == 0) ? "를" : "을"
+        }
+        return "을"
+    }
+
+    /// 한국어 종결어미 직후에서 자르고, 없으면 가장 가까운 어절 경계에서 "다."로 마무리한다.
     private func smartTruncateKorean(_ text: String, limit: Int) -> String {
         let collapsed = text.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard collapsed.count > limit else { return collapsed }
+        // limit 이내면 그대로 반환 (불필요한 truncate 회피)
+        if collapsed.count <= limit { return collapsed }
         let snippet = String(collapsed.prefix(limit))
         let endings = ["다.", "다 ", "요.", "임.", "니다.", "였다.", "한다.", "된다.", "이다."]
         var bestIdx: String.Index? = nil
@@ -1027,11 +1053,12 @@ final class LLMService: ObservableObject {
         if let idx = bestIdx, snippet.distance(from: snippet.startIndex, to: idx) >= max(20, limit / 3) {
             return String(snippet[..<idx]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        // 종결어미를 못 찾으면 가장 가까운 어절 경계에서 자르고 "…" 대신 "(이하 생략)"으로 명시
         if let space = snippet.range(of: " ", options: .backwards),
            snippet.distance(from: snippet.startIndex, to: space.lowerBound) >= max(20, limit / 3) {
-            return String(snippet[..<space.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+            return String(snippet[..<space.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) + " (이하 생략)"
         }
-        return snippet.trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+        return snippet.trimmingCharacters(in: .whitespacesAndNewlines) + " (이하 생략)"
     }
 
     private func ensureKoreanTerminal(_ text: String) -> String {
@@ -1462,10 +1489,23 @@ final class LLMService: ObservableObject {
     }
 
     private func sanitizeQuizStatement(_ text: String) -> String {
-        let cleaned = text
+        var cleaned = text
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .replacingOccurrences(of: #"(제\s*\d+\s*조(?:\s*제\s*\d+\s*항)?(?:\s*제\s*\d+\s*호)?\s*,?\s*){3,}"#, with: "핵심 조문 ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 머리글 잡티 제거: "자 2025마8671 결정", "[권리행사최고및담보취소]", "<...>" 같은 OCR 헤더
+        cleaned = cleaned.replacingOccurrences(of: #"^자\s+\d{2,4}[가-힣]{1,3}\d+\s*(결정|판결)?\s*"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"^\[[^\]]*\]\s*"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"^[<〈][^>〉]*[>〉]\s*"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: "[<〈>〉]", with: "", options: .regularExpression)
+
+        // 조사·접속사로 시작하면 떼어낸다
+        let leading = ["는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 ", "로 ", "으로 "]
+        for p in leading where cleaned.hasPrefix(p) {
+            cleaned = String(cleaned.dropFirst(p.count))
+            break
+        }
 
         return String(cleaned.prefix(88))
     }

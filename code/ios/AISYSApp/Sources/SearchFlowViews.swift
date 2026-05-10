@@ -77,21 +77,21 @@ struct SearchView: View {
                         .font(.subheadline).foregroundStyle(.secondary)
                 } else if !viewModel.searchResults.isEmpty {
                     // List + .lazy로 렌더링 성능 개선 (화면 에 보이는 항목만 렌더링)
-                    List(viewModel.searchResults) { apiCase in
-                        NavigationLink {
-                            LazyView(CaseSummaryView(apiCase: apiCase, viewModel: viewModel, shouldAutoSave: true))
-                        } label: {
-                            SearchResultCard(
-                                title: apiCase.caseName,
-                                subtitle: "\(apiCase.courtName)  \(apiCase.caseNumber)",
-                                tags: apiCase.subject.isEmpty ? [] : ["#\(apiCase.subject)"],
-                                summary: apiCase.issueSummary ?? ""
-                            )
+                    VStack(spacing: 10) {
+                        ForEach(viewModel.searchResults) { apiCase in
+                            NavigationLink {
+                                LazyView(CaseSummaryView(apiCase: apiCase, viewModel: viewModel, shouldAutoSave: true))
+                            } label: {
+                                SearchResultCard(
+                                    title: apiCase.caseName,
+                                    subtitle: "\(apiCase.courtName)  \(apiCase.caseNumber)",
+                                    tags: apiCase.subject.isEmpty ? [] : ["#\(apiCase.subject)"],
+                                    summary: apiCase.issueSummary ?? ""
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
-                    .listStyle(.plain)
-                    .frame(maxHeight: .infinity)
                 } else {
                     Text("표시할 판례가 없습니다. 백엔드 연결 또는 키워드를 확인해주세요.")
                         .font(.subheadline)
@@ -108,21 +108,21 @@ struct SearchView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    List(visibleScannedCases) { scanned in
-                        NavigationLink {
-                            LazyView(buildScannedCaseSummaryView(scanned))
-                        } label: {
-                            SearchResultCard(
-                                title: scanned.caseName,
-                                subtitle: "스캔 \(DateFormatter.shortDate.string(from: scanned.scannedAt))",
-                                tags: scanned.keywords.prefix(3).map { "#\($0)" },
-                                summary: String(scanned.keySentences.prefix(140))
-                            )
+                    VStack(spacing: 10) {
+                        ForEach(visibleScannedCases) { scanned in
+                            NavigationLink {
+                                LazyView(buildScannedCaseSummaryView(scanned))
+                            } label: {
+                                SearchResultCard(
+                                    title: scanned.caseName,
+                                    subtitle: "스캔 \(DateFormatter.shortDate.string(from: scanned.scannedAt))",
+                                    tags: scanned.keywords.prefix(3).map { "#\($0)" },
+                                    summary: String(scanned.keySentences.prefix(140))
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
-                    .listStyle(.plain)
-                    .frame(maxHeight: .infinity)
 
                     if scannedCases.count > defaultScannedCaseLimit {
                         Button(showAllScannedCases ? "접기" : "더보기") {
@@ -135,7 +135,6 @@ struct SearchView: View {
             .padding()
         }
         .navigationTitle("Search")
-        .withSmallBackButton()
         .onChange(of: runtime.pendingSearchQuery) { newValue in
             guard let query = newValue?.trimmingCharacters(in: .whitespacesAndNewlines), !query.isEmpty else {
                 return
@@ -146,6 +145,22 @@ struct SearchView: View {
         }
         .task(priority: .utility) {
             apiConnectionHint = await NetworkService.shared.deviceConnectionHint()
+            LocalCaseStore.shared.updateScanned(
+                searchable: scannedCases.map { $0.toSearchableAPICase() },
+                display: scannedCases.map { $0.toAPICase() }
+            )
+            // 약점 카드 등에서 탭 전환과 함께 pendingSearchQuery 가 미리 설정된 경우 즉시 트리거
+            if let pending = runtime.pendingSearchQuery?.trimmingCharacters(in: .whitespacesAndNewlines), !pending.isEmpty {
+                keyword = pending
+                runtime.pendingSearchQuery = nil
+                await viewModel.search(query: pending)
+            }
+        }
+        .onChange(of: scannedCases.count) { _ in
+            LocalCaseStore.shared.updateScanned(
+                searchable: scannedCases.map { $0.toSearchableAPICase() },
+                display: scannedCases.map { $0.toAPICase() }
+            )
         }
     }
 
@@ -803,8 +818,13 @@ struct WrongAnswerSaveView: View {
 
 struct ReviewView: View {
     @EnvironmentObject private var store: ReviewStore
+    @EnvironmentObject private var runtime: AppRuntimeState
     @Query(sort: \ScannedCase.scannedAt, order: .reverse)
     private var scannedCases: [ScannedCase]
+
+    /// 약점 영역 추천 판례 — body 평가 시마다 임베딩을 돌리지 않도록 비동기 계산 후 캐시한다.
+    @State private var similarRecommendations: [APICase] = []
+    @State private var lastSimilarityKey: String = ""
 
     var body: some View {
         ScrollView {
@@ -825,18 +845,27 @@ struct ReviewView: View {
                                 .font(.headline)
                         }
                         ForEach(weak, id: \.label) { item in
-                            HStack {
-                                Text(item.label)
-                                    .font(.subheadline)
-                                Spacer()
-                                Text("오답 \(item.count)회")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            NavigationLink {
+                                WeakOXListView(subjectLabel: item.label)
+                            } label: {
+                                HStack {
+                                    Text(item.label)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Text("오답 \(item.count)회")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(Color.orange.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 12)
-                            .background(Color.orange.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .buttonStyle(.plain)
                         }
                     }
                     .padding(14)
@@ -845,32 +874,27 @@ struct ReviewView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
 
-                // ── 약점 영역 기반 유사 판례 추천 ────────────────
-                if !weak.isEmpty {
-                    let allCases: [APICase] = store.savedCases + scannedCases.map { $0.toAPICase() }
-                    let queryText = weak.map { $0.label }.joined(separator: " ")
-                    let similar = LocalSimilarityEngine.shared.findSimilar(query: queryText, in: allCases, topK: 3)
-                    if !similar.isEmpty {
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "sparkles")
-                                    .foregroundStyle(.indigo)
-                                Text("약점 영역 추천 판례")
-                                    .font(.headline)
+                // ── 약점 영역 기반 유사 판례 추천 (비동기 캐시) ──
+                if !weak.isEmpty && !similarRecommendations.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                                .foregroundStyle(.indigo)
+                            Text("약점 영역 추천 판례")
+                                .font(.headline)
+                        }
+                        ForEach(similarRecommendations) { c in
+                            NavigationLink {
+                                CaseSummaryView(apiCase: c)
+                            } label: {
+                                SearchResultCard(
+                                    title: c.caseNumber,
+                                    subtitle: c.subject,
+                                    tags: c.subject.isEmpty ? [] : ["#\(c.subject)"],
+                                    summary: c.issueSummary ?? ""
+                                )
                             }
-                            ForEach(similar) { c in
-                                NavigationLink {
-                                    CaseSummaryView(apiCase: c)
-                                } label: {
-                                    SearchResultCard(
-                                        title: c.caseNumber,
-                                        subtitle: c.subject,
-                                        tags: c.subject.isEmpty ? [] : ["#\(c.subject)"],
-                                        summary: c.issueSummary ?? ""
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -955,7 +979,31 @@ struct ReviewView: View {
             .padding()
         }
         .navigationTitle("복습 노트")
-        .withSmallBackButton()
+        .task(id: similarityCacheKey) {
+            await refreshSimilarRecommendations()
+        }
+    }
+
+    /// 캐시 무효화 키 — weakSubjects 와 케이스 수 변화에만 반응
+    private var similarityCacheKey: String {
+        let weak = store.weakSubjects().map { $0.label }.joined(separator: "|")
+        return "\(weak)#\(store.savedCases.count)#\(scannedCases.count)"
+    }
+
+    @MainActor
+    private func refreshSimilarRecommendations() async {
+        let weak = store.weakSubjects()
+        guard !weak.isEmpty else {
+            similarRecommendations = []
+            return
+        }
+        let allCases: [APICase] = store.savedCases + scannedCases.map { $0.toAPICase() }
+        let queryText = weak.map { $0.label }.joined(separator: " ")
+        // NLEmbedding 호출은 첫 진입 시 무거우므로 detached Task 로 옮긴 뒤 메인에서 결과만 반영한다.
+        let result = await Task.detached(priority: .utility) { @MainActor in
+            LocalSimilarityEngine.shared.findSimilar(query: queryText, in: allCases, topK: 3)
+        }.value
+        similarRecommendations = result
     }
 }
 
@@ -997,7 +1045,6 @@ struct MyPageView: View {
             }
         }
         .navigationTitle("My Page")
-        .withSmallBackButton()
         .task {
             if serverURLInput.isEmpty {
                 serverURLInput = apiBaseURLOverride
@@ -1077,5 +1124,100 @@ private extension DateFormatter {
         f.dateFormat = "MM/dd HH:mm"
         return f
     }()
+}
+
+
+// MARK: - 약점 영역 OX 모음 화면
+
+/// 약점 영역(예: "민사 · 제19조제3항 · 제280조") 클릭 시 사용자가 그 영역에서 틀렸던 OX 기록을 열거.
+struct WeakOXListView: View {
+    let subjectLabel: String
+    @EnvironmentObject private var store: ReviewStore
+
+    var body: some View {
+        let records = filteredRecords
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("자주 틀린 OX")
+                    .font(.largeTitle.bold())
+                Text(subjectLabel)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                if records.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "checkmark.seal")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.green)
+                        Text("이 영역의 오답 기록이 없습니다.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+                } else {
+                    Text("총 \(records.count)건의 오답을 한 번 더 점검하세요.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(records) { rec in
+                        WrongOXCard(record: rec)
+                    }
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("자주 틀린 OX")
+        .withSmallBackButton()
+    }
+
+    private var filteredRecords: [WrongQuizRecord] {
+        let key = subjectLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        return store.wrongQuizRecords.filter { rec in
+            guard let subj = rec.subject?.trimmingCharacters(in: .whitespacesAndNewlines), !subj.isEmpty else {
+                return false
+            }
+            return subj == key || subj.hasPrefix(key) || subj.contains(key) || key.contains(subj)
+        }
+    }
+}
+
+private struct WrongOXCard: View {
+    let record: WrongQuizRecord
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(record.caseNumber)
+                    .font(.caption.bold())
+                    .foregroundStyle(.blue)
+                Spacer()
+                Text(record.solvedAt)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Text(record.question)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 12) {
+                Label("내 답: \(record.userAnswer)", systemImage: "person.fill.questionmark")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                Label("정답: \(record.correctAnswer)", systemImage: "checkmark.seal.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            }
+            if !record.explanation.isEmpty {
+                Text(record.explanation)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
 }
 
