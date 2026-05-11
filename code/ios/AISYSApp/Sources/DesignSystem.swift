@@ -86,15 +86,13 @@ enum AppRadius {
 
 /// 정보 밀도가 높은 메인 카드. 모든 섹션 컨테이너의 기본형.
 ///
-/// 리테마 v1.0: AppIcon 의 글래스 블록 메타포를 그대로 카드에 이식.
-/// - 배경: glassFillTop → glassFillBot 대각 그라데이션
-/// - 상단 광택: 옅은 흰색 highlight (6%)
-/// - 윤곽: 골드 1px hairline (55% 골드)
-///
-/// 단색 배경이 필요한 특수 케이스는 `background` 파라미터로 override.
+/// 리테마 v1.1: 배경이 글래스 블루를 입고 카드는 단색 짙은 네이비로 돌아간다.
+/// - 카드 fill: `surface` 단색 (#15263F)
+/// - 카드 윤곽: 옅은 골드 hairline 1px (`goldHairline` 35% 로 약화)
+/// - 그라데이션 카드가 필요하면 background 파라미터로 override
 struct AppCard<Content: View>: View {
     var padding: CGFloat = AppSpace.l
-    /// nil 이면 글래스 그라데이션 사용. 단색을 강제하려면 색 지정.
+    /// nil 이면 기본 단색 surface. 명시 시 해당 색으로 override.
     var background: Color? = nil
     @ViewBuilder var content: Content
 
@@ -102,32 +100,11 @@ struct AppCard<Content: View>: View {
         content
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                Group {
-                    if let background {
-                        background
-                    } else {
-                        ZStack(alignment: .top) {
-                            LinearGradient(
-                                colors: [AppColor.glassFillTop, AppColor.glassFillBot],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            // 상단 광택
-                            LinearGradient(
-                                colors: [AppColor.glassHighlight, .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .frame(maxHeight: 60)
-                        }
-                    }
-                }
-            )
+            .background(background ?? AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous)
-                    .strokeBorder(AppColor.goldHairline, lineWidth: 1)
+                    .strokeBorder(AppColor.goldHairline.opacity(0.6), lineWidth: 0.6)
             )
     }
 }
@@ -196,10 +173,34 @@ struct SectionHeader: View {
 }
 
 /// 화면 배경에 전역 적용하는 modifier.
+///
+/// 리테마 v1.1: 배경에 AppIcon 톤의 글래스 블루 대각 그라데이션을 깐다.
+/// 카드는 단색이라 배경의 깊이감이 그대로 드러나 고급스러운 인상을 만든다.
 struct AppBackground: ViewModifier {
     func body(content: Content) -> some View {
         ZStack {
+            // 1) 가장 짙은 베이스
             AppColor.background.ignoresSafeArea()
+            // 2) 글래스 블루 대각 그라데이션 (위→아래로 살짝 밝아짐)
+            LinearGradient(
+                colors: [
+                    AppColor.glassFillTop.opacity(0.55),
+                    AppColor.glassFillBot.opacity(0.35),
+                    AppColor.background
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            // 3) 상단 옅은 광택
+            LinearGradient(
+                colors: [AppColor.glassHighlight, .clear],
+                startPoint: .top,
+                endPoint: .center
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+
             content
         }
     }

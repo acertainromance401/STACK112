@@ -1647,7 +1647,7 @@ private struct StackBlocksView: View {
         }
     }
 
-    /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 글래스 블루 + 골드 hairline (AppIcon 톤).
+    /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 골드 hairline + 짙은 단색 (배경의 글래스가 비치게).
     @ViewBuilder
     private func block(isFilled: Bool, partialFill: Double, wobble: Double) -> some View {
         ZStack(alignment: .bottom) {
@@ -1662,19 +1662,10 @@ private struct StackBlocksView: View {
             if isFilled || partialFill > 0 {
                 GeometryReader { geo in
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    AppColor.glassFillTop,
-                                    AppColor.glassFillBot
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        .fill(AppColor.surfaceElevated)
                         .overlay(
                             RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .strokeBorder(AppColor.goldHairline, lineWidth: 0.7)
+                                .strokeBorder(AppColor.goldHairline, lineWidth: 0.8)
                         )
                         .frame(height: max(2, geo.size.height * CGFloat(partialFill)))
                         .frame(maxHeight: .infinity, alignment: .bottom)
@@ -1683,7 +1674,7 @@ private struct StackBlocksView: View {
         }
         .frame(maxWidth: .infinity)
         .rotationEffect(.degrees(wobble))
-        .shadow(color: isFilled ? AppColor.accent.opacity(0.12) : .clear, radius: 1.5, x: 0, y: 0.5)
+        .shadow(color: isFilled ? AppColor.accent.opacity(0.10) : .clear, radius: 1.5, x: 0, y: 0.5)
     }
 
     /// 결정적(deterministic) 살짝 어긋남. 동일 인덱스는 항상 같은 각도 → 떨림 없음.
