@@ -1066,11 +1066,10 @@ struct AIAnalysisView: View {
 // MARK: =============================================================
 //
 // 통계 그래프는 AI분석 탭으로 흡수되었으므로 별도 탭이 없다.
-// D-Day, 일일 목표, 백엔드 URL 같은 자주 변경되지 않는 설정만 시트에 남긴다.
+// 본 앱은 온디바이스 모드로만 동작하므로 백엔드 URL 같은 설정은 노출하지 않는다.
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var studyStore = StudyStore.shared
-    @AppStorage(NetworkService.overrideKey) private var apiOverride: String = ""
 
     @State private var dDayNameInput: String = ""
     @State private var dDayDateInput: Date = Date()
@@ -1092,11 +1091,13 @@ struct SettingsSheet: View {
                     }
                 }
 
-                Section("백엔드") {
+                Section("동작 모드") {
                     HStack {
-                        Text("API URL")
+                        Image(systemName: "iphone.gen3")
+                            .foregroundStyle(.green)
+                        Text("온디바이스 모드")
                         Spacer()
-                        Text(apiOverride.isEmpty ? "로컬 모드" : apiOverride)
+                        Text("네트워크 미사용")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
