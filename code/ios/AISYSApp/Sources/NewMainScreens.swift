@@ -1483,60 +1483,47 @@ private struct StackBlocksView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let gap: CGFloat = 4
-            let blockWidth = (geo.size.width - gap * CGFloat(columns - 1)) / CGFloat(columns)
-            let blockHeight = (geo.size.height - gap * CGFloat(maxRows - 1)) / CGFloat(maxRows)
-
-            ZStack(alignment: .bottomLeading) {
-                ForEach(0..<columns * maxRows, id: \.self) { idx in
-                    let col = idx % columns
-                    let row = idx / columns                       // 0 = 가장 아래
-                    let isFilled = idx < filledBlocks
-                    let isTopOfStack = idx == filledBlocks && topBlockProgress > 0
-
-                    block(
-                        width: blockWidth,
-                        height: blockHeight,
-                        isFilled: isFilled,
-                        partialFill: isTopOfStack ? topBlockProgress : (isFilled ? 1.0 : 0.0),
-                        wobble: wobbleAngle(idx)
-                    )
-                    .offset(
-                        x: CGFloat(col) * (blockWidth + gap),
-                        y: -CGFloat(row) * (blockHeight + gap)
-                    )
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
-                            removal: .opacity
+        // VStack 기반 — row 3(맨 위) 부터 row 0(맨 아래) 순서로 배치.
+        // 이전 ZStack+offset 방식은 frame을 벗어나 헤더 텍스트와 겹치는 문제가 있어 제거.
+        VStack(spacing: 4) {
+            ForEach((0..<maxRows).reversed(), id: \.self) { row in
+                HStack(spacing: 4) {
+                    ForEach(0..<columns, id: \.self) { col in
+                        let idx = row * columns + col
+                        let isFilled = idx < filledBlocks
+                        let isTopOfStack = idx == filledBlocks && topBlockProgress > 0
+                        block(
+                            isFilled: isFilled,
+                            partialFill: isTopOfStack ? topBlockProgress : (isFilled ? 1.0 : 0.0),
+                            wobble: wobbleAngle(idx)
                         )
-                    )
-                    .animation(
-                        .spring(response: 0.55, dampingFraction: 0.7)
-                            .delay(Double(idx) * 0.015),
-                        value: filledBlocks
-                    )
+                        .animation(
+                            .spring(response: 0.55, dampingFraction: 0.7)
+                                .delay(Double(idx) * 0.015),
+                            value: filledBlocks
+                        )
+                    }
                 }
-
-                // 200건 초과 라벨
-                if overflow > 0 {
-                    Text("+\(overflow)")
-                        .font(AppFont.captionEmphasis)
-                        .foregroundStyle(AppColor.accent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(AppColor.background)
-                        .clipShape(Capsule())
-                        .offset(x: geo.size.width - 50, y: -geo.size.height + 16)
-                }
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            // 200건 초과 라벨
+            if overflow > 0 {
+                Text("+\(overflow)")
+                    .font(AppFont.captionEmphasis)
+                    .foregroundStyle(AppColor.accent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(AppColor.background)
+                    .clipShape(Capsule())
+                    .padding(6)
             }
         }
     }
 
     /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 골드 그라데이션.
     @ViewBuilder
-    private func block(width: CGFloat, height: CGFloat, isFilled: Bool, partialFill: Double, wobble: Double) -> some View {
+    private func block(isFilled: Bool, partialFill: Double, wobble: Double) -> some View {
         ZStack(alignment: .bottom) {
             // 빈 슬롯
             RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -1547,29 +1534,24 @@ private struct StackBlocksView: View {
                 )
 
             if isFilled || partialFill > 0 {
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                AppColor.accent,
-                                AppColor.accent.opacity(0.7)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
+                GeometryReader { geo in
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    AppColor.accent,
+                                    AppColor.accent.opacity(0.7)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
                         )
-                    )
-                    .frame(height: max(2, height * CGFloat(partialFill)))
-                    .overlay(
-                        // 종이 한 장의 가로선 느낌
-                        Rectangle()
-                            .fill(AppColor.background.opacity(0.18))
-                            .frame(height: 0.5)
-                            .padding(.horizontal, 2),
-                        alignment: .top
-                    )
+                        .frame(height: max(2, geo.size.height * CGFloat(partialFill)))
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                }
             }
         }
-        .frame(width: width, height: height)
+        .frame(maxWidth: .infinity)
         .rotationEffect(.degrees(wobble))
         .shadow(color: isFilled ? AppColor.accent.opacity(0.18) : .clear, radius: 1.5, x: 0, y: 0.5)
     }
