@@ -10,7 +10,6 @@
 		0134EB00FCADE9C6760E94C3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71F7EC6215383E28B8504D6 /* Models.swift */; };
 		0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */; };
 		0D8B09BABDDB4ECA59B0D5F9 /* ScannedCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */; };
-		0EA7792179855573B3E6849D /* Llama-3.2-3B-Instruct-Q4_K_M.gguf in Resources */ = {isa = PBXBuildFile; fileRef = AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */; };
 		17842704C3A11AEB56ED1DAA /* AISYSAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */; };
 		1C43007E9CD651F2878094CB /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EB6CEDE58FD30A4BC467BE /* LLMService.swift */; };
 		24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE170875E59DB4941C4441FB /* NetworkService.swift */; };
@@ -55,7 +54,6 @@
 		80EB6CEDE58FD30A4BC467BE /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		A012500B9935794B1603D393 /* AISYSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AISYSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedCase.swift; sourceTree = "<group>"; };
-		AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Llama-3.2-3B-Instruct-Q4_K_M.gguf"; sourceTree = "<group>"; };
 		BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeState.swift; sourceTree = "<group>"; };
 		D71F7EC6215383E28B8504D6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngines.swift; sourceTree = "<group>"; };
@@ -121,7 +119,6 @@
 				D8E9F0A1B2C3D4E5F6071830 /* DesignSystem.swift */,
 				D8E9F0A1B2C3D4E5F6071832 /* StudyStore.swift */,
 				694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */,
-				AB05BE1FA19F48EC68087C0B /* Llama-3.2-3B-Instruct-Q4_K_M.gguf */,
 				80EB6CEDE58FD30A4BC467BE /* LLMService.swift */,
 				E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */,
 				B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */,
@@ -230,7 +227,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */,
-				0EA7792179855573B3E6849D /* Llama-3.2-3B-Instruct-Q4_K_M.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -309,11 +305,11 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
 				INFOPLIST_KEY_CFBundleDisplayName = AI_SYS;
-				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-3B-Instruct-Q4_K_M.gguf";
+				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "판례 이미지를 선택해 OCR 분석을 수행합니다. 이미지는 기기 내에서만 처리되며 외부로 전송되지 않습니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_UIFileSharingEnabled = NO;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
@@ -337,11 +333,11 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
 				INFOPLIST_KEY_CFBundleDisplayName = AI_SYS;
-				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-3B-Instruct-Q4_K_M.gguf";
+				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "판례 이미지를 선택해 OCR 분석을 수행합니다. 이미지는 기기 내에서만 처리되며 외부로 전송되지 않습니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_UIFileSharingEnabled = NO;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;

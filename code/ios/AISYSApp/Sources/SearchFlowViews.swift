@@ -211,6 +211,7 @@ struct CaseSummaryView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     // ── 엔진 정보 (접힌 상태가 기본) ──────────────
+                    #if DEBUG
                     DisclosureGroup {
                         VStack(alignment: .leading, spacing: 4) {
                             Toggle(
@@ -280,6 +281,7 @@ struct CaseSummaryView: View {
                     .padding(AppSpace.m)
                     .background(AppColor.surface)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    #endif
 
                     // ── LLM 추론 상태 ──────────────────────────────
                     if viewModel.isSummarizing {
