@@ -33,7 +33,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.acertainromance401.aisys
         PRODUCT_NAME: AISYSApp
-        INFOPLIST_KEY_CFBundleDisplayName: AI_SYS
+        INFOPLIST_KEY_CFBundleDisplayName: STACK112
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait

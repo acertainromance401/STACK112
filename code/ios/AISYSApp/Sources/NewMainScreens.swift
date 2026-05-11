@@ -80,7 +80,7 @@ struct HomeView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("AI SYS")
+                Text("STACK112")
                     .font(AppFont.tag)
                     .foregroundStyle(AppColor.accent)
                 Text("오늘도 합격을 향해")
@@ -1312,7 +1312,7 @@ struct SettingsSheet: View {
                                     .font(AppFont.body)
                                     .foregroundStyle(AppColor.textPrimary)
                                 Spacer()
-                                Text("AI SYS")
+                                Text("STACK112")
                                     .font(AppFont.body)
                                     .foregroundStyle(AppColor.textSecondary)
                             }

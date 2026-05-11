@@ -1179,7 +1179,7 @@ struct MyPageView: View {
     var body: some View {
         Form {
             Section("계정") {
-                Text("AI_SYS 사용자")
+                Text("STACK112 사용자")
                 Text("경찰 공무원 시험 준비")
             }
             Section("서버 설정") {
