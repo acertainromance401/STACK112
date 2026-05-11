@@ -21,9 +21,9 @@ struct OCRView: View {
     var body: some View {
         ScrollView {
                 VStack(spacing: 20) {
-                    Text("문제 스캔")
+                    Text("판례 스캔")
                         .font(.largeTitle.bold())
-                    Text("판례 이미지를 선택하면 OCR → IR 분석 → 암기 수첩·OX 퀴즈 화면으로 이동합니다.")
+                    Text("판례 이미지를 선택하면 자동으로 요약하고 OX 퀴즈를 만들어 드립니다.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
 
@@ -37,12 +37,12 @@ struct OCRView: View {
                                     .foregroundStyle(.blue)
                                 if isRecognizing {
                                     ProgressView()
-                                    Text("OCR 분석 중...").foregroundStyle(.secondary)
+                                    Text("이미지에서 글자를 읽는 중...").foregroundStyle(.secondary)
                                 } else if isExtractingIR {
                                     ProgressView()
-                                    Text("키워드 추출 중...").foregroundStyle(.secondary)
+                                    Text("핵심 키워드를 정리하는 중...").foregroundStyle(.secondary)
                                 } else {
-                                    Text("사진을 선택해 OCR 시작")
+                                    Text("사진을 선택하면 분석을 시작합니다")
                                         .foregroundStyle(.secondary)
                                     if selectedPhotoCount > 0 {
                                         Text("선택된 이미지: \(selectedPhotoCount)장")
@@ -66,7 +66,7 @@ struct OCRView: View {
                         TextField("예: 2024다311181 또는 사건명", text: $caseIdentifierInput)
                             .textFieldStyle(.roundedBorder)
                             .disabled(isRecognizing || isExtractingIR)
-                        Text("입력하면 OCR 저장 시 우선 사용됩니다. 비워두면 자동 번호(OCR-시간)로 저장됩니다.")
+                        Text("입력하면 저장 시 이 이름을 사용합니다. 비워두면 자동 번호로 저장됩니다.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -103,7 +103,7 @@ struct OCRView: View {
                 }
                 .padding()
             }
-            .navigationTitle("OCR")
+            .navigationTitle("판례 스캔")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

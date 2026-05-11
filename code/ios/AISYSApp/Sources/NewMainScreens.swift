@@ -717,7 +717,7 @@ struct CaseCardsView: View {
                     Text("판례 스캔하기")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(AppColor.background)
-                    Text("사진을 선택해 OCR → 자동 분석 → 요약")
+                    Text("사진을 선택하면 자동으로 분석하고 요약해 드립니다")
                         .font(AppFont.caption)
                         .foregroundStyle(AppColor.background.opacity(0.75))
                 }
@@ -790,7 +790,7 @@ struct CaseCardsView: View {
                         .font(AppFont.sectionHeader)
                 }
                 stepRow("1", "판례 이미지 1~20장을 한 번에 선택")
-                stepRow("2", "자동 OCR · IR 분석으로 핵심 쟁점·결론 추출")
+                stepRow("2", "자동 분석으로 핵심 쟁점·결론 추출")
                 stepRow("3", "한 줄 요약 + OX 변형 문제로 즉시 학습")
             }
         }

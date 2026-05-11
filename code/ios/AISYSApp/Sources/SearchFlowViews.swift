@@ -104,7 +104,7 @@ struct SearchView: View {
 
                     Text("내가 스캔한 판례")
                         .font(.title3.bold())
-                    Text("OCR로 저장된 \(scannedCases.count)건")
+                    Text("저장된 \(scannedCases.count)건")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -210,8 +210,8 @@ struct CaseSummaryView: View {
                         .foregroundStyle(AppColor.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    // ── 엔진 정보 (접힌 상태가 기본) ──────────────
-                    #if DEBUG
+                    // ── 엔진 정보 패널 (사용자 노출 X. 내부 진단용 — SHOW_LLM_DEBUG_PANEL 컴파일 플래그가 설정되면 표시) ──────────────
+                    #if SHOW_LLM_DEBUG_PANEL
                     DisclosureGroup {
                         VStack(alignment: .leading, spacing: 4) {
                             Toggle(
@@ -938,7 +938,7 @@ struct ReviewView: View {
                         Text("저장된 판례가 없습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        Text("검색 결과를 탭하거나 OCR로 스캔하면 여기에 저장됩니다.")
+                        Text("검색 결과를 탭하거나 판례를 스캔하면 여기에 저장됩니다.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -973,12 +973,12 @@ struct ReviewView: View {
                     }
                 }
 
-                // ── 스캔한 판례 (OCR) ───────────────────────────
+                // ── 스캔한 판례 ───────────────────────────
                 if !scannedCases.isEmpty {
                     if !store.savedCases.isEmpty { Divider().padding(.vertical, 4) }
                     Text("스캔한 판례")
                         .font(.title3.bold())
-                    Text("OCR로 저장된 \(scannedCases.count)건")
+                    Text("저장된 \(scannedCases.count)건")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     ForEach(scannedCases) { scanned in

@@ -268,7 +268,7 @@ final class CaseSummaryViewModel: ObservableObject {
             }
         }
 
-        errorMessage = "LLM 초기화가 지연되고 있습니다. 잠시 후 다시 시도해주세요."
+        errorMessage = "AI 분석 준비가 조금 늦어지고 있습니다. 잠시 후 다시 시도해주세요."
         return false
     }
 
@@ -328,14 +328,8 @@ final class CaseSummaryViewModel: ObservableObject {
         }
     }
 
-    /// 백엔드 /cases/{case_number}/similar 호출
+    /// 온디바이스 유사 판례 검색 (로컬 corpus + 시드에서 직접 탐색)
     private func fetchSimilarCases(caseItem: APICase) async {
-        // OCR 임시 케이스는 유사 판례 API 대상이 아님
-        guard !caseItem.caseNumber.hasPrefix("OCR-") else {
-            similarCases = []
-            return
-        }
-
         isLoadingSimilarCases = true
         defer { isLoadingSimilarCases = false }
 
