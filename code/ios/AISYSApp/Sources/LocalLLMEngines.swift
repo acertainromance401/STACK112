@@ -406,9 +406,14 @@ final class LlamaCppEngine: LocalLLMEngine {
                 "샘플러 초기화에 실패했습니다. source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
             )
         }
+        // 샘플러 체인 — 한국어 법률 요약처럼 사실에 가까운 출력이 우선이므로
+        // temp 를 낮춰 결정적 출력을 유도하고 repetition penalty 로 반복 토큰을 억제한다.
+        // top_k=40 / top_p=0.9 는 다양성 유지를 위해 그대로 두되, temp 0.4 + penalty 1.1 조합으로
+        // 1B 모델의 환각/같은 어절 반복 현상을 완화한다.
+        llama_sampler_chain_add(loadedSampler, llama_sampler_init_penalties(64, 1.1, 0.0, 0.0))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_k(40))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_p(0.9, 1))
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_temp(0.7))
+        llama_sampler_chain_add(loadedSampler, llama_sampler_init_temp(0.4))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED))
 
         model = loadedModel

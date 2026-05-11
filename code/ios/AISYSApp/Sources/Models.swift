@@ -456,6 +456,19 @@ final class ReviewStore: ObservableObject {
         }
     }
 
+    /// 오답 기록 전체 초기화 — 설정 화면 "오답노트 비우기" 버튼에서 호출.
+    func clearAllWrongRecords() {
+        wrongQuizRecords.removeAll()
+        wrongAnswers.removeAll()
+        UserDefaults.standard.removeObject(forKey: Self.wrongQuizRecordsKey)
+    }
+
+    /// 저장된 판례(검색 즐겨찾기) 전체 비우기 — 설정 화면 "저장 판례 비우기" 버튼에서 호출.
+    func clearAllSavedCases() {
+        savedCases.removeAll()
+        UserDefaults.standard.removeObject(forKey: Self.savedCasesKey)
+    }
+
     /// 자주 틀린 taxonomy/과목 상위 N개 — 약점 카드 표시용.
     /// - "형사소송법 > 증거능력 > 위법수집증거배제" 같이 ` > ` 구분일 경우 상위 두 단계까지만 묶음.
     /// - 빈도 ≥ 2 인 항목만 반환하여 우연한 1회 오답은 제외.

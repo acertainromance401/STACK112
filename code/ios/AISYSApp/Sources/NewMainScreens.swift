@@ -1284,11 +1284,19 @@ struct AIAnalysisView: View {
 // 본 앱은 온디바이스 모드로만 동작하므로 백엔드 URL 같은 설정은 노출하지 않는다.
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var reviewStore: ReviewStore
     @StateObject private var studyStore = StudyStore.shared
+    @Query private var scannedCases: [ScannedCase]
 
     @State private var dDayNameInput: String = ""
     @State private var dDayDateInput: Date = Date()
     @State private var goalInput: String = ""
+
+    // 데이터 초기화 알럿 — 실수 방지를 위해 2단계 확인
+    @State private var showResetScannedAlert = false
+    @State private var showResetWrongAlert = false
+    @State private var showResetSavedAlert = false
 
     /// 화면 전체에 한국어 표기 강제 — DatePicker, 월 이름 등이 한글로 나오도록.
     private let koreanLocale = Locale(identifier: "ko_KR")
@@ -1404,15 +1412,64 @@ struct SettingsSheet: View {
                     AppCard {
                         VStack(alignment: .leading, spacing: AppSpace.m) {
                             SectionHeader(title: "정보")
-                            HStack {
-                                Text("앱 이름")
-                                    .font(AppFont.body)
-                                    .foregroundStyle(AppColor.textPrimary)
-                                Spacer()
-                                Text("STACK112")
-                                    .font(AppFont.body)
+
+                            infoRow(label: "앱 이름", value: "STACK112")
+                            Divider().background(AppColor.border.opacity(0.4))
+                            infoRow(label: "버전", value: appVersionString)
+                            Divider().background(AppColor.border.opacity(0.4))
+                            infoRow(label: "AI 엔진", value: "Llama 3.2 · 1B (온디바이스)")
+
+                            // 법적 면책 — App Review 거절 위험 회피용 표시
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("법적 면책")
+                                    .font(AppFont.captionEmphasis)
                                     .foregroundStyle(AppColor.textSecondary)
+                                Text("본 앱의 요약·해설은 학습 보조용이며, 실제 법률 자문이나 사건 판단의 근거가 되지 않습니다.")
+                                    .font(AppFont.caption)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
+                            .padding(.top, AppSpace.s)
+
+                            // 오픈소스 표기
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("오픈소스 라이선스")
+                                    .font(AppFont.captionEmphasis)
+                                    .foregroundStyle(AppColor.textSecondary)
+                                Text("Llama 3.2 Community License (Meta Platforms, Inc.)\nllama.cpp (ggerganov / MIT)")
+                                    .font(AppFont.caption)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(.top, AppSpace.s)
+                        }
+                    }
+
+                    // ── 데이터 관리 ────────────────────────────
+                    AppCard {
+                        VStack(alignment: .leading, spacing: AppSpace.m) {
+                            SectionHeader(title: "데이터 관리")
+                            Text("아래 작업은 되돌릴 수 없습니다.")
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textTertiary)
+
+                            dangerRow(
+                                title: "스캔한 판례 모두 삭제",
+                                subtitle: "현재 \(scannedCases.count)건 저장됨",
+                                action: { showResetScannedAlert = true }
+                            )
+                            Divider().background(AppColor.border.opacity(0.4))
+                            dangerRow(
+                                title: "오답노트 비우기",
+                                subtitle: "기록된 OX 오답을 모두 삭제합니다",
+                                action: { showResetWrongAlert = true }
+                            )
+                            Divider().background(AppColor.border.opacity(0.4))
+                            dangerRow(
+                                title: "저장 판례 비우기",
+                                subtitle: "검색에서 즐겨찾기한 판례를 모두 삭제합니다",
+                                action: { showResetSavedAlert = true }
+                            )
                         }
                     }
                 }
@@ -1437,8 +1494,77 @@ struct SettingsSheet: View {
                 dDayDateInput = studyStore.dDayDate
                 goalInput = "\(studyStore.dailyGoalQuestions)"
             }
+            .alert("스캔한 판례를 모두 삭제할까요?", isPresented: $showResetScannedAlert) {
+                Button("삭제", role: .destructive) { resetScannedCases() }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("\(scannedCases.count)건의 스캔 메모와 요약이 영구 삭제됩니다.")
+            }
+            .alert("오답노트를 비울까요?", isPresented: $showResetWrongAlert) {
+                Button("비우기", role: .destructive) { reviewStore.clearAllWrongRecords() }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("이전 오답 기록은 복구할 수 없습니다.")
+            }
+            .alert("저장 판례를 비울까요?", isPresented: $showResetSavedAlert) {
+                Button("비우기", role: .destructive) { reviewStore.clearAllSavedCases() }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("검색에서 별표한 즐겨찾기 목록이 비워집니다.")
+            }
         }
         .environment(\.locale, koreanLocale)
+    }
+
+    // MARK: - 작은 헬퍼 뷰들
+
+    /// 앱 버전 (Info.plist CFBundleShortVersionString) — Settings 정보 표시용.
+    private var appVersionString: String {
+        let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+        return "\(short) (\(build))"
+    }
+
+    @ViewBuilder
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(AppFont.body)
+                .foregroundStyle(AppColor.textPrimary)
+            Spacer()
+            Text(value)
+                .font(AppFont.body)
+                .foregroundStyle(AppColor.textSecondary)
+        }
+    }
+
+    @ViewBuilder
+    private func dangerRow(title: String, subtitle: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(AppFont.bodyEmphasis)
+                        .foregroundStyle(AppColor.danger)
+                    Text(subtitle)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textTertiary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(AppColor.textTertiary)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func resetScannedCases() {
+        for c in scannedCases {
+            modelContext.delete(c)
+        }
+        try? modelContext.save()
     }
 
     private func save() {

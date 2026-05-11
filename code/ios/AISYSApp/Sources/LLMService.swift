@@ -42,8 +42,8 @@ final class LLMService: ObservableObject {
     private let examLimit = 180
     private let lowMemoryPromptLimit = 720
     private let normalPromptLimit = 960
-    private let lowMemoryTokenCap = 96
-    private let normalTokenCap = 128
+    private let lowMemoryTokenCap = 160
+    private let normalTokenCap = 220
 
     @Published private(set) var state: LLMState = .idle
     @Published private(set) var loadProgress: Double = 0
@@ -131,21 +131,13 @@ final class LLMService: ObservableObject {
             ragEvidence: ragEvidence
         )
 
-        // OCR 케이스나 저사양 환경에서는 서버 grounded 요약을 먼저 시도해
-        // 로컬 모델의 거친 출력을 완화합니다.
-        if caseItem.caseNumber.hasPrefix("OCR-") || shouldUseServerForHighDifficulty() {
-            if let grounded = try? await serverGroundedSummary(caseItem: caseItem) {
-                return grounded
-            }
-        }
+        // 백엔드 grounded 분기는 v1.0에서 제거됨 — 모든 추론은 온디바이스 우선.
+        // 로컬 1B 출력이 실패하면 RuleBasedLocalEngine + buildSummaryOutput 폴백으로 처리한다.
 
         let rawOutput: String
         do {
-            rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 128, purpose: "summarize")
+            rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 220, purpose: "summarize")
         } catch {
-            if let grounded = try? await serverGroundedSummary(caseItem: caseItem) {
-                return grounded
-            }
             let fallbackRaw = buildSummaryOutput(caseItem: caseItem)
             return LLMSummary(rawOutput: fallbackRaw)
         }
@@ -159,9 +151,6 @@ final class LLMService: ObservableObject {
         }
 
         // 모델 출력 형식이 달라도 UX가 깨지지 않도록 안전 폴백
-        if let grounded = try? await serverGroundedSummary(caseItem: caseItem) {
-            return grounded
-        }
         let fallbackRaw = buildSummaryOutput(caseItem: caseItem)
         return LLMSummary(rawOutput: fallbackRaw)
     }
@@ -220,19 +209,10 @@ final class LLMService: ObservableObject {
         }.joined(separator: "\n\n")
         let prompt = LLMPromptTemplate.compare(question: question, evidenceBlock: evidenceBlock)
 
-        // 고난도(비교)는 저사양 또는 로컬 엔진 상태가 불안정하면 서버 근거 기반 응답을 우선 시도
-        if shouldUseServerForHighDifficulty() {
-            if let serverAnswer = try? await serverGroundedAnswer(question: question, intent: "compare") {
-                return serverAnswer
-            }
-        }
-
+        // v1.0: 서버 grounded 분기 제거. 로컬 엔진 실패 시 룰 기반 요약으로 폴백.
         do {
             return try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 220, purpose: "compare")
         } catch {
-            if let serverAnswer = try? await serverGroundedAnswer(question: question, intent: "compare") {
-                return serverAnswer
-            }
             return buildComparisonOutput(question: question, cases: cases)
         }
     }
@@ -1166,19 +1146,7 @@ final class LLMService: ObservableObject {
             count: count
         )
 
-        // 고난도(퀴즈 생성)는 저사양 기기에서 서버 규칙 기반 생성 폴백을 우선 시도
-        if shouldUseServerForHighDifficulty() {
-            if let serverQuiz = try? await NetworkService.shared.serverGenerateOXQuiz(
-                caseNumber: caseItem.caseNumber,
-                caseName: caseItem.caseName,
-                keySentences: quizBody,
-                keywords: compactKeywords,
-                quizCount: count
-            ), !serverQuiz.isEmpty {
-                return serverQuiz
-            }
-        }
-
+        // v1.0: \uc11c\ubc84 \ubd84\uae30 \uc81c\uac70. \ub85c\uceec 1B \uc2e4\ud328 \uc2dc \ub8f0 \uae30\ubc18 \ud3f4\ubc31\ub9cc \uc0ac\uc6a9.
         do {
             // OX 퀴즈는 IR 추출 결과를 먼저 압축한 뒤 프롬프트에 넣고 생성합니다.
             let rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 260, purpose: "ox_quiz")
@@ -1188,16 +1156,6 @@ final class LLMService: ObservableObject {
                 return Array(filtered.prefix(max(1, count)))
             }
         } catch {}
-
-        if let serverQuiz = try? await NetworkService.shared.serverGenerateOXQuiz(
-            caseNumber: caseItem.caseNumber,
-            caseName: caseItem.caseName,
-            keySentences: quizBody,
-            keywords: compactKeywords,
-            quizCount: count
-        ), !serverQuiz.isEmpty {
-            return serverQuiz
-        }
 
         // 폴백: digest 기반 quizBody를 우선 사용해 OX 문항을 직접 구성 (raw OCR 노이즈 회피)
         let baseQuiz = buildFallbackOXQuiz(caseItem: caseItem, keySentences: quizBody.isEmpty ? keySentences : quizBody, count: count)
