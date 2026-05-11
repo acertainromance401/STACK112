@@ -8,10 +8,10 @@ import SwiftUI
 enum AppColor {
     // 배경 — 깊이 단계별로 3단 (가장 어두운 배경 → 카드 → 카드 hover)
     static let background = Color(red: 0.039, green: 0.078, blue: 0.157)        // #0A1428 짙은 네이비
-    // surface / surfaceElevated 는 글래스 효과 안에서 단색 폴백으로만 사용.
-    // 실제 카드 fill 은 `AppCard` 가 glassFillTop/Bot 그라데이션을 입힌다.
-    static let surface = Color(red: 0.082, green: 0.149, blue: 0.247)           // #15263F
-    static let surfaceElevated = Color(red: 0.114, green: 0.196, blue: 0.318)   // #1D3251
+    // surface / surfaceElevated 는 글래스 배경 위에 떠 있는 단색 카드.
+    // 그림자로 입체감을 만들기 위해 배경보다 살짝 밝은 톤.
+    static let surface = Color(red: 0.094, green: 0.180, blue: 0.298)           // #182E4C
+    static let surfaceElevated = Color(red: 0.137, green: 0.227, blue: 0.357)   // #233A5B
 
     // 글래스 카드 그라데이션 (AppIcon 블록 톤과 동일 계열)
     static let glassFillTop = Color(red: 0.196, green: 0.314, blue: 0.510)      // #325082
@@ -102,10 +102,9 @@ struct AppCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(background ?? AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous)
-                    .strokeBorder(AppColor.goldHairline.opacity(0.6), lineWidth: 0.6)
-            )
+            // 윤곽선 제거, 부드러운 그림자로만 입체감 (iOS 17 모던 스타일)
+            .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 6)
+            .shadow(color: Color.black.opacity(0.18), radius: 2, x: 0, y: 1)
     }
 }
 
