@@ -35,6 +35,15 @@ struct HomeView: View {
     private var scannedCases: [ScannedCase]
     @State private var showSettings = false
 
+    /// 첫 실행 시 시험일 입력 시트를 띄우기 위한 영속 플래그.
+    /// 한 번 닫으면 다시 뜨지 않고, 이후엔 톱니바퀴 설정에서만 변경 가능.
+    @AppStorage("home.hasCompletedExamDateOnboarding") private var hasCompletedExamDateOnboarding: Bool = false
+    @State private var showExamDateOnboarding = false
+
+    /// 실시간 카운트다운(일·시·분·초)을 위해 1초마다 갱신되는 트리거.
+    @State private var nowTick: Date = Date()
+    private let countdownTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpace.l) {
@@ -51,6 +60,21 @@ struct HomeView: View {
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) { SettingsSheet() }
+        .sheet(isPresented: $showExamDateOnboarding) {
+            ExamDateOnboardingSheet(isPresented: $showExamDateOnboarding,
+                                    hasCompleted: $hasCompletedExamDateOnboarding)
+        }
+        .onAppear {
+            if !hasCompletedExamDateOnboarding {
+                // 약간의 지연으로 첫 진입 애니메이션과 충돌 방지
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showExamDateOnboarding = true
+                }
+            }
+        }
+        .onReceive(countdownTimer) { tick in
+            nowTick = tick
+        }
     }
 
     private var header: some View {
@@ -80,18 +104,39 @@ struct HomeView: View {
 
     private var dDayCard: some View {
         AppCard {
-            HStack {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(studyStore.dDayName)
                         .font(AppFont.caption)
                         .foregroundStyle(AppColor.textSecondary)
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("D-\(max(0, studyStore.dDay))")
-                            .font(AppFont.metricNumber)
-                            .foregroundStyle(AppColor.accent)
-                        Text("일 남음")
-                            .font(AppFont.caption)
-                            .foregroundStyle(AppColor.textSecondary)
+
+                    // 일·시·분·초 실시간 카운트다운
+                    let parts = countdownParts(now: nowTick, target: studyStore.dDayDate)
+                    if parts.isPast {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text("D-DAY")
+                                .font(AppFont.metricNumber)
+                                .foregroundStyle(AppColor.danger)
+                            Text("시험일이 지났습니다")
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                        }
+                    } else {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text("D-\(parts.days)")
+                                .font(AppFont.metricNumber)
+                                .foregroundStyle(AppColor.accent)
+                            Text("일 남음")
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                        }
+                        // 시·분·초 라인 — monospacedDigit 으로 글자 떨림 방지
+                        HStack(spacing: 4) {
+                            timeChip(value: parts.hours, unit: "시")
+                            timeChip(value: parts.minutes, unit: "분")
+                            timeChip(value: parts.seconds, unit: "초")
+                        }
+                        .padding(.top, 2)
                     }
                 }
                 Spacer()
@@ -109,6 +154,51 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    // MARK: D-Day helpers
+
+    /// 시험일까지 남은 일/시/분/초 분해 결과
+    private struct CountdownParts {
+        let days: Int
+        let hours: Int
+        let minutes: Int
+        let seconds: Int
+        let isPast: Bool
+    }
+
+    /// `target` 까지의 남은 시간을 일·시·분·초로 분해.
+    /// 시험일의 시작(00:00) 시각을 기준으로 잡고, 지나면 isPast=true.
+    private func countdownParts(now: Date, target: Date) -> CountdownParts {
+        let cal = Calendar.current
+        let targetStart = cal.startOfDay(for: target)
+        if now >= targetStart {
+            return CountdownParts(days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true)
+        }
+        let comps = cal.dateComponents([.day, .hour, .minute, .second], from: now, to: targetStart)
+        return CountdownParts(
+            days: max(0, comps.day ?? 0),
+            hours: max(0, comps.hour ?? 0),
+            minutes: max(0, comps.minute ?? 0),
+            seconds: max(0, comps.second ?? 0),
+            isPast: false
+        )
+    }
+
+    /// 시·분·초 각 칸. monospacedDigit 으로 폭 고정.
+    private func timeChip(value: Int, unit: String) -> some View {
+        HStack(spacing: 1) {
+            Text(String(format: "%02d", value))
+                .font(AppFont.captionEmphasis.monospacedDigit())
+                .foregroundStyle(AppColor.textPrimary)
+            Text(unit)
+                .font(AppFont.tag)
+                .foregroundStyle(AppColor.textTertiary)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(AppColor.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
     private var todayProgressCard: some View {
@@ -1160,5 +1250,172 @@ struct SettingsSheet: View {
         studyStore.dDayDate = dDayDateInput
         if let v = Int(goalInput), v > 0 { studyStore.dailyGoalQuestions = v }
         dismiss()
+    }
+}
+
+// MARK: - 첫 실행 시험일 입력 시트
+//
+// 앱을 처음 켰을 때 단 한 번 노출되어 시험 이름과 날짜를 받는다.
+// 이후 변경은 홈 화면 톱니바퀴 → 설정 → 학습 목표에서 가능.
+struct ExamDateOnboardingSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var hasCompleted: Bool
+
+    @StateObject private var studyStore = StudyStore.shared
+    @State private var nameInput: String = "경찰공채 1차"
+    @State private var dateInput: Date = Calendar.current.date(byAdding: .day, value: 90, to: Date()) ?? Date()
+
+    private let presetExams: [(label: String, monthsAhead: Int)] = [
+        ("경찰공채 1차", 3),
+        ("경찰공채 2차", 6),
+        ("경찰간부", 4),
+        ("9급 공채", 5)
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppSpace.l) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("환영합니다")
+                            .font(AppFont.tag)
+                            .foregroundStyle(AppColor.accent)
+                        Text("목표 시험일을\n설정해 주세요")
+                            .font(AppFont.displayTitle)
+                            .foregroundStyle(AppColor.textPrimary)
+                        Text("D-Day와 매일 학습 계획이 자동으로 계산됩니다.\n나중에 톱니바퀴 설정에서 언제든 바꿀 수 있어요.")
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
+                            .padding(.top, 2)
+                    }
+                    .padding(.top, AppSpace.m)
+
+                    // ── 빠른 선택 ──────────────────────────────
+                    VStack(alignment: .leading, spacing: AppSpace.s) {
+                        Text("빠른 선택")
+                            .font(AppFont.captionEmphasis)
+                            .foregroundStyle(AppColor.textSecondary)
+                        FlowChips(items: presetExams.map { $0.label }) { label in
+                            if let preset = presetExams.first(where: { $0.label == label }) {
+                                nameInput = preset.label
+                                dateInput = Calendar.current.date(byAdding: .month, value: preset.monthsAhead, to: Date()) ?? Date()
+                            }
+                        }
+                    }
+
+                    // ── 직접 입력 ──────────────────────────────
+                    VStack(alignment: .leading, spacing: AppSpace.s) {
+                        Text("시험 이름")
+                            .font(AppFont.captionEmphasis)
+                            .foregroundStyle(AppColor.textSecondary)
+                        TextField("예: 경찰공채 1차", text: $nameInput)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: AppSpace.s) {
+                        Text("시험일")
+                            .font(AppFont.captionEmphasis)
+                            .foregroundStyle(AppColor.textSecondary)
+                        DatePicker("", selection: $dateInput, in: Date()..., displayedComponents: .date)
+                            .datePickerStyle(.graphical)
+                            .tint(AppColor.accent)
+                            .background(AppColor.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    }
+
+                    // ── 미리보기 ──────────────────────────────
+                    AppCard(background: AppColor.surfaceElevated) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(nameInput.isEmpty ? "시험 이름을 입력하세요" : nameInput)
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text("D-\(daysUntil(dateInput))")
+                                    .font(AppFont.metricNumber)
+                                    .foregroundStyle(AppColor.accent)
+                                Text("일 후")
+                                    .font(AppFont.caption)
+                                    .foregroundStyle(AppColor.textSecondary)
+                            }
+                        }
+                    }
+
+                    Button {
+                        save()
+                    } label: {
+                        Text("시작하기")
+                            .font(AppFont.bodyEmphasis)
+                            .foregroundStyle(AppColor.background)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, AppSpace.m)
+                            .background(AppColor.accent)
+                            .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(nameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding(AppSpace.l)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("나중에") {
+                        // 기본 90일을 유지하고 닫음. 다시는 자동으로 뜨지 않음.
+                        hasCompleted = true
+                        isPresented = false
+                    }
+                    .foregroundStyle(AppColor.textSecondary)
+                }
+            }
+            .withAppBackground()
+            .interactiveDismissDisabled(true)
+        }
+    }
+
+    private func daysUntil(_ date: Date) -> Int {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: Date())
+        let target = cal.startOfDay(for: date)
+        return max(0, cal.dateComponents([.day], from: start, to: target).day ?? 0)
+    }
+
+    private func save() {
+        let trimmed = nameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty { studyStore.dDayName = trimmed }
+        studyStore.dDayDate = dateInput
+        hasCompleted = true
+        isPresented = false
+    }
+}
+
+// MARK: - 가벼운 칩 row (FlowChips)
+//
+// 빠른 선택 프리셋용. 한 줄 가로 스크롤로 간결하게.
+private struct FlowChips: View {
+    let items: [String]
+    let onSelect: (String) -> Void
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: AppSpace.s) {
+                ForEach(items, id: \.self) { item in
+                    Button {
+                        onSelect(item)
+                    } label: {
+                        Text(item)
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textPrimary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppColor.surface)
+                            .overlay(
+                                Capsule().stroke(AppColor.border, lineWidth: 1)
+                            )
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 }
