@@ -544,6 +544,9 @@ struct PracticeView: View {
 // MARK: =============================================================
 struct WrongNoteView: View {
     @EnvironmentObject private var store: ReviewStore
+    @State private var showAllWrongRecords = false
+
+    private let initialWrongRecordLimit = 20
 
     var body: some View {
         ScrollView {
@@ -565,8 +568,33 @@ struct WrongNoteView: View {
                             .padding(.top, 8)
                     } else {
                         VStack(spacing: AppSpace.m) {
-                            ForEach(store.wrongQuizRecords.prefix(20)) { rec in
+                            let visibleRecords = showAllWrongRecords
+                                ? Array(store.wrongQuizRecords)
+                                : Array(store.wrongQuizRecords.prefix(initialWrongRecordLimit))
+                            ForEach(visibleRecords) { rec in
                                 WrongRecordCard(record: rec)
+                            }
+                            if store.wrongQuizRecords.count > initialWrongRecordLimit {
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        showAllWrongRecords.toggle()
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Text(showAllWrongRecords
+                                             ? "접기"
+                                             : "더 보기 (+\(store.wrongQuizRecords.count - initialWrongRecordLimit)건)")
+                                            .font(AppFont.captionEmphasis)
+                                        Image(systemName: showAllWrongRecords ? "chevron.up" : "chevron.down")
+                                            .font(.caption.bold())
+                                    }
+                                    .foregroundStyle(AppColor.accent)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, AppSpace.s)
+                                    .background(AppColor.accentSoft)
+                                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
