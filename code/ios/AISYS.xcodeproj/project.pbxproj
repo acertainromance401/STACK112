@@ -293,7 +293,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.acertainromance401.aisys.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AISYSApp.app/AISYSApp";
 			};
 			name = Release;
@@ -321,8 +321,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.acertainromance401.aisys;
 				PRODUCT_NAME = AISYSApp;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Release;
 		};
@@ -349,8 +349,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.acertainromance401.aisys;
 				PRODUCT_NAME = AISYSApp;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -430,7 +430,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.acertainromance401.aisys.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AISYSApp.app/AISYSApp";
 			};
 			name = Debug;
