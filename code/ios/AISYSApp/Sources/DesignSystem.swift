@@ -1,24 +1,32 @@
 import SwiftUI
 
-// MARK: - Color Palette (Police Navy + Gold)
+// MARK: - Color Palette (Glass Navy + Gold Hairline)
 //
-// 디자인 철학: 화려함보다 집중. 다크 네이비 기반, 포인트 컬러 최소화.
-// 경찰 상징색(짙은 남색 + 금색)을 채택해 수험생에게 시험·제복 분위기를 환기.
-// 모든 화면은 다크모드 기준으로 최적화되며 라이트모드는 자동 변환 대응만 한다.
+// 디자인 철학: 화려함보다 집중. AppIcon 의 "글래스 블록 + 골드 윤곽" 메타포를
+// 앱 본체로 확장. 다크 네이비 기반에 카드는 반투명 글래스, 강조는 골드 1px hairline.
+// 골드 fill 은 핵심 CTA·STACK 카운터 같은 1화면 1~2회 한정.
 enum AppColor {
     // 배경 — 깊이 단계별로 3단 (가장 어두운 배경 → 카드 → 카드 hover)
     static let background = Color(red: 0.039, green: 0.078, blue: 0.157)        // #0A1428 짙은 네이비
-    static let surface = Color(red: 0.078, green: 0.137, blue: 0.235)           // #14233C 카드
-    static let surfaceElevated = Color(red: 0.110, green: 0.180, blue: 0.290)   // #1C2E4A 카드 hover/active
+    // surface / surfaceElevated 는 글래스 효과 안에서 단색 폴백으로만 사용.
+    // 실제 카드 fill 은 `AppCard` 가 glassFillTop/Bot 그라데이션을 입힌다.
+    static let surface = Color(red: 0.082, green: 0.149, blue: 0.247)           // #15263F
+    static let surfaceElevated = Color(red: 0.114, green: 0.196, blue: 0.318)   // #1D3251
+
+    // 글래스 카드 그라데이션 (AppIcon 블록 톤과 동일 계열)
+    static let glassFillTop = Color(red: 0.196, green: 0.314, blue: 0.510)      // #325082
+    static let glassFillBot = Color(red: 0.078, green: 0.157, blue: 0.290)      // #14284A
+    static let glassHighlight = Color.white.opacity(0.06)                       // 상단 광택
 
     // 텍스트 — 시인성과 시선피로 균형
     static let textPrimary = Color(red: 0.961, green: 0.973, blue: 0.984)       // #F5F8FB
-    static let textSecondary = Color(red: 0.612, green: 0.655, blue: 0.729)     // #9CA7BA
-    static let textTertiary = Color(red: 0.412, green: 0.451, blue: 0.518)      // #697384
+    static let textSecondary = Color(red: 0.643, green: 0.690, blue: 0.769)     // #A4B0C4
+    static let textTertiary = Color(red: 0.435, green: 0.486, blue: 0.561)      // #6F7C8F
 
-    // 포인트 — 경찰 금색 (전문성, 절제). 강조는 1화면 1~2회만 사용.
+    // 포인트 — 경찰 금색. fill 대신 hairline / 핵심 숫자에만 사용.
     static let accent = Color(red: 0.961, green: 0.769, blue: 0.094)            // #F5C418 골드
-    static let accentSoft = Color(red: 0.961, green: 0.769, blue: 0.094, opacity: 0.18)
+    static let accentSoft = Color(red: 0.961, green: 0.769, blue: 0.094, opacity: 0.10) // fill 약화
+    static let goldHairline = Color(red: 0.961, green: 0.769, blue: 0.094, opacity: 0.55) // 카드 윤곽
 
     // 의미적 컬러 — 채도 낮춰 시선 피로 완화
     static let danger = Color(red: 0.820, green: 0.298, blue: 0.298)            // #D14C4C
@@ -31,8 +39,8 @@ enum AppColor {
     static let warningSoft = Color(red: 0.929, green: 0.604, blue: 0.220, opacity: 0.18)
 
     // 경계선
-    static let separator = Color(red: 0.157, green: 0.220, blue: 0.318, opacity: 0.6)
-    static let border = Color(red: 0.196, green: 0.275, blue: 0.396)
+    static let separator = Color(red: 0.176, green: 0.255, blue: 0.376, opacity: 0.5)
+    static let border = Color(red: 0.235, green: 0.318, blue: 0.451)
 
     // 확신도 컬러 — 문제풀이에서 "확실/애매/찍음" 시각화용
     static let confidenceHigh = Color(red: 0.314, green: 0.671, blue: 0.435)
@@ -77,20 +85,49 @@ enum AppRadius {
 // MARK: - Reusable UI Components
 
 /// 정보 밀도가 높은 메인 카드. 모든 섹션 컨테이너의 기본형.
+///
+/// 리테마 v1.0: AppIcon 의 글래스 블록 메타포를 그대로 카드에 이식.
+/// - 배경: glassFillTop → glassFillBot 대각 그라데이션
+/// - 상단 광택: 옅은 흰색 highlight (6%)
+/// - 윤곽: 골드 1px hairline (55% 골드)
+///
+/// 단색 배경이 필요한 특수 케이스는 `background` 파라미터로 override.
 struct AppCard<Content: View>: View {
     var padding: CGFloat = AppSpace.l
-    var background: Color = AppColor.surface
+    /// nil 이면 글래스 그라데이션 사용. 단색을 강제하려면 색 지정.
+    var background: Color? = nil
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(background)
+            .background(
+                Group {
+                    if let background {
+                        background
+                    } else {
+                        ZStack(alignment: .top) {
+                            LinearGradient(
+                                colors: [AppColor.glassFillTop, AppColor.glassFillBot],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            // 상단 광택
+                            LinearGradient(
+                                colors: [AppColor.glassHighlight, .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(maxHeight: 60)
+                        }
+                    }
+                }
+            )
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous)
-                    .stroke(AppColor.separator, lineWidth: 0.5)
+                    .strokeBorder(AppColor.goldHairline, lineWidth: 1)
             )
     }
 }

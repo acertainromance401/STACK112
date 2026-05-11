@@ -1647,7 +1647,7 @@ private struct StackBlocksView: View {
         }
     }
 
-    /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 골드 그라데이션.
+    /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 글래스 블루 + 골드 hairline (AppIcon 톤).
     @ViewBuilder
     private func block(isFilled: Bool, partialFill: Double, wobble: Double) -> some View {
         ZStack(alignment: .bottom) {
@@ -1665,12 +1665,16 @@ private struct StackBlocksView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    AppColor.accent,
-                                    AppColor.accent.opacity(0.7)
+                                    AppColor.glassFillTop,
+                                    AppColor.glassFillBot
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .strokeBorder(AppColor.goldHairline, lineWidth: 0.7)
                         )
                         .frame(height: max(2, geo.size.height * CGFloat(partialFill)))
                         .frame(maxHeight: .infinity, alignment: .bottom)
@@ -1679,7 +1683,7 @@ private struct StackBlocksView: View {
         }
         .frame(maxWidth: .infinity)
         .rotationEffect(.degrees(wobble))
-        .shadow(color: isFilled ? AppColor.accent.opacity(0.18) : .clear, radius: 1.5, x: 0, y: 0.5)
+        .shadow(color: isFilled ? AppColor.accent.opacity(0.12) : .clear, radius: 1.5, x: 0, y: 0.5)
     }
 
     /// 결정적(deterministic) 살짝 어긋남. 동일 인덱스는 항상 같은 각도 → 떨림 없음.
