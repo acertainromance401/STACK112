@@ -1,5 +1,16 @@
 # AI_SYS iOS (SwiftUI)
 
+최종 업데이트: 2026-05-11
+현재 상태: 완전 온디바이스(Backend-free) 동작. iPhone 12 mini(A14, 4GB) 실기기 검증 통과.
+
+> **2026-05-11 변경 사항**
+> - HTTP 백엔드 의존을 제거하고 모든 검색·IR·유사 판례를 단말 내부에서 처리합니다.
+> - 신규 모듈: `LegalIssueDictionary`, `LocalIRPipeline`, `LocalCaseSearchEngine`, `LocalCaseStore`.
+> - 복습 노트의 "자주 틀리는 영역" → 영역별 오답 OX 모음(`WeakOXListView`) 화면 신설.
+> - Review 탭 진입 시 lag 해소(NLEmbedding 비동기 캐시).
+> - 탭 root view 의 비활성 뒤로가기 버튼 제거.
+> - **주의**: `xcodegen generate` 를 실행하면 수동으로 추가한 4개 신규 Swift 파일의 `pbxproj` 등록과 `DEVELOPMENT_TEAM` 설정이 사라질 수 있습니다. 신규 파일은 직접 `pbxproj` 에 등록되어 있으니 *필요할 때만* `xcodegen` 을 사용하세요.
+
 이 폴더는 `xcodegen`으로 생성되는 iOS SwiftUI 프로젝트입니다.
 
 ## 빠른 실행
@@ -53,7 +64,7 @@ xcodegen generate
 xcodebuild test \
   -project AISYS.xcodeproj \
   -scheme AISYSApp \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 ```
 
@@ -81,3 +92,9 @@ xcodebuild test \
 ```bash
 xcrun simctl list devices
 ```
+
+## 현재 알려진 테스트 이슈 (2026-05-07)
+
+- `AISYSAppTests.testSaveWrongAnswerAddsItemToTop` 실패
+- `AISYSAppTests.testRecommendedCasesExist` 실패
+- 내부 시연/개발 실행은 가능하나 운영 배포 전 테스트 기대값 정비 권장

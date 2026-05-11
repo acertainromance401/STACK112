@@ -1,7 +1,10 @@
 # AI_SYS 동작 실행 가이드 (초보자용)
 
 작성일: 2026-04-08
-문서 버전: v1.0
+최종 업데이트: 2026-05-11
+문서 버전: v1.2
+
+> **2026-05-11 업데이트**: iOS 앱이 완전 온디바이스(Backend-free)로 동작합니다. 아래 Docker Compose 절차는 *백엔드 옵션*을 사용할 때만 필요하며, iOS 앱만 단독 실행할 경우 Xcode 빌드+실기기 설치만으로 모든 기능이 동작합니다(검색·OCR·요약·OX·복습 노트 모두 단말 내부 처리).
 
 이 문서는 AI_SYS를 실제로 실행하는 방법과 내부 동작 과정을 쉽게 설명한다.
 가장 쉬운 방법은 Docker Compose 실행 방식이다.
@@ -17,14 +20,14 @@
 - 프로젝트 루트 경로로 이동해야 한다.
 
 프로젝트 루트 예시:
-- /Users/acertainromance401/Desktop/AI_SYS/AI_SYS
+- /Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM
 
 ## 3. 가장 쉬운 실행 방법 (권장)
 
 ### 3.1 실행 명령
 
 ```bash
-cd /Users/acertainromance401/Desktop/AI_SYS/AI_SYS
+cd /Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM
 docker compose up -d --build
 ```
 
@@ -129,3 +132,9 @@ docker compose logs db
 - 처음 실행: docker compose up -d --build
 - 확인: http://127.0.0.1:8000/docs
 - 데이터 초기화 필요 시: docker compose down -v 후 다시 up
+
+## 10. 최신 점검 결과 (2026-05-07)
+
+- 백엔드: `docker compose up -d --build` 후 `/health` 200 확인
+- 도커 구성: `docker compose config` 유효성 통과
+- iOS: 빌드 가능, 단위 테스트 2건 실패(`AISYSAppTests`)로 운영 배포 전 테스트 정비 필요

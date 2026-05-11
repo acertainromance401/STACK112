@@ -1,7 +1,9 @@
 # AI_SYS 완벽 가이드: 아키텍처, 파이프라인, 배포
 
-> 최종 수정: 2026년 5월 6일  
-> 현재 상태: iOS 앱 완전 로컬 동작 + 옵셔널 백엔드 연결
+> 최종 수정: 2026년 5월 11일  
+> 현재 상태: **iOS 앱은 완전 온디바이스(Backend-free) 모드로 운영 중**. 본 문서의 FastAPI/EC2/RDS 섹션은 (a) 다중 사용자 동기화 또는 (b) 외부 시스템 연동이 필요해질 때를 위한 *선택적 참고 자료*이며, 현재 빌드는 백엔드 없이도 풀 기능 동작합니다.
+> - 단일 진실 공급원: [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](../Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md)
+> - 단말 IR 파이프라인 매핑: `code/backend/app/ir_pipeline.py` ↔ `code/ios/AISYSApp/Sources/LocalIRPipeline.swift` (Swift 포팅, 동일 알고리즘)
 
 ---
 
@@ -440,6 +442,17 @@ CREATE INDEX idx_issue_fts ON published_cases
 
 ## 배포 단계별 가이드
 
+## 현재 배포 판정 (2026-05-07)
+
+- 백엔드 런타임 스모크: 통과 (`/health` 200)
+- 도커 배포 구성: 유효 (`docker compose config` 통과)
+- iOS 테스트: 2건 실패
+   - `AISYSAppTests.testSaveWrongAnswerAddsItemToTop`
+   - `AISYSAppTests.testRecommendedCasesExist`
+- 판정
+   - 내부 배포(시연/TestFlight 내부): 가능
+   - 운영 배포/스토어 제출: 테스트 정비 후 진행 권장
+
 ### Phase 1: 로컬 앱 완성 & 테스트 (현재 상태)
 
 #### ✅ 완료 사항
@@ -698,5 +711,5 @@ A: 대법원 판례 검색 API (공개 데이터)
 ---
 
 **작성일**: 2026년 5월 6일  
-**최종 검토**: V1.0 Production Ready
+**최종 검토**: 2026년 5월 7일 / Conditional Release
 

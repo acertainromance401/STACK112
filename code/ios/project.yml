@@ -26,6 +26,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - AISYSApp/Sources
+      - AISYSApp/Resources
     dependencies:
       - package: llama_cpp
         product: LlamaSwift
@@ -33,18 +34,17 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.acertainromance401.aisys
         PRODUCT_NAME: AISYSApp
-        INFOPLIST_KEY_CFBundleDisplayName: AI_SYS
+        INFOPLIST_KEY_CFBundleDisplayName: STACK112
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIRequiresFullScreen: YES
-        INFOPLIST_KEY_UIFileSharingEnabled: YES
+        INFOPLIST_KEY_UIFileSharingEnabled: NO
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
         INFOPLIST_KEY_LLAMA_MODEL_FILE: Llama-3.2-1B-Instruct-Q4_K_M.gguf
-        INFOPLIST_KEY_API_BASE_URL: http://172.27.30.76:8000
-        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: YES
-        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: YES
-        SUPPORTS_MACCATALYST: YES
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "판례 이미지를 선택해 OCR 분석을 수행합니다. 이미지는 기기 내에서만 처리되며 외부로 전송되지 않습니다."
+        SUPPORTS_MACCATALYST: NO
+        TARGETED_DEVICE_FAMILY: "1"
     scheme:
       testTargets:
         - AISYSAppTests

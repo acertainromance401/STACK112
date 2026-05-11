@@ -1,5 +1,8 @@
 # AI_SYS Backend Quickstart
 
+최종 업데이트: 2026-05-07
+현재 상태: 백엔드 컨테이너 실행 및 `/health` 검증 통과
+
 ## 1) 가상환경 및 의존성 설치
 ```bash
 cd backend
@@ -78,3 +81,14 @@ PYTHONPATH=. python scripts/evaluate_ir.py \
 - `avg_signal_retention`: 핵심문장 축약 뒤 조문/사건번호/법원명/날짜 등 법률 신호 보존 비율
 - `avg_keyword_count`: 샘플당 추출된 법률 키워드 평균 개수
 - `avg_key_sentence_length`: LLM 입력 핵심문장 길이 평균
+
+## 8) 최신 스모크 체크 (2026-05-07)
+
+```bash
+docker compose up -d --build
+curl -i http://127.0.0.1:8000/health
+docker compose down
+```
+
+기대 결과:
+- HTTP/1.1 200 OK

@@ -1,7 +1,8 @@
 # AI_SYS iOS 앱 최적화 결과 & 현재 상태
 
 > **작성일**: 2026년 5월 6일  
-> **상태**: CPU/메모리 최적화 완료, 배포 준비 단계
+> **최종 업데이트**: 2026년 5월 7일  
+> **상태**: CPU/메모리 최적화 완료, 운영 배포 전 검증 단계
 
 ---
 
@@ -15,9 +16,10 @@
   - JSON 디코딩 메인 스레드 (1-2%)
   - SwiftUI 렌더링 (2-3%)
 
-### 현재 상태 (최적화 완료)
-- **예상 Energy Report**: CPU 60%, 메모리 120 MB, 열 Fair
+### 현재 상태 (최적화 완료, 검증 진행 중)
+- **성능 추정치**: CPU 60%, 메모리 120 MB, 열 Fair
 - **개선율**: CPU 32% ↓, 메모리 44% ↓
+- **최신 검증 결과(2026-05-07)**: iOS 단위 테스트 2건 실패로 운영 배포 보류
 
 ---
 
@@ -45,8 +47,8 @@ let request = VNRecognizeTextRequest()
 let handler = VNImageRequestHandler(data: data)
 try handler.perform([request])  // ← 5-10초 블로킹
 
-// ✅ 변경 후: 백그라운드 스레드에서 실행
-let result = await Task.detached(priority: .userInitiated) { () -> Result<String, String> in
+// ✅ 변경 후: 백그라운드 스레드에서 실행 (throw 기반)
+let text = try await Task.detached(priority: .userInitiated) { () throws -> String in
     let request = VNRecognizeTextRequest()
     let handler = VNImageRequestHandler(data: data)
     try handler.perform([request])
@@ -286,7 +288,8 @@ LLMSummary {
 ### 즉시 (이번 주)
 1. 실기기에서 재검증 (Energy Report 확인)
 2. 성능 지표 수집 (CPU, 메모리, 열)
-3. 사용자 테스트 (50명+)
+3. 실패한 iOS 단위 테스트 2건 정비
+4. 사용자 테스트 (50명+)
 
 ### 단기 (이번 달)
 1. 백엔드 배포 (선택사항)
@@ -297,6 +300,17 @@ LLMSummary {
 2. 로컬 검색 추가 (선택사항)
    - 로컬 판례 목록 TF-IDF 인덱싱
    - 검색 기능 추가
+
+## 🧪 최신 점검 결과 (2026-05-07)
+
+- 백엔드: `docker compose` 기동 및 `/health` 200 확인
+- 백엔드: Python 컴파일 스모크 체크 통과
+- iOS: 빌드는 통과, 테스트는 2건 실패
+    - `testSaveWrongAnswerAddsItemToTop`
+    - `testRecommendedCasesExist`
+- 배포 판정
+    - 내부 시연/스테이징: 가능
+    - 운영 배포/스토어 제출: 테스트 수정 전 보류
 
 ### 장기 (3개월)
 1. AppStore 제출
@@ -324,6 +338,6 @@ LLMSummary {
 
 ---
 
-**최종 검토**: 2026년 5월 6일  
-**상태**: Production Ready ✅
+**최종 검토**: 2026년 5월 7일  
+**상태**: Conditional Release (테스트 수정 후 운영 배포)
 

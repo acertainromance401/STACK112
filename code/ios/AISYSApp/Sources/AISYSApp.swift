@@ -11,6 +11,8 @@ struct AISYSApp: App {
             RootTabView()
                 .environmentObject(store)
                 .environmentObject(runtime)
+                .preferredColorScheme(.dark)
+                .tint(AppColor.accent)
                 .task {
                     await LLMService.shared.loadModelIfNeeded()
                 }

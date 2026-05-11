@@ -43,16 +43,34 @@ struct LocalLLMModelResolution {
 }
 
 enum LocalLLMModelLocator {
-    private static let fallbackFileNames = [
+    private static let model1BFileNames = [
         "llama-3.2-1b-instruct-q4_k_m.gguf",
         "Llama-3.2-1B-Instruct-Q4_K_M.gguf"
     ]
+
+    private static let model3BFileNames = [
+        "llama-3.2-3b-instruct-q4_k_m.gguf",
+        "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+        "Llama-3.2-3B-Instruct-Q4_K_L.gguf"
+    ]
+
+    private static let modelLargeFileNames = [
+        "llama-3.1-8b-instruct-q4_k_m.gguf",
+        "Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+    ]
+
+    private enum DeviceTier: String {
+        case low = "low"
+        case balanced = "balanced"
+        case high = "high"
+    }
 
     static func resolveModel(ignoreDocuments: Bool) -> LocalLLMModelResolution {
         let candidates = candidateFileNames()
         let configuredFileName = candidates.first
         let bundleURL = resolveFromBundle(candidates: candidates)
         let documentsURL = resolveFromDocuments(candidates: candidates)
+        let tierReason = "device=\(deviceTier().rawValue)/\(deviceMemoryGB())GB"
 
         if ignoreDocuments {
             return LocalLLMModelResolution(
@@ -62,8 +80,8 @@ enum LocalLLMModelLocator {
                 documentsURL: documentsURL,
                 configuredFileName: configuredFileName,
                 selectionReason: bundleURL == nil
-                    ? "Documents 무시 설정이 켜져 있고 번들 모델을 찾지 못했습니다."
-                    : "Documents 무시 설정이 켜져 있어 번들 모델을 선택했습니다."
+                    ? "Documents 무시 설정이 켜져 있고 번들 모델을 찾지 못했습니다. (\(tierReason))"
+                    : "Documents 무시 설정이 켜져 있어 번들 모델을 선택했습니다. (\(tierReason))"
             )
         }
 
@@ -75,7 +93,7 @@ enum LocalLLMModelLocator {
                     bundleURL: bundleURL,
                     documentsURL: documentsURL,
                     configuredFileName: configuredFileName,
-                    selectionReason: "Documents 모델이 번들 모델보다 최신이라 선택했습니다."
+                    selectionReason: "Documents 모델이 번들 모델보다 최신이라 선택했습니다. (\(tierReason))"
                 )
             }
 
@@ -85,7 +103,7 @@ enum LocalLLMModelLocator {
                 bundleURL: bundleURL,
                 documentsURL: documentsURL,
                 configuredFileName: configuredFileName,
-                selectionReason: "번들 모델이 더 최신이거나 동일하여 선택했습니다."
+                selectionReason: "번들 모델이 더 최신이거나 동일하여 선택했습니다. (\(tierReason))"
             )
         }
 
@@ -96,7 +114,7 @@ enum LocalLLMModelLocator {
                 bundleURL: bundled,
                 documentsURL: documentsURL,
                 configuredFileName: configuredFileName,
-                selectionReason: "번들 모델만 발견되어 선택했습니다."
+                selectionReason: "번들 모델만 발견되어 선택했습니다. (\(tierReason))"
             )
         }
 
@@ -107,7 +125,7 @@ enum LocalLLMModelLocator {
                 bundleURL: bundleURL,
                 documentsURL: inDocuments,
                 configuredFileName: configuredFileName,
-                selectionReason: "번들 모델이 없어 Documents 모델을 선택했습니다."
+                selectionReason: "번들 모델이 없어 Documents 모델을 선택했습니다. (\(tierReason))"
             )
         }
 
@@ -117,8 +135,20 @@ enum LocalLLMModelLocator {
             bundleURL: bundleURL,
             documentsURL: documentsURL,
             configuredFileName: configuredFileName,
-            selectionReason: "번들과 Documents 어디에서도 GGUF 모델을 찾지 못했습니다."
+            selectionReason: "번들과 Documents 어디에서도 GGUF 모델을 찾지 못했습니다. (\(tierReason))"
         )
+    }
+
+    private static func deviceMemoryGB() -> UInt64 {
+        ProcessInfo.processInfo.physicalMemory / 1_073_741_824
+    }
+
+    private static func deviceTier() -> DeviceTier {
+        let memory = deviceMemoryGB()
+        // 8GB 이하 기기는 3B에서 prefill 단계 abort 가능성이 있어 low로 취급
+        if memory <= 8 { return .low }
+        if memory <= 12 { return .balanced }
+        return .high
     }
 
     private static func isDocumentsModelPreferred(documentsURL: URL, bundleURL: URL) -> Bool {
@@ -141,10 +171,24 @@ enum LocalLLMModelLocator {
 
     private static func candidateFileNames() -> [String] {
         let configured = (Bundle.main.object(forInfoDictionaryKey: "LLAMA_MODEL_FILE") as? String) ?? ""
+        let tierPreferred: [String]
+        switch deviceTier() {
+        case .low:
+            tierPreferred = model1BFileNames
+        case .balanced:
+            // 기본은 3B 우선, 없으면 1B 자동 다운그레이드
+            tierPreferred = model3BFileNames + model1BFileNames
+        case .high:
+            // 고성능 기기는 3B 우선, 8B가 있을 때만 선택 가능
+            tierPreferred = model3BFileNames + modelLargeFileNames + model1BFileNames
+        }
+
         var result: [String] = []
         var seen = Set<String>()
 
-        for name in [configured] + fallbackFileNames {
+        // configured 파일명을 최우선으로 강제하면 저사양에서도 3B를 먼저 잡아 크래시가 날 수 있어
+        // tierPreferred를 우선하고 configured은 마지막 후보로만 둡니다.
+        for name in tierPreferred + [configured] {
             let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty || seen.contains(trimmed) {
                 continue
@@ -229,7 +273,7 @@ final class LlamaCppEngine: LocalLLMEngine {
     let name = "llama.cpp"
     private(set) var isLoaded = false
     private var modelURL: URL?
-    var ignoreDocumentsModel = false
+    var ignoreDocumentsModel = true
     private(set) var modelResolution = LocalLLMModelResolution(
         selectedURL: nil,
         selectedSource: nil,
@@ -310,16 +354,33 @@ final class LlamaCppEngine: LocalLLMEngine {
         }
 
         var cparams = llama_context_default_params()
-        // 극단 최적화: 메모리/CPU 대폭 감소 (모바일 실기기 맞춤)
-        // n_ctx 2048 -> 512: 메모리 사용량 75% 감소, CPU 집약성 감소
-        // n_batch 512 -> 128: 배치 처리 단순화, decode 루프 최소화
-        // n_ubatch 512 -> 128: CPU 부하 최소화
-        // threads 2-3개만: 컨텍스트 스위칭 오버헤드 제거
-        cparams.n_ctx = 512
-        cparams.n_batch = 128
-        cparams.n_ubatch = 128
-        cparams.n_threads = 2
-        cparams.n_threads_batch = 2
+        let memoryGB = ProcessInfo.processInfo.physicalMemory / 1_073_741_824
+        // 보수 설정: 발열/메모리 급증을 막고 저사양에서는 자동 축소
+        if memoryGB <= 4 {
+            cparams.n_ctx = 256
+            cparams.n_batch = 64
+            cparams.n_ubatch = 64
+            cparams.n_threads = 2
+            cparams.n_threads_batch = 2
+        } else if memoryGB <= 6 {
+            cparams.n_ctx = 320
+            cparams.n_batch = 64
+            cparams.n_ubatch = 64
+            cparams.n_threads = 2
+            cparams.n_threads_batch = 2
+        } else if memoryGB <= 8 {
+            cparams.n_ctx = 384
+            cparams.n_batch = 96
+            cparams.n_ubatch = 96
+            cparams.n_threads = 2
+            cparams.n_threads_batch = 2
+        } else {
+            cparams.n_ctx = 512
+            cparams.n_batch = 128
+            cparams.n_ubatch = 128
+            cparams.n_threads = 3
+            cparams.n_threads_batch = 2
+        }
 
         guard let loadedContext = llama_init_from_model(loadedModel, cparams) else {
             llama_model_free(loadedModel)
@@ -345,9 +406,14 @@ final class LlamaCppEngine: LocalLLMEngine {
                 "샘플러 초기화에 실패했습니다. source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
             )
         }
+        // 샘플러 체인 — 한국어 법률 요약처럼 사실에 가까운 출력이 우선이므로
+        // temp 를 낮춰 결정적 출력을 유도하고 repetition penalty 로 반복 토큰을 억제한다.
+        // top_k=40 / top_p=0.9 는 다양성 유지를 위해 그대로 두되, temp 0.4 + penalty 1.1 조합으로
+        // 1B 모델의 환각/같은 어절 반복 현상을 완화한다.
+        llama_sampler_chain_add(loadedSampler, llama_sampler_init_penalties(64, 1.1, 0.0, 0.0))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_k(40))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_p(0.9, 1))
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_temp(0.7))
+        llama_sampler_chain_add(loadedSampler, llama_sampler_init_temp(0.4))
         llama_sampler_chain_add(loadedSampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED))
 
         model = loadedModel
@@ -375,8 +441,8 @@ final class LlamaCppEngine: LocalLLMEngine {
         // 무거운 llama_decode 연산을 백그라운드 스레드에서 실행하여 메인 스레드 블로킹 방지
         // 이는 Objective-C 타입 정보 경고를 해결하고 UI 렉을 개선합니다.
         let result = try await Task.detached(priority: .userInitiated) { () -> String in
-            // llama_memory_clear를 매번 호출하면 CPU 비용이 큼 - 제거
-            // llama_sampler_reset만 호출하여 샘플링 상태 초기화 (가볍고 필수)
+            // 현재 연결된 llama.swift 버전에는 llama_kv_cache_clear 심볼이 없어 sampler만 초기화합니다.
+            // 컨텍스트 누적 이슈는 프롬프트/생성 토큰 상한으로 방지합니다.
             llama_sampler_reset(sampler)
 
             // 1. 프롬프트 전체를 토큰화
@@ -388,23 +454,49 @@ final class LlamaCppEngine: LocalLLMEngine {
                 throw LocalLLMEngineError.runtimeUnavailable("프롬프트 토큰화 결과가 비어 있습니다.")
             }
 
-            // n_batch(128)를 초과하면 llama_decode가 SIGABRT로 크래시.
-            // 뒤쪽(최신 내용)을 우선 보존하여 트리밍.
-            let batchLimit = 120
-            if promptTokens.count > batchLimit {
-                promptTokens = Array(promptTokens.suffix(batchLimit))
+            let memoryGB = ProcessInfo.processInfo.physicalMemory / 1_073_741_824
+            // 안전장치: 8GB 이하 환경에서 3B는 prefill 단계에서 abort가 발생할 수 있어 즉시 폴백 유도
+            let modelName = self.modelURL?.lastPathComponent.lowercased() ?? ""
+            if memoryGB <= 8 && modelName.contains("3b") {
+                throw LocalLLMEngineError.runtimeUnavailable("현재 기기 메모리에서는 3B 모델이 불안정하여 1B로 자동 폴백합니다.")
             }
 
-            let promptBatch = promptTokens.withUnsafeMutableBufferPointer {
-                llama_batch_get_one($0.baseAddress, Int32($0.count))
+            let contextBudget = memoryGB <= 4 ? 320 : (memoryGB <= 6 ? 384 : (memoryGB <= 8 ? 448 : 512))
+            let reservedForGeneration = memoryGB <= 6 ? 72 : 96
+            let promptBudget = max(64, contextBudget - reservedForGeneration - 8)
+            if promptTokens.count > promptBudget {
+                promptTokens = Array(promptTokens.prefix(promptBudget))
             }
-            let prefillResult = llama_decode(context, promptBatch)
-            guard prefillResult == 0 else {
-                throw LocalLLMEngineError.runtimeUnavailable("프롬프트 디코딩에 실패했습니다. code=\(prefillResult)")
+
+            // prefill 청크는 loadModel()에서 설정한 n_batch를 넘지 않도록 맞춥니다.
+            // n_batch보다 큰 값이 들어가면 llama_decode 내부 assert로 SIGABRT가 날 수 있습니다.
+            let batchLimit: Int
+            if memoryGB <= 6 {
+                batchLimit = 64
+            } else if memoryGB <= 8 {
+                batchLimit = 96
+            } else {
+                batchLimit = 120
+            }
+            var start = 0
+            while start < promptTokens.count {
+                let end = min(start + batchLimit, promptTokens.count)
+                var chunk = Array(promptTokens[start..<end])
+                let prefillResult = chunk.withUnsafeMutableBufferPointer { buffer -> Int32 in
+                    guard let base = buffer.baseAddress, buffer.count > 0 else { return -1 }
+                    let batch = llama_batch_get_one(base, Int32(buffer.count))
+                    return llama_decode(context, batch)
+                }
+                guard prefillResult == 0 else {
+                    throw LocalLLMEngineError.runtimeUnavailable("프롬프트 디코딩에 실패했습니다. code=\(prefillResult)")
+                }
+                start = end
             }
 
             // 모바일 환경에서 최대 토큰 생성 수 대폭 제한 (배터리/CPU/메모리 최소화)
-            let maxOut = max(1, min(maxTokens, 160))
+            let hardMaxOut = memoryGB <= 6 ? 96 : 128
+            let availableGenerationBudget = max(1, contextBudget - promptTokens.count - 4)
+            let maxOut = max(1, min(maxTokens, hardMaxOut, availableGenerationBudget))
             var generated: [llama_token] = []
             generated.reserveCapacity(maxOut)
 
@@ -420,10 +512,10 @@ final class LlamaCppEngine: LocalLLMEngine {
 
                 // 방금 뽑은 토큰을 다시 컨텍스트에 반영해야 다음 토큰을 이어서 생성할 수 있습니다.
                 var one = [token]
-                let nextBatch = one.withUnsafeMutableBufferPointer {
-                    llama_batch_get_one($0.baseAddress, 1)
+                let nextResult = one.withUnsafeMutableBufferPointer { buffer -> Int32 in
+                    let batch = llama_batch_get_one(buffer.baseAddress, 1)
+                    return llama_decode(context, batch)
                 }
-                let nextResult = llama_decode(context, nextBatch)
                 if nextResult != 0 {
                     break
                 }

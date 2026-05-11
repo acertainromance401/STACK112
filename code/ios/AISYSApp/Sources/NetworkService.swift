@@ -1,71 +1,61 @@
 import Foundation
 
-// MARK: - API Response Models
+// MARK: - Compat Models (백엔드 시절 사용하던 응답 모델 — 시그니처 호환용)
 
 struct SearchAPIResponse: Decodable {
     let total: Int
     let items: [APICase]
 }
 
-struct RecommendedCasesAPIResponse: Decodable {
-    let total: Int
-    let items: [APIRecommendedCase]
+struct GroundedCitationAPI: Decodable {
+    let caseNumber: String
+    let caseName: String
+    let quotedText: String
+    let reason: String
 }
 
-struct WrongAnswersAPIResponse: Decodable {
-    let total: Int
-    let items: [APIWrongAnswerItem]
+struct GroundedAnswerAPIResponse: Decodable {
+    let question: String
+    let answer: String
+    let citations: [GroundedCitationAPI]
+    let safetyFlags: [String]
 }
 
-// MARK: - Network Errors
+// MARK: - Errors
 
 enum NetworkError: LocalizedError {
-    case badStatus(Int)
-    case emptyResponse
+    case notSupportedOffline
+    case caseNotFound(String)
 
     var errorDescription: String? {
         switch self {
-        case .badStatus(let code): return "서버 오류 (HTTP \(code))"
-        case .emptyResponse: return "서버 응답이 비어 있습니다"
+        case .notSupportedOffline:
+            return "이 기능은 더 이상 사용되지 않습니다 (온디바이스 모드)"
+        case .caseNotFound(let key):
+            return "로컬 판례를 찾지 못했습니다: \(key)"
         }
     }
 }
 
-// MARK: - NetworkService
+// MARK: - NetworkService (로컬 백엔드 프록시)
+//
+// 2026-05-12 이후 본 앱은 풀 온디바이스 모드로 전환되었습니다.
+// 호출 측 수정 폭을 최소화하기 위해 기존 `NetworkService` 메서드 시그니처는 유지하되,
+// 내부 구현은 모두 로컬 엔진(`LocalIRPipeline`, `LocalCaseSearchEngine`,
+// `LocalSimilarityEngine`)과 `LocalCaseStore` corpus 위에서 동작합니다.
+//
+// configureBaseURL/healthCheck 등 기존 UI 호환 메서드는 no-op 또는 항상 true 입니다.
 
 actor NetworkService {
     static let shared = NetworkService()
-    static let overrideKey = "API_BASE_URL_OVERRIDE"
+    static let overrideKey = "API_BASE_URL_OVERRIDE"   // 호환 유지용 키
     static let userIDKey = "AISYS_USER_ID"
-#if DEBUG
-    private static let fallbackBaseURL = "http://172.27.30.76:8000"
-#else
-    private static let fallbackBaseURL = "https://api.example.com"
-#endif
 
-    private var baseURL: URL
-    private let session: URLSession
-    private let decoder: JSONDecoder
+    private init() {}
 
-    private init() {
-        // Info.plist의 API_BASE_URL 키 또는 환경 기본값 사용
-        let override = UserDefaults.standard.string(forKey: Self.overrideKey)
-        let plistURL = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String
-        let urlString = (override?.isEmpty == false ? override : plistURL) ?? Self.fallbackBaseURL
-        self.baseURL = URL(string: urlString) ?? URL(string: Self.fallbackBaseURL)!
+    // MARK: - Compat (UI 잔존 호출 호환)
 
-        // 실기기에서 네트워크가 불안정할 때 홈 화면이 오래 멈춘 것처럼 보이지 않도록 타임아웃을 짧게 유지합니다.
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 8
-        config.timeoutIntervalForResource = 12
-        config.waitsForConnectivity = false
-        self.session = URLSession(configuration: config)
-        let d = JSONDecoder()
-        d.keyDecodingStrategy = .convertFromSnakeCase
-        d.dateDecodingStrategy = .iso8601
-        self.decoder = d
-    }
-
+    /// 과거 API 베이스 URL 설정. 온디바이스 모드에서는 무시됩니다.
     func configureBaseURL(_ value: String) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
@@ -73,29 +63,9 @@ actor NetworkService {
         } else {
             UserDefaults.standard.set(trimmed, forKey: Self.overrideKey)
         }
-
-        let plistURL = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String
-        let next = trimmed.isEmpty ? (plistURL ?? Self.fallbackBaseURL) : trimmed
-        if let parsed = URL(string: next) {
-            baseURL = parsed
-        }
     }
 
-    func currentBaseURLString() -> String {
-        baseURL.absoluteString
-    }
-
-    func deviceConnectionHint() -> String? {
-        guard let host = baseURL.host?.lowercased() else { return nil }
-#if targetEnvironment(simulator)
-        return nil
-#else
-        if host == "127.0.0.1" || host == "localhost" {
-            return "실기기에서는 127.0.0.1/localhost가 아이폰 자신을 가리킵니다. 맥의 LAN IP(예: http://192.168.x.x:8000)로 변경하세요."
-        }
-        return nil
-#endif
-    }
+    func deviceConnectionHint() -> String? { nil }
 
     static func currentUserID() -> String {
         if let existing = UserDefaults.standard.string(forKey: userIDKey), !existing.isEmpty {
@@ -106,117 +76,64 @@ actor NetworkService {
         return generated
     }
 
-    /// /search?q=...&limit=... → [APICase]
+    /// 온디바이스 모드에서는 항상 "건강함" — 검색·IR이 즉시 동작.
+    func healthCheck() async -> Bool { true }
+
+    // MARK: - Cases
+
+    /// 키워드로 로컬 corpus 검색 → 점수 정렬된 [APICase].
+    /// 검색은 raw 가 포함된 corpus 위에서 수행하지만, 사용자에게 노출될 때는
+    /// raw 가 빠진 displayCorpus 의 동일 id 케이스로 치환한다.
     func searchCases(query: String, limit: Int = 10) async throws -> [APICase] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("search"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "q", value: query),
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
-        let (data, response) = try await session.data(from: components.url!)
-        try validate(response)
-        
-        // JSON 디코딩을 백그라운드 스레드에서 실행 (메인 스레드 블로킹 방지)
-        return try await Task.detached(priority: .userInitiated) { [weak self] () -> [APICase] in
-            guard let self else { throw NetworkError.emptyResponse }
-            let response = try self.decoder.decode(SearchAPIResponse.self, from: data)
-            return response.items
-        }.value
+        let store = LocalCaseStore.shared
+        let hits = LocalCaseSearchEngine.search(query: query, in: store.searchCorpus, limit: limit)
+        let displayPool = store.displayCorpus
+        return hits.map { hit in
+            displayPool.first { $0.id == hit.id } ?? hit
+        }
     }
 
-    /// /cases?limit=... → 최신 published 케이스 목록
+    /// 최신순 corpus 미리보기 (스캔 케이스가 앞쪽에 위치)
     func listCases(limit: Int = 20) async throws -> [APICase] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("cases"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
-        let (data, response) = try await session.data(from: components.url!)
-        try validate(response)
-        
-        // JSON 디코딩을 백그라운드 스레드에서 실행 (메인 스레드 블로킹 방지)
-        return try await Task.detached(priority: .userInitiated) { [weak self] () -> [APICase] in
-            guard let self else { throw NetworkError.emptyResponse }
-            let response = try self.decoder.decode(SearchAPIResponse.self, from: data)
-            return response.items
-        }.value
+        Array(LocalCaseStore.shared.allCases.prefix(limit))
     }
 
-    /// /health 상태 점검
-    func healthCheck() async -> Bool {
-        let url = baseURL.appendingPathComponent("health")
-        do {
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 3
-            let (_, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return false }
-            return (200..<300).contains(http.statusCode)
-        } catch {
-            return false
-        }
-    }
-
-    /// /dashboard/recommended?limit=... → 추천 복습 카드
-    func listRecommendedCases(limit: Int = 7) async throws -> [APIRecommendedCase] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("dashboard/recommended"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
-        let (data, response) = try await session.data(from: components.url!)
-        try validate(response)
-        return try decoder.decode(RecommendedCasesAPIResponse.self, from: data).items
-    }
-
-    /// /dashboard/wrong-answers?user_id=...&limit=... → 최근 오답 노트
-    func listWrongAnswers(userID: String, limit: Int = 20) async throws -> [APIWrongAnswerItem] {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("dashboard/wrong-answers"),
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = [
-            URLQueryItem(name: "user_id", value: userID),
-            URLQueryItem(name: "limit", value: String(limit))
-        ]
-        let (data, response) = try await session.data(from: components.url!)
-        try validate(response)
-        return try decoder.decode(WrongAnswersAPIResponse.self, from: data).items
-    }
-
-    /// /cases/{caseNumber} → APICase
     func getCase(caseNumber: String) async throws -> APICase {
-        let url = baseURL
-            .appendingPathComponent("cases")
-            .appendingPathComponent(caseNumber)
-        let (data, response) = try await session.data(from: url)
-        try validate(response)
-        return try decoder.decode(APICase.self, from: data)
-    }
-
-    /// POST /ir/extract — OCR 텍스트 → 키워드 + 핵심문장
-    func irExtract(text: String, topKeywords: Int = 10, topSentences: Int = 5) async throws -> APIIRExtractResponse {
-        let url = baseURL.appendingPathComponent("ir/extract")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body = ["text": text, "top_keywords": topKeywords, "top_sentences": topSentences] as [String: Any]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await session.data(for: request)
-        try validate(response)
-        return try decoder.decode(APIIRExtractResponse.self, from: data)
-    }
-
-    private func validate(_ response: URLResponse) throws {
-        guard let http = response as? HTTPURLResponse else { return }
-        guard (200..<300).contains(http.statusCode) else {
-            throw NetworkError.badStatus(http.statusCode)
+        guard let found = LocalCaseStore.shared.find(caseNumber: caseNumber) else {
+            throw NetworkError.caseNotFound(caseNumber)
         }
+        return found
+    }
+
+    /// 유사 판례 — NLEmbedding + 토큰 매칭 결합
+    func listSimilarCases(caseNumber: String, topK: Int = 5) async throws -> [APICase] {
+        let corpus = LocalCaseStore.shared.allCases
+        guard let target = corpus.first(where: { $0.caseNumber == caseNumber || $0.id == caseNumber }) else {
+            return []
+        }
+        return LocalCaseSearchEngine.similar(to: target, in: corpus, topK: topK)
+    }
+
+    // MARK: - IR Extract
+
+    /// 백엔드 /ir/extract 의 로컬 대체 — `LocalIRPipeline` 호출 (수 ms 소요)
+    func irExtract(text: String, topKeywords: Int = 10, topSentences: Int = 5) async throws -> APIIRExtractResponse {
+        LocalIRPipeline.extract(text: text, topKeywords: topKeywords, topSentences: topSentences)
+    }
+
+    // MARK: - Disabled Endpoints
+
+    func groundedAnswer(question: String, intent: String, topK: Int = 4) async throws -> GroundedAnswerAPIResponse {
+        throw NetworkError.notSupportedOffline
+    }
+
+    func serverGenerateOXQuiz(
+        caseNumber: String,
+        caseName: String,
+        keySentences: String,
+        keywords: [String],
+        quizCount: Int = 3
+    ) async throws -> [OXQuizQuestion] {
+        throw NetworkError.notSupportedOffline
     }
 }

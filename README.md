@@ -2,15 +2,20 @@
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
 
-## 현재 구현 상태 (2026-04-17)
-- iOS 앱(탭 5개: Home/OCR/Search/Review/My Page), FastAPI, PostgreSQL(pgvector) 연동이 동작합니다.
-- 대시보드와 검색/상세 화면은 DB 기반 데이터로 동작하며, Swift 더미 중심 흐름은 제거되었습니다.
-- 온디바이스 LLM은 LlamaSwift(llama.cpp) 기반이며, GGUF 모델은 Git에 포함하지 않고 기기 `Documents/models` 경로에서 로드하도록 운영합니다.
-- 퀴즈는 상세 화면 버튼 기반으로 생성되며, LLM 준비 상태 대기 로직과 앱 시작 선로딩이 반영되었습니다.
-- 전 주요 화면에 공통 뒤로가기 버튼이 적용되었습니다.
-- 운영 이슈: Docker compose 프로젝트 혼선으로 발생하던 404는 ai_sys_team 스택으로 정리되었습니다.
+## 현재 구현 상태 (2026-05-11)
+- iOS 앱(탭 5개: Home/OCR/Search/Review/My Page)이 **완전 온디바이스(Backend-free)** 모드로 동작합니다.
+- 모든 검색·IR 추출·유사 판례·요약·OX 퀴즈는 단말 내부에서 실행되며, 서버/네트워크 없이도 풀 기능 사용 가능합니다.
+- 핵심 모듈: `LegalIssueDictionary`, `LocalIRPipeline`(ir_pipeline.py 의 Swift 포팅), `LocalCaseSearchEngine`, `LocalCaseStore`, `LocalSimilarityEngine`(`NLEmbedding`).
+- 온디바이스 LLM은 LlamaSwift(llama.cpp) 기반이며, GGUF 모델은 Git에 포함하지 않고 번들/`Documents/models` 경로에서 로드합니다.
+- 복습 노트의 "자주 틀리는 영역" 카드를 누르면 해당 영역의 오답 OX 모음(`WeakOXListView`)이 열립니다.
+- Review 탭 진입 시 lag 가 발생하던 동기 임베딩 호출을 비동기 캐시(`Task.detached`) 로 분리했습니다.
+- 탭 root view 의 비활성 뒤로가기 버튼을 제거하고, 푸시된 sub view 에서만 동작하도록 정리했습니다.
+- 운영: HTTP 백엔드 의존이 사라져 EC2/RDS 인스턴스 비용·인증·CORS 이슈가 0이 되었습니다.
+- 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인.
 
 ## 관련 문서
+- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md) — **최신**
+- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md)
 - [Project_Descriptions/Project_Description.md](Project_Descriptions/Project_Description.md)
 - [Project_Descriptions/User_Journey_Scenario_AI_SYS.md](Project_Descriptions/User_Journey_Scenario_AI_SYS.md)
 - [Project_Descriptions/PRD_AI_SYS.md](Project_Descriptions/PRD_AI_SYS.md)
@@ -110,6 +115,7 @@
 | QA | 기능 테스트, 시나리오 기반 검증, 발표·시연 환경 준비 및 배포 전 품질 확인 |
 
 ## 8. git주소
-- 저장소 주소: `https://github.com/acertainromance401/AI_SYS`
+- 개인 저장소: `https://github.com/acertainromance401/AI_SYS_Personal`
+- 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
 
 

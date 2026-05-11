@@ -1,6 +1,6 @@
 # AI_SYS LLM Hybrid Contract
 
-최종 업데이트: 2026-04-17 (v1.1)
+최종 업데이트: 2026-05-07 (v1.2)
 
 This document defines the three implementation artifacts for AI_SYS:
 1. Search response JSON schema with evidence fields

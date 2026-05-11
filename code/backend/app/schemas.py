@@ -88,6 +88,7 @@ class GroundedAnswerResponse(BaseModel):
     answer: str
     citations: list[Citation]
     safety_flags: list[str]
+    domain: str = "general_legal"
     generated_at: datetime
 
 
@@ -106,6 +107,8 @@ class IRExtractResponse(BaseModel):
     """키워드 및 핵심 문장 반환"""
     keywords: list[str]
     key_sentences: str
+    domain: str = "general_legal"
+    study_focus: list[str] = Field(default_factory=list)
 
 
 class SimilarCaseItem(BaseModel):

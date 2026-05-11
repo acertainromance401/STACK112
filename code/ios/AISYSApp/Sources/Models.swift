@@ -37,23 +37,6 @@ struct APICase: Codable, Identifiable {
     }
 }
 
-struct APIRecommendedCase: Codable {
-    let caseNumber: String
-    let caseName: String
-    let subject: String
-    let issue: String
-    let accuracy: Int
-
-    func toCaseStudy() -> CaseStudy {
-        CaseStudy(
-            subject: subject,
-            title: caseName,
-            issue: issue,
-            accuracy: accuracy
-        )
-    }
-}
-
 struct APIWrongAnswerItem: Codable {
     let title: String
     let memo: String
@@ -68,6 +51,8 @@ struct APIWrongAnswerItem: Codable {
 struct APIIRExtractResponse: Decodable {
     let keywords: [String]
     let keySentences: String
+    let domain: String?
+    let studyFocus: [String]?
 }
 
 // MARK: - LLM Output Model
@@ -81,36 +66,101 @@ struct LLMSummary: Equatable {
 
     /// LLM raw 텍스트에서 "- key: value" 패턴을 파싱
     init?(rawOutput: String) {
-        func extract(_ key: String) -> String? {
-            guard let range = rawOutput.range(
-                of: #"- \#(key):\s*(.+)"#,
-                options: .regularExpression
-            ) else { return nil }
-            return String(rawOutput[range])
-                .components(separatedBy: ": ")
-                .dropFirst()
-                .joined(separator: ": ")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+        let lines = rawOutput
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        func canonicalKey(_ rawKey: String) -> String? {
+            let key = rawKey.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+            switch key {
+            case "one_line_summary", "one-line-summary", "summary",
+                 "한줄요약", "한 줄 요약", "요약":
+                return "one_line_summary"
+            case "key_issue", "key_issues", "issue", "key_issue_points",
+                 "핵심쟁점", "핵심 쟁점", "쟁점":
+                return "key_issue"
+            case "ruling_point", "holding_point", "held", "reason",
+                 "결론", "판결결론", "판결 결론":
+                return "ruling_point"
+            case "exam_takeaway", "exam_points", "exam_takeaway_points",
+                 "포인트", "시험포인트", "시험 포인트":
+                return "exam_takeaway"
+            default:
+                return nil
+            }
         }
+
+        func looksLikeTemplateEcho(_ value: String) -> Bool {
+            let normalized = value.lowercased()
+            if normalized.isEmpty { return true }
+            // Chained template keys (e.g. "- foo: - bar: - baz:")
+            let colonCount = normalized.components(separatedBy: ":").count - 1
+            if colonCount >= 3 { return true }
+            // Prompt echo patterns
+            if normalized.contains("please help") || normalized.contains("## step") {
+                return true
+            }
+            let badTokens = [
+                "one_line_summary", "key_issue", "ruling_point", "exam_takeaway",
+                "holding_summary", "[output", "outputformat",
+                "summary_key", "evidence_key", "rule_applied"
+            ]
+            let hitCount = badTokens.filter { normalized.contains($0) }.count
+            return hitCount >= 1
+        }
+
+        var values: [String: String] = [:]
+        var currentKey: String?
+
+        for line in lines {
+            let parts = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            if parts.count == 2 {
+                var keyCandidate = String(parts[0])
+                keyCandidate = keyCandidate.replacingOccurrences(of: "-", with: "")
+                keyCandidate = keyCandidate.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let key = canonicalKey(keyCandidate) {
+                    let value = String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !value.isEmpty {
+                        values[key] = value
+                    }
+                    currentKey = key
+                    continue
+                }
+            }
+
+            if let key = currentKey {
+                let appended = (values[key].map { $0 + " " } ?? "") + line
+                values[key] = appended.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+
         guard
-            let one = extract("one_line_summary"),
-            let issue = extract("key_issue"),
-            let ruling = extract("ruling_point"),
-            let exam = extract("exam_takeaway")
+            let one = values["one_line_summary"],
+            let issue = values["key_issue"],
+            let ruling = values["ruling_point"],
+            let exam = values["exam_takeaway"]
         else { return nil }
+
+        guard
+            !looksLikeTemplateEcho(one),
+            !looksLikeTemplateEcho(issue),
+            !looksLikeTemplateEcho(ruling),
+            !looksLikeTemplateEcho(exam)
+        else { return nil }
+
+        guard
+            one.count >= 2,
+            issue.count >= 2,
+            ruling.count >= 2,
+            exam.count >= 2
+        else { return nil }
+
         self.oneLineSummary = one
         self.keyIssue = issue
         self.rulingPoint = ruling
         self.examTakeaway = exam
     }
-}
-
-struct CaseStudy: Identifiable, Equatable {
-    let id = UUID()
-    let subject: String
-    let title: String
-    let issue: String
-    let accuracy: Int
 }
 
 struct WrongAnswerItem: Identifiable, Equatable {
@@ -124,6 +174,44 @@ struct WrongAnswerNote: Equatable {
     let title: String
     let confusionPoint: String
     let memo: String
+}
+
+struct WrongQuizRecord: Identifiable, Codable, Equatable {
+    let id: String
+    let caseNumber: String
+    let caseTitle: String
+    let question: String
+    let userAnswer: String
+    let correctAnswer: String
+    let explanation: String
+    let caseSummary: String
+    let solvedAt: String
+    /// taxonomy 경로 또는 과목 (약점 분석용). 구버전 과 호환을 위해 optional.
+    let subject: String?
+
+    init(
+        id: String = UUID().uuidString,
+        caseNumber: String,
+        caseTitle: String,
+        question: String,
+        userAnswer: String,
+        correctAnswer: String,
+        explanation: String,
+        caseSummary: String,
+        solvedAt: String,
+        subject: String? = nil
+    ) {
+        self.id = id
+        self.caseNumber = caseNumber
+        self.caseTitle = caseTitle
+        self.question = question
+        self.userAnswer = userAnswer
+        self.correctAnswer = correctAnswer
+        self.explanation = explanation
+        self.caseSummary = caseSummary
+        self.solvedAt = solvedAt
+        self.subject = subject
+    }
 }
 
 struct SearchResultItem: Identifiable, Equatable {
@@ -157,23 +245,31 @@ struct OXQuizQuestion: Identifiable, Equatable {
         // 각 문항은 "---" 구분자로 구분
         let blocks = rawOutput.components(separatedBy: "---")
         return blocks.compactMap { block -> OXQuizQuestion? in
+            // "- key: value" 형태에서 첫 번째 ":" 이후를 모두 값으로 사용 (statement 안에 ":" 가 들어가도 안전)
             func value(_ key: String) -> String? {
-                guard let range = block.range(
-                    of: #"- \#(key):\s*(.+)"#,
-                    options: .regularExpression
-                ) else { return nil }
-                return String(block[range])
-                    .components(separatedBy: ": ")
-                    .dropFirst()
-                    .joined(separator: ": ")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let lines = block.components(separatedBy: .newlines)
+                for line in lines {
+                    let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let prefixes = ["- \(key):", "-\(key):", "\(key):"]
+                    for prefix in prefixes {
+                        if trimmed.lowercased().hasPrefix(prefix.lowercased()) {
+                            let raw = String(trimmed.dropFirst(prefix.count))
+                            return raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                    }
+                }
+                return nil
             }
             guard
                 let stmt = value("statement"),
                 let answerStr = value("answer"),
-                let explanation = value("explanation")
+                let explanation = value("explanation"),
+                !stmt.isEmpty,
+                !answerStr.isEmpty
             else { return nil }
-            let answer = answerStr.uppercased().hasPrefix("O")
+            // "O", "o", "참", "true"는 O로 처리
+            let upper = answerStr.uppercased()
+            let answer = upper.hasPrefix("O") || upper.hasPrefix("참") || upper.hasPrefix("TRUE")
             return OXQuizQuestion(statement: stmt, answer: answer, explanation: explanation)
         }
     }
@@ -251,28 +347,58 @@ struct QuizQuestion: Equatable {
 }
 
 final class ReviewStore: ObservableObject {
-    @Published var recommendedCases: [CaseStudy] = []
-
     @Published var wrongAnswers: [WrongAnswerItem] = []
 
-    @Published var searchResults: [SearchResultItem] = []
-
-    @Published private(set) var isRemoteDashboardLoaded = false
+    @Published var wrongQuizRecords: [WrongQuizRecord] = []
 
     // MARK: - 저장된 판례 (검색/스캔 이력)
     @Published var savedCases: [APICase] = []
     private static let savedCasesKey = "com.aisys.savedCases"
+    private static let wrongQuizRecordsKey = "com.aisys.wrongQuizRecords"
 
     init() {
+        if let data = UserDefaults.standard.data(forKey: Self.wrongQuizRecordsKey),
+           let decoded = try? JSONDecoder().decode([WrongQuizRecord].self, from: data) {
+            wrongQuizRecords = decoded
+        }
+
         if let data = UserDefaults.standard.data(forKey: Self.savedCasesKey),
            let decoded = try? JSONDecoder().decode([APICase].self, from: data) {
-            savedCases = decoded
+            let needsMigration = decoded.contains { $0.caseName != $0.caseNumber }
+            let normalized = decoded.map { item in
+                APICase(
+                    id: item.id,
+                    caseNumber: item.caseNumber,
+                    caseName: item.caseNumber,
+                    courtName: item.courtName,
+                    subject: item.subject,
+                    issueSummary: item.issueSummary,
+                    holdingSummary: item.holdingSummary,
+                    examPoints: item.examPoints,
+                    sourceUrl: item.sourceUrl
+                )
+            }
+            savedCases = normalized
+            if needsMigration {
+                persistSavedCases()
+            }
         }
     }
 
     func saveCase(_ apiCase: APICase) {
         guard !savedCases.contains(where: { $0.id == apiCase.id }) else { return }
-        savedCases.insert(apiCase, at: 0)
+        let normalized = APICase(
+            id: apiCase.id,
+            caseNumber: apiCase.caseNumber,
+            caseName: apiCase.caseNumber,
+            courtName: apiCase.courtName,
+            subject: apiCase.subject,
+            issueSummary: apiCase.issueSummary,
+            holdingSummary: apiCase.holdingSummary,
+            examPoints: apiCase.examPoints,
+            sourceUrl: apiCase.sourceUrl
+        )
+        savedCases.insert(normalized, at: 0)
         persistSavedCases()
     }
 
@@ -296,19 +422,80 @@ final class ReviewStore: ObservableObject {
         wrongAnswers.insert(item, at: 0)
     }
 
-    func applyRemoteDashboard(recommended: [APIRecommendedCase], wrong: [APIWrongAnswerItem]) {
-        if !recommended.isEmpty {
-            recommendedCases = recommended.map { $0.toCaseStudy() }
+    func saveWrongQuizRecord(
+        caseNumber: String,
+        caseTitle: String,
+        question: String,
+        userAnswer: Bool,
+        correctAnswer: Bool,
+        explanation: String,
+        caseSummary: String,
+        subject: String? = nil
+    ) {
+        let item = WrongQuizRecord(
+            caseNumber: caseNumber,
+            caseTitle: caseTitle,
+            question: question,
+            userAnswer: userAnswer ? "O" : "X",
+            correctAnswer: correctAnswer ? "O" : "X",
+            explanation: explanation,
+            caseSummary: caseSummary,
+            solvedAt: Self.nowString,
+            subject: subject
+        )
+        wrongQuizRecords.insert(item, at: 0)
+        if wrongQuizRecords.count > 200 {
+            wrongQuizRecords = Array(wrongQuizRecords.prefix(200))
         }
-        if !wrong.isEmpty {
-            wrongAnswers = wrong.map { $0.toWrongAnswerItem() }
+        persistWrongQuizRecords()
+    }
+
+    private func persistWrongQuizRecords() {
+        if let data = try? JSONEncoder().encode(wrongQuizRecords) {
+            UserDefaults.standard.set(data, forKey: Self.wrongQuizRecordsKey)
         }
-        isRemoteDashboardLoaded = true
+    }
+
+    /// 오답 기록 전체 초기화 — 설정 화면 "오답노트 비우기" 버튼에서 호출.
+    func clearAllWrongRecords() {
+        wrongQuizRecords.removeAll()
+        wrongAnswers.removeAll()
+        UserDefaults.standard.removeObject(forKey: Self.wrongQuizRecordsKey)
+    }
+
+    /// 저장된 판례(검색 즐겨찾기) 전체 비우기 — 설정 화면 "저장 판례 비우기" 버튼에서 호출.
+    func clearAllSavedCases() {
+        savedCases.removeAll()
+        UserDefaults.standard.removeObject(forKey: Self.savedCasesKey)
+    }
+
+    /// 자주 틀린 taxonomy/과목 상위 N개 — 약점 카드 표시용.
+    /// - "형사소송법 > 증거능력 > 위법수집증거배제" 같이 ` > ` 구분일 경우 상위 두 단계까지만 묶음.
+    /// - 빈도 ≥ 2 인 항목만 반환하여 우연한 1회 오답은 제외.
+    func weakSubjects(topK: Int = 3) -> [(label: String, count: Int)] {
+        var counter: [String: Int] = [:]
+        for r in wrongQuizRecords {
+            guard let raw = r.subject?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { continue }
+            let parts = raw.components(separatedBy: " > ")
+            let key = parts.prefix(2).joined(separator: " > ")
+            counter[key, default: 0] += 1
+        }
+        return counter
+            .filter { $0.value >= 2 }
+            .sorted { $0.value > $1.value }
+            .prefix(topK)
+            .map { (label: $0.key, count: $0.value) }
     }
 
     private static var todayString: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
+        return formatter.string(from: Date())
+    }
+
+    private static var nowString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd HH:mm"
         return formatter.string(from: Date())
     }
 }
