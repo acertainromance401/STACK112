@@ -6,6 +6,7 @@ import SwiftData
 struct OCRView: View {
     @EnvironmentObject private var runtime: AppRuntimeState
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
 
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var recognizedText = ""
@@ -103,6 +104,22 @@ struct OCRView: View {
                 .padding()
             }
             .navigationTitle("OCR")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 15, weight: .bold))
+                            Text("뒤로")
+                                .font(.system(size: 15))
+                        }
+                    }
+                    .accessibilityLabel("뒤로 가기")
+                }
+            }
             .navigationDestination(isPresented: $navigateToSummary) {
                 if let ocrCase = runtime.pendingOCRCase {
                     CaseSummaryView(apiCase: ocrCase, viewModel: summaryViewModel)
