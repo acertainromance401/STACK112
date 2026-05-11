@@ -83,7 +83,7 @@ struct HomeView: View {
                 Text("STACK112")
                     .font(AppFont.tag)
                     .foregroundStyle(AppColor.accent)
-                Text("오늘도 합격을 향해")
+                Text("공부 한 켠, 가볍게 쌓아두기")
                     .font(AppFont.displayTitle)
                     .foregroundStyle(AppColor.textPrimary)
             }
@@ -652,7 +652,7 @@ struct WrongNoteView: View {
                 AppCard {
                     SectionHeader(title: "최근 오답", trailing: "\(store.wrongQuizRecords.count)건")
                     if store.wrongQuizRecords.isEmpty {
-                        Text("아직 오답이 없습니다. 문제풀이 탭에서 학습을 시작하세요.")
+                        Text("아직 메모해 둔 오답이 없어요. 헷갈렸던 문제를 가볍게 남겨두세요.")
                             .font(AppFont.caption)
                             .foregroundStyle(AppColor.textSecondary)
                             .padding(.top, 8)
@@ -835,7 +835,7 @@ struct CaseCardsView: View {
                     Text("판례 스캔하기")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(AppColor.background)
-                    Text("사진을 선택하면 자동으로 분석하고 요약해 드립니다")
+                    Text("공부 중 본 판례를 사진으로 담아두면 자동으로 정리됩니다")
                         .font(AppFont.caption)
                         .foregroundStyle(AppColor.background.opacity(0.75))
                 }
@@ -907,9 +907,9 @@ struct CaseCardsView: View {
                     Text("이렇게 사용하세요")
                         .font(AppFont.sectionHeader)
                 }
-                stepRow("1", "판례 이미지 1~20장을 한 번에 선택")
-                stepRow("2", "자동 분석으로 핵심 쟁점·결론 추출")
-                stepRow("3", "한 줄 요약 + OX 변형 문제로 즉시 학습")
+                stepRow("1", "공부하다 본 판례 사진을 1~20장 담아두기")
+                stepRow("2", "자동 정리된 핵심 쟁점·결론을 가볍게 훑기")
+                stepRow("3", "OX 변형 문제로 짧게 점검하기")
             }
         }
     }
@@ -1142,7 +1142,7 @@ struct AIAnalysisView: View {
         let unsure = counts[AnswerConfidence.unsure.rawValue] ?? 0
         let sure = counts[AnswerConfidence.sure.rawValue] ?? 0
         let total = guess + unsure + sure
-        if total == 0 { return "확신도 데이터가 아직 없습니다. 문제풀이에서 확신도를 함께 기록하세요." }
+        if total == 0 { return "확신도 메모가 아직 없어요. 문제풀이 때 함께 표시하면 흐름이 보입니다." }
         if guess > sure && guess > unsure {
             return "찍어 맞춘 비율이 큽니다. 정답이라도 다시 풀어 개념을 굳히세요."
         }
@@ -1173,9 +1173,9 @@ struct AIAnalysisView: View {
         let last7 = studyStore.recentDays(7)
         let solved = last7.reduce(0) { $0 + $1.solved }
         if solved < 50 {
-            return "최근 7일 누적 \(solved)문항. 일 30문항 페이스를 회복하면 D-Day 까지 충분히 회독 가능합니다."
+            return "최근 7일 누적 \(solved)문항. 부담 없이 하루 한 켠씩 쌓아두면 시험일까지 좋은 흐름이 만들어집니다."
         }
-        return "최근 7일 \(solved)문항 양호. 새 판례 카드 회독과 OX 변형 풀이를 병행하세요."
+        return "최근 7일 \(solved)문항. 좋은 흐름이에요. 본 공부 사이사이 가볍게 점검해 보세요."
     }
 }
 
@@ -1377,13 +1377,13 @@ struct ExamDateOnboardingSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpace.l) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("환영합니다")
+                        Text("공부 한 켠에")
                             .font(AppFont.tag)
                             .foregroundStyle(AppColor.accent)
-                        Text("목표 시험일을\n설정해 주세요")
+                        Text("공부하실 시험을\n알려주세요")
                             .font(AppFont.displayTitle)
                             .foregroundStyle(AppColor.textPrimary)
-                        Text("D-Day와 매일 학습 계획이 자동으로 계산됩니다.\n나중에 톱니바퀴 설정에서 언제든 바꿀 수 있어요.")
+                        Text("입력하신 시험일까지 남은 시간을 가볍게 보여드립니다.\n나중에 톱니바퀴 설정에서 언제든 바꿀 수 있어요.")
                             .font(AppFont.caption)
                             .foregroundStyle(AppColor.textSecondary)
                             .padding(.top, 2)

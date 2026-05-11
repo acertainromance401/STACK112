@@ -1073,7 +1073,7 @@ struct ReviewView: View {
                         Text("저장된 판례가 없습니다.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        Text("검색 결과를 탭하거나 판례를 스캔하면 여기에 저장됩니다.")
+                        Text("검색 결과를 탭하거나 판례를 스캔해 가볍게 모아두는 공간입니다.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -1315,7 +1315,7 @@ struct WeakOXListView: View {
                         Image(systemName: "checkmark.seal")
                             .font(.system(size: 48))
                             .foregroundStyle(AppColor.success)
-                        Text("이 영역의 오답 기록이 없습니다.")
+                        Text("이 영역에 메모해 둔 오답이 아직 없어요.")
                             .font(AppFont.body)
                             .foregroundStyle(AppColor.textSecondary)
                     }

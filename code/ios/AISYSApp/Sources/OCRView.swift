@@ -23,7 +23,7 @@ struct OCRView: View {
                 VStack(spacing: 20) {
                     Text("판례 스캔")
                         .font(.largeTitle.bold())
-                    Text("판례 이미지를 선택하면 자동으로 요약하고 OX 퀴즈를 만들어 드립니다.")
+                    Text("공부 중 본 판례 사진을 담아두면 자동으로 요약·정리되어 한 켠에 쌓입니다.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
 
