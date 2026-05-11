@@ -1193,47 +1193,146 @@ struct SettingsSheet: View {
     @State private var dDayDateInput: Date = Date()
     @State private var goalInput: String = ""
 
+    /// 화면 전체에 한국어 표기 강제 — DatePicker, 월 이름 등이 한글로 나오도록.
+    private let koreanLocale = Locale(identifier: "ko_KR")
+
+    /// 시험일 한글 포맷 (예: "2026년 7월 31일 금요일")
+    private var dDayDateLabel: String {
+        let f = DateFormatter()
+        f.locale = koreanLocale
+        f.dateFormat = "yyyy년 M월 d일 EEEE"
+        return f.string(from: dDayDateInput)
+    }
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section("학습 목표") {
-                    TextField("D-Day 이름 (예: 경찰공채 1차)", text: $dDayNameInput)
-                    DatePicker("시험일", selection: $dDayDateInput, displayedComponents: .date)
-                    HStack {
-                        Text("일일 목표 문항 수")
-                        Spacer()
-                        TextField("30", text: $goalInput)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppSpace.l) {
+                    // ── 학습 목표 ───────────────────────────────
+                    AppCard {
+                        VStack(alignment: .leading, spacing: AppSpace.m) {
+                            SectionHeader(title: "학습 목표")
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("시험 이름")
+                                    .font(AppFont.captionEmphasis)
+                                    .foregroundStyle(AppColor.textSecondary)
+                                TextField("예: 경찰공채 1차", text: $dDayNameInput)
+                                    .font(AppFont.body)
+                                    .foregroundStyle(AppColor.textPrimary)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 10)
+                                    .background(AppColor.surfaceElevated)
+                                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.s))
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Text("시험일")
+                                        .font(AppFont.captionEmphasis)
+                                        .foregroundStyle(AppColor.textSecondary)
+                                    Spacer()
+                                    Text(dDayDateLabel)
+                                        .font(AppFont.caption)
+                                        .foregroundStyle(AppColor.accent)
+                                }
+                                DatePicker(
+                                    "",
+                                    selection: $dDayDateInput,
+                                    in: Date()...,
+                                    displayedComponents: .date
+                                )
+                                .datePickerStyle(.graphical)
+                                .labelsHidden()
+                                .tint(AppColor.accent)
+                                .environment(\.locale, koreanLocale)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 6)
+                                .background(AppColor.surfaceElevated)
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.s))
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("일일 목표 문항 수")
+                                    .font(AppFont.captionEmphasis)
+                                    .foregroundStyle(AppColor.textSecondary)
+                                HStack {
+                                    TextField("30", text: $goalInput)
+                                        .keyboardType(.numberPad)
+                                        .font(AppFont.body)
+                                        .foregroundStyle(AppColor.textPrimary)
+                                        .multilineTextAlignment(.leading)
+                                    Spacer()
+                                    Text("문항")
+                                        .font(AppFont.caption)
+                                        .foregroundStyle(AppColor.textTertiary)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .background(AppColor.surfaceElevated)
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.s))
+                            }
+                        }
+                    }
+
+                    // ── 동작 모드 ───────────────────────────────
+                    AppCard {
+                        VStack(alignment: .leading, spacing: AppSpace.m) {
+                            SectionHeader(title: "동작 모드")
+                            HStack(spacing: AppSpace.s) {
+                                Image(systemName: "iphone.gen3")
+                                    .foregroundStyle(AppColor.success)
+                                    .font(.system(size: 18, weight: .semibold))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("온디바이스 모드")
+                                        .font(AppFont.body)
+                                        .foregroundStyle(AppColor.textPrimary)
+                                    Text("모든 분석이 기기 안에서 실행됩니다")
+                                        .font(AppFont.caption)
+                                        .foregroundStyle(AppColor.textSecondary)
+                                }
+                                Spacer()
+                                Text("네트워크 미사용")
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(AppColor.surfaceElevated)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+
+                    // ── 정보 ───────────────────────────────────
+                    AppCard {
+                        VStack(alignment: .leading, spacing: AppSpace.m) {
+                            SectionHeader(title: "정보")
+                            HStack {
+                                Text("앱 이름")
+                                    .font(AppFont.body)
+                                    .foregroundStyle(AppColor.textPrimary)
+                                Spacer()
+                                Text("AI SYS")
+                                    .font(AppFont.body)
+                                    .foregroundStyle(AppColor.textSecondary)
+                            }
+                        }
                     }
                 }
-
-                Section("동작 모드") {
-                    HStack {
-                        Image(systemName: "iphone.gen3")
-                            .foregroundStyle(.green)
-                        Text("온디바이스 모드")
-                        Spacer()
-                        Text("네트워크 미사용")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Section("정보") {
-                    HStack { Text("앱"); Spacer(); Text("AI SYS").foregroundStyle(.secondary) }
-                }
+                .padding(AppSpace.l)
             }
+            .withAppBackground()
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("닫기") { dismiss() }
+                        .foregroundStyle(AppColor.textSecondary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") { save() }
                         .fontWeight(.bold)
+                        .foregroundStyle(AppColor.accent)
                 }
             }
             .onAppear {
@@ -1242,6 +1341,7 @@ struct SettingsSheet: View {
                 goalInput = "\(studyStore.dailyGoalQuestions)"
             }
         }
+        .environment(\.locale, koreanLocale)
     }
 
     private func save() {
@@ -1370,6 +1470,7 @@ struct ExamDateOnboardingSheet: View {
             .withAppBackground()
             .interactiveDismissDisabled(true)
         }
+        .environment(\.locale, Locale(identifier: "ko_KR"))
     }
 
     private func daysUntil(_ date: Date) -> Int {
