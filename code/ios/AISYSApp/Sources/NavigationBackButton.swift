@@ -8,9 +8,11 @@ struct SmallBackButton: View {
             dismiss()
         } label: {
             Image(systemName: "chevron.left")
-                .font(.caption.bold())
-                .frame(width: 24, height: 24)
-                .background(Color(.secondarySystemBackground))
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(AppColor.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(AppColor.surface)
+                .overlay(Circle().stroke(AppColor.border, lineWidth: 0.5))
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)

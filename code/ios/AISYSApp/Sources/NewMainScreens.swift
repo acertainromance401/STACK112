@@ -33,6 +33,7 @@ struct HomeView: View {
     @StateObject private var studyStore = StudyStore.shared
     @Query(sort: \ScannedCase.scannedAt, order: .reverse)
     private var scannedCases: [ScannedCase]
+    @State private var showSettings = false
 
     var body: some View {
         ScrollView {
@@ -49,6 +50,7 @@ struct HomeView: View {
             .padding(.bottom, AppSpace.xxl)
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $showSettings) { SettingsSheet() }
     }
 
     private var header: some View {
@@ -63,7 +65,7 @@ struct HomeView: View {
             }
             Spacer()
             Button {
-                runtime.selectedTab = 5
+                showSettings = true
             } label: {
                 Image(systemName: "gearshape.fill")
                     .font(.title3)
@@ -129,7 +131,7 @@ struct HomeView: View {
                     .background(AppColor.surfaceElevated)
                     .clipShape(Capsule())
                 Button {
-                    runtime.selectedTab = 1
+                    runtime.selectedTab = 2
                 } label: {
                     HStack {
                         Image(systemName: "play.fill")
@@ -150,13 +152,13 @@ struct HomeView: View {
 
     private var quickActionsRow: some View {
         HStack(spacing: AppSpace.m) {
-            QuickActionButton(icon: "exclamationmark.bubble.fill", label: "오답노트", tint: AppColor.danger) {
-                runtime.selectedTab = 2
+            QuickActionButton(icon: "doc.text.viewfinder", label: "판례 스캔", tint: AppColor.accent) {
+                runtime.selectedTab = 1
             }
-            QuickActionButton(icon: "rectangle.stack.fill", label: "판례카드", tint: AppColor.info) {
+            QuickActionButton(icon: "exclamationmark.bubble.fill", label: "오답노트", tint: AppColor.danger) {
                 runtime.selectedTab = 3
             }
-            QuickActionButton(icon: "brain.head.profile", label: "AI분석", tint: AppColor.accent) {
+            QuickActionButton(icon: "brain.head.profile", label: "AI분석", tint: AppColor.info) {
                 runtime.selectedTab = 4
             }
         }
@@ -222,7 +224,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: AppSpace.m) {
                 SectionHeader(title: "최근 스캔 판례", trailing: scannedCases.isEmpty ? nil : "전체보기 →")
                 if scannedCases.isEmpty {
-                    Text("아직 스캔한 판례가 없습니다. 판례카드 탭에서 추가하세요.")
+                    Text("아직 스캔한 판례가 없습니다. ‘판례 스캔’ 탭에서 추가하세요.")
                         .font(AppFont.caption)
                         .foregroundStyle(AppColor.textSecondary)
                 } else {
@@ -247,7 +249,7 @@ struct HomeView: View {
                 }
             }
         }
-        .onTapGesture { runtime.selectedTab = 3 }
+        .onTapGesture { runtime.selectedTab = 1 }
     }
 }
 
@@ -646,39 +648,31 @@ private struct WrongRecordCard: View {
 }
 
 // MARK: =============================================================
-// MARK: Case Cards (판례카드)
+// MARK: Case Scan (판례 스캔 — OCR 메인 화면)
 // MARK: =============================================================
+//
+// 본 앱의 핵심 기능. 화면 진입 즉시 "판례 스캔하기" CTA 가 가장 크게 보이며,
+// 그 아래에 스캔된 판례 카드들이 시간 역순으로 나열된다.
+// 카드 탭 → CaseSummaryView push (요약 + 학습 가이드 + OX 생성).
 struct CaseCardsView: View {
     @Query(sort: \ScannedCase.scannedAt, order: .reverse)
     private var scannedCases: [ScannedCase]
-    @State private var pageIndex: Int = 0
     @State private var showOCR = false
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: AppSpace.l) {
-                    HStack {
-                        Text("판례카드")
-                            .font(AppFont.displayTitle)
-                        Spacer()
-                        AppTag(text: "\(scannedCases.count)장", color: AppColor.accent, background: AppColor.accentSoft)
-                    }
-                    Text("스와이프로 회독하고, 부족한 카드만 OX 로 복습하세요.")
-                        .font(AppFont.caption)
-                        .foregroundStyle(AppColor.textSecondary)
-
-                    if scannedCases.isEmpty {
-                        emptyState
-                    } else {
-                        swipeDeck
-                        listSection
-                    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppSpace.l) {
+                header
+                primaryScanCTA
+                if !scannedCases.isEmpty {
+                    summaryShortcutCard
+                    listSection
+                } else {
+                    emptyHint
                 }
-                .padding(AppSpace.l)
-                .padding(.bottom, 80)
             }
-            ocrFab
+            .padding(AppSpace.l)
+            .padding(.bottom, AppSpace.xxl)
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showOCR) {
@@ -689,69 +683,133 @@ struct CaseCardsView: View {
         }
     }
 
-    private var emptyState: some View {
-        AppCard {
-            VStack(alignment: .center, spacing: AppSpace.m) {
-                Image(systemName: "doc.text.viewfinder")
-                    .font(.system(size: 48))
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("핵심 기능")
+                    .font(AppFont.tag)
                     .foregroundStyle(AppColor.accent)
-                Text("아직 스캔한 판례가 없습니다.")
-                    .font(AppFont.bodyEmphasis)
-                Text("우측 하단의 + 버튼으로 OCR을 시작하세요.")
-                    .font(AppFont.caption)
-                    .foregroundStyle(AppColor.textSecondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, AppSpace.l)
-        }
-    }
-
-    private var swipeDeck: some View {
-        TabView(selection: $pageIndex) {
-            ForEach(Array(scannedCases.prefix(10).enumerated()), id: \.element.id) { idx, sc in
-                NavigationLink {
-                    CaseSummaryView(apiCase: sc.toAPICase())
-                } label: {
-                    swipeCard(sc)
-                }
-                .buttonStyle(.plain)
-                .tag(idx)
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .always))
-        .indexViewStyle(.page(backgroundDisplayMode: .always))
-        .frame(height: 340)
-    }
-
-    private func swipeCard(_ sc: ScannedCase) -> some View {
-        AppCard(padding: AppSpace.l, background: AppColor.surfaceElevated) {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
-                HStack {
-                    AppTag(text: "판례", color: AppColor.accent, background: AppColor.accentSoft)
-                    Spacer()
-                    Text(DateFormatter.shortDate.string(from: sc.scannedAt))
-                        .font(AppFont.tag)
-                        .foregroundStyle(AppColor.textTertiary)
-                }
-                Text(sc.caseName)
-                    .font(AppFont.title)
+                Text("판례 스캔")
+                    .font(AppFont.displayTitle)
                     .foregroundStyle(AppColor.textPrimary)
-                    .lineLimit(2)
-                if let issue = sc.keyIssue, !issue.isEmpty {
-                    labelBlock("핵심 쟁점", text: issue)
+            }
+            Spacer()
+            if !scannedCases.isEmpty {
+                AppTag(text: "보관 \(scannedCases.count)건", color: AppColor.accent, background: AppColor.accentSoft)
+            }
+        }
+        .padding(.top, AppSpace.s)
+    }
+
+    /// 화면에서 가장 크고 눈에 띄는 OCR 시작 CTA — 1탭이면 사진 선택 화면 진입.
+    private var primaryScanCTA: some View {
+        Button { showOCR = true } label: {
+            HStack(spacing: AppSpace.l) {
+                ZStack {
+                    Circle()
+                        .fill(AppColor.background.opacity(0.25))
+                        .frame(width: 64, height: 64)
+                    Image(systemName: "doc.text.viewfinder")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(AppColor.background)
                 }
-                if let holding = sc.rulingPoint, !holding.isEmpty {
-                    labelBlock("결론", text: holding, color: AppColor.success)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("판례 스캔하기")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(AppColor.background)
+                    Text("사진을 선택해 OCR → 자동 분석 → 요약")
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.background.opacity(0.75))
                 }
-                HStack(spacing: 6) {
-                    ForEach(sc.keywords.prefix(4), id: \.self) { kw in
-                        AppTag(text: kw)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.title3.bold())
+                    .foregroundStyle(AppColor.background)
+            }
+            .padding(AppSpace.l)
+            .frame(maxWidth: .infinity)
+            .background(AppColor.accent)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// 가장 최근 스캔 1건의 핵심 정보를 큰 카드로 보여주고 바로 "요약 보기" 진입.
+    @ViewBuilder
+    private var summaryShortcutCard: some View {
+        if let latest = scannedCases.first {
+            NavigationLink {
+                CaseSummaryView(apiCase: latest.toAPICase())
+            } label: {
+                AppCard(background: AppColor.surfaceElevated) {
+                    VStack(alignment: .leading, spacing: AppSpace.m) {
+                        HStack {
+                            AppTag(text: "가장 최근", color: AppColor.accent, background: AppColor.accentSoft)
+                            Spacer()
+                            Text(DateFormatter.shortDate.string(from: latest.scannedAt))
+                                .font(AppFont.tag)
+                                .foregroundStyle(AppColor.textTertiary)
+                        }
+                        Text(latest.caseName)
+                            .font(AppFont.title)
+                            .foregroundStyle(AppColor.textPrimary)
+                            .lineLimit(2)
+                        if let issue = latest.keyIssue, !issue.isEmpty {
+                            labelBlock("핵심 쟁점", text: issue)
+                        }
+                        if let holding = latest.rulingPoint, !holding.isEmpty {
+                            labelBlock("결론", text: holding, color: AppColor.success)
+                        }
+                        HStack(spacing: 6) {
+                            ForEach(latest.keywords.prefix(5), id: \.self) { kw in
+                                AppTag(text: kw)
+                            }
+                            Spacer()
+                        }
+                        HStack(spacing: 6) {
+                            Text("요약 자세히 보기")
+                                .font(AppFont.captionEmphasis)
+                                .foregroundStyle(AppColor.accent)
+                            Image(systemName: "arrow.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(AppColor.accent)
+                        }
                     }
                 }
             }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 4)
+    }
+
+    private var emptyHint: some View {
+        AppCard {
+            VStack(alignment: .leading, spacing: AppSpace.s) {
+                HStack(spacing: 6) {
+                    Image(systemName: "lightbulb.fill").foregroundStyle(AppColor.accent)
+                    Text("이렇게 사용하세요")
+                        .font(AppFont.sectionHeader)
+                }
+                stepRow("1", "판례 이미지 1~20장을 한 번에 선택")
+                stepRow("2", "자동 OCR · IR 분석으로 핵심 쟁점·결론 추출")
+                stepRow("3", "한 줄 요약 + OX 변형 문제로 즉시 학습")
+            }
+        }
+    }
+
+    private func stepRow(_ no: String, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: AppSpace.m) {
+            Text(no)
+                .font(AppFont.captionEmphasis)
+                .foregroundStyle(AppColor.background)
+                .frame(width: 22, height: 22)
+                .background(AppColor.accent)
+                .clipShape(Circle())
+            Text(text)
+                .font(AppFont.body)
+                .foregroundStyle(AppColor.textPrimary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func labelBlock(_ title: String, text: String, color: Color = AppColor.accent) -> some View {
@@ -760,51 +818,48 @@ struct CaseCardsView: View {
             Text(text)
                 .font(AppFont.body)
                 .foregroundStyle(AppColor.textPrimary)
-                .lineLimit(3)
+                .lineLimit(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var listSection: some View {
         VStack(alignment: .leading, spacing: AppSpace.s) {
-            SectionHeader(title: "전체 판례", trailing: "최신순")
+            SectionHeader(title: "전체 스캔본", trailing: "최신순 · \(scannedCases.count)건")
             ForEach(scannedCases) { sc in
                 NavigationLink {
                     CaseSummaryView(apiCase: sc.toAPICase())
                 } label: {
                     HStack(spacing: AppSpace.m) {
-                        Image(systemName: "doc.text.fill").foregroundStyle(AppColor.accent)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(sc.caseName).font(AppFont.bodyEmphasis).lineLimit(1).foregroundStyle(AppColor.textPrimary)
-                            Text(sc.keywords.prefix(3).joined(separator: " · "))
-                                .font(AppFont.caption).foregroundStyle(AppColor.textSecondary).lineLimit(1)
+                        Image(systemName: "doc.text.fill")
+                            .font(.title3)
+                            .foregroundStyle(AppColor.accent)
+                            .frame(width: 36)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(sc.caseName)
+                                .font(AppFont.bodyEmphasis)
+                                .lineLimit(1)
+                                .foregroundStyle(AppColor.textPrimary)
+                            Text(sc.keyIssue ?? sc.keywords.prefix(3).joined(separator: " · "))
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                                .lineLimit(1)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(AppColor.textTertiary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption.bold())
+                            .foregroundStyle(AppColor.textTertiary)
                     }
                     .padding(AppSpace.m)
                     .background(AppColor.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.m).stroke(AppColor.separator, lineWidth: 0.5)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
                 }
                 .buttonStyle(.plain)
             }
         }
-    }
-
-    private var ocrFab: some View {
-        Button {
-            showOCR = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.title2.bold())
-                .foregroundStyle(AppColor.background)
-                .frame(width: 56, height: 56)
-                .background(AppColor.accent)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
-        }
-        .padding(.trailing, AppSpace.xl)
-        .padding(.bottom, AppSpace.xl)
     }
 }
 
@@ -825,6 +880,8 @@ struct AIAnalysisView: View {
                     .foregroundStyle(AppColor.textSecondary)
 
                 summaryCard
+                metricsCard
+                accuracyChartCard
                 weakPatternCard
                 confidenceCard
                 routineCard
@@ -832,6 +889,49 @@ struct AIAnalysisView: View {
             .padding(AppSpace.l)
         }
         .navigationBarHidden(true)
+    }
+
+    private var metricsCard: some View {
+        AppCard {
+            VStack(alignment: .leading, spacing: AppSpace.m) {
+                SectionHeader(title: "누적 메트릭")
+                HStack(spacing: AppSpace.l) {
+                    MetricBlock(value: "\(studyStore.totalSolved)", label: "총 문항")
+                    MetricBlock(value: "\(studyStore.totalCorrect)", label: "정답", tint: AppColor.success)
+                    MetricBlock(
+                        value: studyStore.totalSolved > 0 ? "\(Int(studyStore.overallAccuracy * 100))" : "—",
+                        label: "정답률",
+                        tint: AppColor.accent,
+                        trailingSymbol: studyStore.totalSolved > 0 ? "%" : nil
+                    )
+                    MetricBlock(value: "\(studyStore.streakDays)", label: "연속", tint: AppColor.info, trailingSymbol: "일")
+                }
+            }
+        }
+    }
+
+    private var accuracyChartCard: some View {
+        AppCard {
+            VStack(alignment: .leading, spacing: AppSpace.m) {
+                SectionHeader(title: "최근 7일 정답률")
+                HStack(alignment: .bottom, spacing: 8) {
+                    ForEach(studyStore.recentDays(7)) { rec in
+                        VStack(spacing: 4) {
+                            ZStack(alignment: .bottom) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(AppColor.surfaceElevated)
+                                    .frame(width: 26, height: 100)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(rec.solved == 0 ? AppColor.textTertiary.opacity(0.4) : AppColor.accent)
+                                    .frame(width: 26, height: max(4, CGFloat(rec.accuracy) * 100))
+                            }
+                            Text(rec.shortLabel).font(AppFont.tag).foregroundStyle(AppColor.textTertiary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+        }
     }
 
     private var summaryCard: some View {
@@ -962,156 +1062,74 @@ struct AIAnalysisView: View {
 }
 
 // MARK: =============================================================
-// MARK: Stats (통계 + 설정)
+// MARK: Settings Sheet (홈 톱니바퀴 → 모달)
 // MARK: =============================================================
-struct StatsView: View {
+//
+// 통계 그래프는 AI분석 탭으로 흡수되었으므로 별도 탭이 없다.
+// D-Day, 일일 목표, 백엔드 URL 같은 자주 변경되지 않는 설정만 시트에 남긴다.
+struct SettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var studyStore = StudyStore.shared
     @AppStorage(NetworkService.overrideKey) private var apiOverride: String = ""
-    @State private var editingDDay = false
-    @State private var editingGoal = false
-    @State private var dDayNameInput = ""
-    @State private var dDayDateInput = Date()
-    @State private var goalInput = ""
+
+    @State private var dDayNameInput: String = ""
+    @State private var dDayDateInput: Date = Date()
+    @State private var goalInput: String = ""
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppSpace.l) {
-                Text("통계")
-                    .font(AppFont.displayTitle)
-                metricsCard
-                accuracyChart
-                settingsCard
-            }
-            .padding(AppSpace.l)
-        }
-        .navigationBarHidden(true)
-    }
-
-    private var metricsCard: some View {
-        AppCard {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
-                SectionHeader(title: "누적 메트릭")
-                HStack(spacing: AppSpace.l) {
-                    MetricBlock(value: "\(studyStore.totalSolved)", label: "총 문항")
-                    MetricBlock(value: "\(studyStore.totalCorrect)", label: "정답", tint: AppColor.success)
-                    MetricBlock(
-                        value: studyStore.totalSolved > 0 ? "\(Int(studyStore.overallAccuracy * 100))" : "—",
-                        label: "정답률",
-                        tint: AppColor.accent,
-                        trailingSymbol: studyStore.totalSolved > 0 ? "%" : nil
-                    )
-                    MetricBlock(value: "\(studyStore.streakDays)", label: "연속", tint: AppColor.info, trailingSymbol: "일")
-                }
-            }
-        }
-    }
-
-    private var accuracyChart: some View {
-        AppCard {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
-                SectionHeader(title: "최근 7일 정답률")
-                HStack(alignment: .bottom, spacing: 8) {
-                    ForEach(studyStore.recentDays(7)) { rec in
-                        VStack(spacing: 4) {
-                            ZStack(alignment: .bottom) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(AppColor.surfaceElevated)
-                                    .frame(width: 26, height: 100)
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(rec.solved == 0 ? AppColor.textTertiary.opacity(0.4) : AppColor.accent)
-                                    .frame(width: 26, height: max(4, CGFloat(rec.accuracy) * 100))
-                            }
-                            Text(rec.shortLabel).font(AppFont.tag).foregroundStyle(AppColor.textTertiary)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                }
-            }
-        }
-    }
-
-    private var settingsCard: some View {
-        AppCard {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
-                SectionHeader(title: "설정")
-                settingsRow(title: "D-Day", value: "\(studyStore.dDayName) (\(formatted(studyStore.dDayDate)))") {
-                    dDayNameInput = studyStore.dDayName
-                    dDayDateInput = studyStore.dDayDate
-                    editingDDay = true
-                }
-                settingsRow(title: "일일 목표", value: "\(studyStore.dailyGoalQuestions) 문항") {
-                    goalInput = "\(studyStore.dailyGoalQuestions)"
-                    editingGoal = true
-                }
-                settingsRow(title: "백엔드 URL", value: apiOverride.isEmpty ? "로컬 (off)" : apiOverride, action: nil)
-            }
-        }
-        .sheet(isPresented: $editingDDay) {
-            NavigationStack {
-                Form {
-                    Section("D-Day 이름") {
-                        TextField("예: 경찰공채 1차", text: $dDayNameInput)
-                    }
-                    Section("시험일") {
-                        DatePicker("날짜", selection: $dDayDateInput, displayedComponents: .date)
-                    }
-                }
-                .navigationTitle("D-Day 설정")
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("저장") {
-                            studyStore.dDayName = dDayNameInput
-                            studyStore.dDayDate = dDayDateInput
-                            editingDDay = false
-                        }
-                    }
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("취소") { editingDDay = false }
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $editingGoal) {
-            NavigationStack {
-                Form {
-                    Section("하루 목표 문항 수") {
-                        TextField("예: 30", text: $goalInput)
+        NavigationStack {
+            Form {
+                Section("학습 목표") {
+                    TextField("D-Day 이름 (예: 경찰공채 1차)", text: $dDayNameInput)
+                    DatePicker("시험일", selection: $dDayDateInput, displayedComponents: .date)
+                    HStack {
+                        Text("일일 목표 문항 수")
+                        Spacer()
+                        TextField("30", text: $goalInput)
                             .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
                     }
                 }
-                .navigationTitle("목표 설정")
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("저장") {
-                            if let v = Int(goalInput), v > 0 { studyStore.dailyGoalQuestions = v }
-                            editingGoal = false
-                        }
-                    }
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("취소") { editingGoal = false }
+
+                Section("백엔드") {
+                    HStack {
+                        Text("API URL")
+                        Spacer()
+                        Text(apiOverride.isEmpty ? "로컬 모드" : apiOverride)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
+
+                Section("정보") {
+                    HStack { Text("앱"); Spacer(); Text("AI SYS").foregroundStyle(.secondary) }
+                }
+            }
+            .navigationTitle("설정")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("저장") { save() }
+                        .fontWeight(.bold)
+                }
+            }
+            .onAppear {
+                dDayNameInput = studyStore.dDayName
+                dDayDateInput = studyStore.dDayDate
+                goalInput = "\(studyStore.dailyGoalQuestions)"
             }
         }
     }
 
-    private func settingsRow(title: String, value: String, action: (() -> Void)?) -> some View {
-        Button(action: { action?() }) {
-            HStack {
-                Text(title).font(AppFont.body).foregroundStyle(AppColor.textPrimary)
-                Spacer()
-                Text(value).font(AppFont.caption).foregroundStyle(AppColor.textSecondary).lineLimit(1)
-                if action != nil {
-                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(AppColor.textTertiary)
-                }
-            }
-            .padding(.vertical, 6)
-        }
-        .buttonStyle(.plain)
-        .disabled(action == nil)
-    }
-
-    private func formatted(_ d: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy.MM.dd"; return f.string(from: d)
+    private func save() {
+        let name = dDayNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty { studyStore.dDayName = name }
+        studyStore.dDayDate = dDayDateInput
+        if let v = Int(goalInput), v > 0 { studyStore.dailyGoalQuestions = v }
+        dismiss()
     }
 }
