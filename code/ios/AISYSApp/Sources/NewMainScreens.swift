@@ -1663,10 +1663,6 @@ private struct StackBlocksView: View {
                 GeometryReader { geo in
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
                         .fill(AppColor.surfaceElevated)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .strokeBorder(AppColor.goldHairline, lineWidth: 0.8)
-                        )
                         .frame(height: max(2, geo.size.height * CGFloat(partialFill)))
                         .frame(maxHeight: .infinity, alignment: .bottom)
                 }
@@ -1674,7 +1670,7 @@ private struct StackBlocksView: View {
         }
         .frame(maxWidth: .infinity)
         .rotationEffect(.degrees(wobble))
-        .shadow(color: isFilled ? AppColor.accent.opacity(0.10) : .clear, radius: 1.5, x: 0, y: 0.5)
+        .shadow(color: isFilled ? Color.black.opacity(0.25) : .clear, radius: 1.5, x: 0, y: 0.5)
     }
 
     /// 결정적(deterministic) 살짝 어긋남. 동일 인덱스는 항상 같은 각도 → 떨림 없음.
