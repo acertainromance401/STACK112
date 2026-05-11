@@ -26,6 +26,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - AISYSApp/Sources
+      - AISYSApp/Resources
     dependencies:
       - package: llama_cpp
         product: LlamaSwift
