@@ -199,6 +199,12 @@ struct CaseSummaryView: View {
     var shouldAutoSave: Bool = false
     @EnvironmentObject private var store: ReviewStore
 
+    /// 카드별 사용자 메모를 영속 저장하기 위한 키 (사건번호 + 섹션 식별자)
+    fileprivate func memoKey(_ detail: CaseDetail, _ section: String) -> String {
+        let identifier = apiCase?.caseNumber ?? detail.title
+        return "case_memo::\(identifier)::\(section)"
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpace.m) {
@@ -295,24 +301,28 @@ struct CaseSummaryView: View {
 
                     // ── 암기 수첩 카드 ──────────────────────────────
                     StudyNoteCard(
-                        label: "한 줄 요약",
+                        label: "판례 요약",
                         content: viewModel.summary?.oneLineSummary ?? resolved.issue,
-                        accentColor: AppColor.accent
+                        accentColor: AppColor.accent,
+                        memoStorageKey: memoKey(resolved, "summary")
                     )
                     StudyNoteCard(
                         label: "핵심 쟁점",
                         content: viewModel.summary?.keyIssue ?? resolved.issue,
-                        accentColor: AppColor.warning
+                        accentColor: AppColor.warning,
+                        memoStorageKey: memoKey(resolved, "issue")
                     )
                     StudyNoteCard(
                         label: "판결 결론",
                         content: viewModel.summary?.rulingPoint ?? resolved.conclusion,
-                        accentColor: AppColor.success
+                        accentColor: AppColor.success,
+                        memoStorageKey: memoKey(resolved, "ruling")
                     )
                     StudyNoteCard(
                         label: "시험 포인트",
                         content: viewModel.summary?.examTakeaway ?? resolved.examPoint,
-                        accentColor: AppColor.info
+                        accentColor: AppColor.info,
+                        memoStorageKey: memoKey(resolved, "exam")
                     )
 
                     // IR 키워드 태그
@@ -531,20 +541,48 @@ private struct StudyNoteCard: View {
     let label: String
     let content: String
     let accentColor: Color
+    /// 사용자 메모를 영속 저장할 UserDefaults 키. nil 이면 메모 기능 비활성.
+    var memoStorageKey: String? = nil
+
+    @State private var memoText: String = ""
+    @State private var isEditingMemo: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .font(AppFont.tag)
-                .foregroundStyle(accentColor)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(accentColor.opacity(0.18))
+            // ── 라벨 + AI 요약 뱃지 ──────────────────────────
+            HStack(spacing: 6) {
+                Text(label)
+                    .font(AppFont.tag)
+                    .foregroundStyle(accentColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(accentColor.opacity(0.18))
+                    .clipShape(Capsule())
+
+                HStack(spacing: 3) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 9, weight: .bold))
+                    Text("AI 요약")
+                        .font(AppFont.tag)
+                }
+                .foregroundStyle(AppColor.textTertiary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(AppColor.surfaceElevated)
                 .clipShape(Capsule())
+
+                Spacer()
+            }
+
             Text(content)
                 .font(AppFont.body)
                 .foregroundStyle(AppColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            // ── 사용자 메모 영역 ─────────────────────────────
+            if memoStorageKey != nil {
+                memoSection
+            }
         }
         .padding(AppSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -554,6 +592,103 @@ private struct StudyNoteCard: View {
             RoundedRectangle(cornerRadius: AppRadius.m)
                 .stroke(accentColor.opacity(0.35), lineWidth: 1)
         )
+        .onAppear { loadMemo() }
+        .onChange(of: memoStorageKey ?? "") { _ in loadMemo() }
+    }
+
+    @ViewBuilder
+    private var memoSection: some View {
+        // AI 요약과 시각적으로 분리되는 점선 구분선
+        Divider()
+            .overlay(AppColor.border)
+            .padding(.vertical, 4)
+
+        HStack(spacing: 6) {
+            Image(systemName: "pencil.line")
+                .font(.system(size: 11, weight: .semibold))
+            Text("내 메모")
+                .font(AppFont.tag)
+            Spacer()
+            if !isEditingMemo {
+                Button {
+                    isEditingMemo = true
+                } label: {
+                    Text(memoText.isEmpty ? "추가" : "수정")
+                        .font(AppFont.tag)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(accentColor)
+            }
+        }
+        .foregroundStyle(AppColor.textSecondary)
+
+        if isEditingMemo {
+            // 편집 모드 — 사용자 입력 영역. 배경을 진한 navy 로 깔아 AI 영역과 명확히 구분.
+            VStack(alignment: .trailing, spacing: 6) {
+                TextEditor(text: $memoText)
+                    .font(AppFont.body)
+                    .foregroundStyle(AppColor.textPrimary)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 80)
+                    .padding(8)
+                    .background(AppColor.background)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.s)
+                            .stroke(accentColor.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [4]))
+                    )
+
+                HStack(spacing: 8) {
+                    Button("취소") {
+                        loadMemo() // 변경 사항 폐기
+                        isEditingMemo = false
+                    }
+                    .font(AppFont.captionEmphasis)
+                    .foregroundStyle(AppColor.textSecondary)
+
+                    Button("저장") {
+                        saveMemo()
+                        isEditingMemo = false
+                    }
+                    .font(AppFont.captionEmphasis)
+                    .foregroundStyle(accentColor)
+                }
+            }
+        } else if !memoText.isEmpty {
+            // 표시 모드 — 저장된 메모를 점선 테두리 + 배경 구분으로 표시
+            Text(memoText)
+                .font(AppFont.body)
+                .foregroundStyle(AppColor.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(AppColor.background.opacity(0.6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.s)
+                        .stroke(accentColor.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4]))
+                )
+        } else {
+            // 빈 상태 — 가벼운 안내
+            Text("메모를 추가하면 여기에 표시됩니다.")
+                .font(AppFont.tag)
+                .foregroundStyle(AppColor.textTertiary)
+                .padding(.bottom, 2)
+        }
+    }
+
+    private func loadMemo() {
+        guard let key = memoStorageKey else { memoText = ""; return }
+        memoText = UserDefaults.standard.string(forKey: key) ?? ""
+    }
+
+    private func saveMemo() {
+        guard let key = memoStorageKey else { return }
+        let trimmed = memoText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            UserDefaults.standard.removeObject(forKey: key)
+            memoText = ""
+        } else {
+            UserDefaults.standard.set(memoText, forKey: key)
+        }
     }
 }
 
