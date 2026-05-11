@@ -238,41 +238,61 @@ struct HomeView: View {
                     }
                 }
 
-                StackBlocksView(count: total)
-                    .frame(height: 72)
+                if total == 0 {
+                    // 빈 상태 — 빈 그리드 대신 정돈된 일러스트 표시
+                    HStack(spacing: AppSpace.m) {
+                        Image(systemName: "square.stack.3d.up")
+                            .font(.system(size: 36, weight: .light))
+                            .foregroundStyle(AppColor.accent.opacity(0.85))
+                            .symbolEffect(.pulse, options: .repeating)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("첫 스택을 시작해 보세요")
+                                .font(AppFont.bodyEmphasis)
+                                .foregroundStyle(AppColor.textPrimary)
+                            Text("판례를 스캔하면 여기에 한 칸씩 쌓여요")
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.vertical, AppSpace.s)
+                } else {
+                    StackBlocksView(count: total)
+                        .frame(height: 72)
 
-                // 다음 마일스톤까지의 미니 진행 바
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(milestoneLabel)
-                            .font(AppFont.caption)
-                            .foregroundStyle(AppColor.textSecondary)
-                        Spacer()
-                        if total > 0 && total < 100 {
-                            Text("\(Int(progressToNext * 100))%")
-                                .font(AppFont.captionEmphasis)
-                                .foregroundStyle(AppColor.accent)
-                                .contentTransition(.numericText())
-                                .animation(.easeOut(duration: 0.4), value: total)
+                    // 다음 마일스톤까지의 미니 진행 바
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(milestoneLabel)
+                                .font(AppFont.caption)
+                                .foregroundStyle(AppColor.textSecondary)
+                            Spacer()
+                            if total < 100 {
+                                Text("\(Int(progressToNext * 100))%")
+                                    .font(AppFont.captionEmphasis)
+                                    .foregroundStyle(AppColor.accent)
+                                    .contentTransition(.numericText())
+                                    .animation(.easeOut(duration: 0.4), value: total)
+                            }
                         }
-                    }
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(AppColor.surfaceElevated)
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [AppColor.accent, AppColor.warning],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(AppColor.surfaceElevated)
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [AppColor.accent, AppColor.warning],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
                                     )
-                                )
-                                .frame(width: geo.size.width * progressToNext)
-                                .animation(.spring(response: 0.6, dampingFraction: 0.75), value: total)
+                                    .frame(width: geo.size.width * progressToNext)
+                                    .animation(.spring(response: 0.6, dampingFraction: 0.75), value: total)
+                            }
                         }
+                        .frame(height: 6)
                     }
-                    .frame(height: 6)
                 }
             }
         }
