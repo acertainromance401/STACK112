@@ -83,7 +83,7 @@ struct HomeView: View {
                 Text("STACK112")
                     .font(AppFont.tag)
                     .foregroundStyle(AppColor.accent)
-                Text("공부 한 켠, 가볍게 쌓아두기")
+                Text("공부는 당신이,\n기록은 우리가.")
                     .font(AppFont.displayTitle)
                     .foregroundStyle(AppColor.textPrimary)
             }
