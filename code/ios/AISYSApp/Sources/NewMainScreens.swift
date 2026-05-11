@@ -49,6 +49,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: AppSpace.l) {
                 header
                 dDayCard
+                stackGaugeCard
                 todayProgressCard
                 quickActionsRow
                 if !weakSubjects.isEmpty { weakAreasCard }
@@ -199,6 +200,82 @@ struct HomeView: View {
         .padding(.vertical, 2)
         .background(AppColor.surfaceElevated)
         .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    // MARK: - STACK 게이지 카드
+    //
+    // 판례 스캔 누적 개수에 따라 블록이 한 칸씩 차오르는 시각적 메타포.
+    // - 한 칸 = 5건  (5건마다 새 층이 쌓임)
+    // - 한 행 = 10칸 = 50건
+    // - 골드 액센트 + 살짝 굴절(rotation)로 진짜 종이/책 더미 느낌
+    // - count 변화 시 spring 애니메이션으로 블록이 위로 솟는 효과
+    private var stackGaugeCard: some View {
+        let total = scannedCases.count
+        let nextMilestone = ((total / 10) + 1) * 10           // 다음 마일스톤
+        let progressToNext = Double(total % 10) / 10.0        // 다음 마일스톤까지 %
+        let milestoneLabel: String = {
+            if total == 0 { return "첫 스택을 시작해 보세요" }
+            if total >= 100 { return "100건 돌파! 든든히 쌓였어요" }
+            return "\(nextMilestone)건까지 \(nextMilestone - total)건 남음"
+        }()
+
+        return AppCard {
+            VStack(alignment: .leading, spacing: AppSpace.m) {
+                HStack(alignment: .firstTextBaseline) {
+                    SectionHeader(title: "내 스택")
+                    Spacer()
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text("\(total)")
+                            .font(AppFont.metricNumber.monospacedDigit())
+                            .foregroundStyle(AppColor.accent)
+                            .contentTransition(.numericText(value: Double(total)))
+                            .animation(.spring(response: 0.45, dampingFraction: 0.7), value: total)
+                        Text("건")
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
+                    }
+                }
+
+                StackBlocksView(count: total)
+                    .frame(height: 96)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppSpace.s)
+
+                // 다음 마일스톤까지의 미니 진행 바
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(milestoneLabel)
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
+                        Spacer()
+                        if total > 0 && total < 100 {
+                            Text("\(Int(progressToNext * 100))%")
+                                .font(AppFont.captionEmphasis)
+                                .foregroundStyle(AppColor.accent)
+                                .contentTransition(.numericText())
+                                .animation(.easeOut(duration: 0.4), value: total)
+                        }
+                    }
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(AppColor.surfaceElevated)
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [AppColor.accent, AppColor.warning],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: geo.size.width * progressToNext)
+                                .animation(.spring(response: 0.6, dampingFraction: 0.75), value: total)
+                        }
+                    }
+                    .frame(height: 6)
+                }
+            }
+        }
     }
 
     private var todayProgressCard: some View {
@@ -1350,6 +1427,138 @@ struct SettingsSheet: View {
         studyStore.dDayDate = dDayDateInput
         if let v = Int(goalInput), v > 0 { studyStore.dailyGoalQuestions = v }
         dismiss()
+    }
+}
+
+// MARK: - STACK 블록 시각화
+//
+// 판례 누적 개수에 따라 직사각 블록들이 아래에서 위로 쌓이는 컴포넌트.
+// - 한 칸 = 5건, 한 행 최대 10칸, 최대 4행 = 200건까지 시각화
+// - 200건 초과분은 "+N" 라벨로 표시
+// - 종이 더미 느낌을 주기 위해 각 블록을 살짝 어긋나게 회전(0.5~2°) 배치
+// - 누적이 늘면 새 블록이 위에서 spring 으로 떨어지는 듯한 애니메이션
+private struct StackBlocksView: View {
+    let count: Int
+
+    /// 한 블록당 표현하는 건수
+    private let perBlock: Int = 5
+    /// 한 행당 최대 블록 수
+    private let columns: Int = 10
+    /// 최대 행 수 (= 200건까지 시각화)
+    private let maxRows: Int = 4
+
+    /// 표시해야 할 총 블록 개수
+    private var filledBlocks: Int {
+        let raw = count / perBlock
+        return min(raw, columns * maxRows)
+    }
+    /// 가장 위 블록의 부분 진행률(0.0~1.0). 마지막 블록이 차오르는 듯한 효과.
+    private var topBlockProgress: Double {
+        let partial = count % perBlock
+        return partial == 0 ? 0 : Double(partial) / Double(perBlock)
+    }
+    /// 200건 초과 잉여분
+    private var overflow: Int {
+        max(0, count - columns * maxRows * perBlock)
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let gap: CGFloat = 4
+            let blockWidth = (geo.size.width - gap * CGFloat(columns - 1)) / CGFloat(columns)
+            let blockHeight = (geo.size.height - gap * CGFloat(maxRows - 1)) / CGFloat(maxRows)
+
+            ZStack(alignment: .bottomLeading) {
+                ForEach(0..<columns * maxRows, id: \.self) { idx in
+                    let col = idx % columns
+                    let row = idx / columns                       // 0 = 가장 아래
+                    let isFilled = idx < filledBlocks
+                    let isTopOfStack = idx == filledBlocks && topBlockProgress > 0
+
+                    block(
+                        width: blockWidth,
+                        height: blockHeight,
+                        isFilled: isFilled,
+                        partialFill: isTopOfStack ? topBlockProgress : (isFilled ? 1.0 : 0.0),
+                        wobble: wobbleAngle(idx)
+                    )
+                    .offset(
+                        x: CGFloat(col) * (blockWidth + gap),
+                        y: -CGFloat(row) * (blockHeight + gap)
+                    )
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .opacity
+                        )
+                    )
+                    .animation(
+                        .spring(response: 0.55, dampingFraction: 0.7)
+                            .delay(Double(idx) * 0.015),
+                        value: filledBlocks
+                    )
+                }
+
+                // 200건 초과 라벨
+                if overflow > 0 {
+                    Text("+\(overflow)")
+                        .font(AppFont.captionEmphasis)
+                        .foregroundStyle(AppColor.accent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(AppColor.background)
+                        .clipShape(Capsule())
+                        .offset(x: geo.size.width - 50, y: -geo.size.height + 16)
+                }
+            }
+        }
+    }
+
+    /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 골드 그라데이션.
+    @ViewBuilder
+    private func block(width: CGFloat, height: CGFloat, isFilled: Bool, partialFill: Double, wobble: Double) -> some View {
+        ZStack(alignment: .bottom) {
+            // 빈 슬롯
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .strokeBorder(AppColor.border.opacity(0.35), lineWidth: 1)
+                .background(
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(AppColor.surfaceElevated.opacity(0.4))
+                )
+
+            if isFilled || partialFill > 0 {
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                AppColor.accent,
+                                AppColor.accent.opacity(0.7)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(height: max(2, height * CGFloat(partialFill)))
+                    .overlay(
+                        // 종이 한 장의 가로선 느낌
+                        Rectangle()
+                            .fill(AppColor.background.opacity(0.18))
+                            .frame(height: 0.5)
+                            .padding(.horizontal, 2),
+                        alignment: .top
+                    )
+            }
+        }
+        .frame(width: width, height: height)
+        .rotationEffect(.degrees(wobble))
+        .shadow(color: isFilled ? AppColor.accent.opacity(0.18) : .clear, radius: 1.5, x: 0, y: 0.5)
+    }
+
+    /// 결정적(deterministic) 살짝 어긋남. 동일 인덱스는 항상 같은 각도 → 떨림 없음.
+    private func wobbleAngle(_ idx: Int) -> Double {
+        let seed = (idx * 9301 + 49297) % 233280
+        let normalized = Double(seed) / 233280.0   // 0.0~1.0
+        return (normalized - 0.5) * 3.0            // -1.5° ~ +1.5°
     }
 }
 
