@@ -201,82 +201,93 @@ struct CaseSummaryView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: AppSpace.m) {
                 if let resolved = viewModel.displayDetail ?? detail {
 
                     // ── 제목 ──────────────────────────────────────
                     Text(resolved.title)
-                        .font(.title2.bold())
+                        .font(AppFont.title)
+                        .foregroundStyle(AppColor.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(viewModel.isUsingFallbackEngine
-                             ? "LLM 엔진: \(viewModel.activeEngineName) fallback"
-                             : "LLM 엔진: \(viewModel.activeEngineName)")
-                            .font(.caption.bold())
-                            .foregroundStyle(viewModel.isUsingFallbackEngine ? .orange : .green)
-
-                        Toggle(
-                            "Documents 모델 무시",
-                            isOn: Binding(
-                                get: { viewModel.ignoreDocumentsModel },
-                                set: { newValue in
-                                    Task { await viewModel.setIgnoreDocumentsModel(newValue) }
-                                }
+                    // ── 엔진 정보 (접힌 상태가 기본) ──────────────
+                    DisclosureGroup {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Toggle(
+                                "Documents 모델 무시",
+                                isOn: Binding(
+                                    get: { viewModel.ignoreDocumentsModel },
+                                    set: { newValue in
+                                        Task { await viewModel.setIgnoreDocumentsModel(newValue) }
+                                    }
+                                )
                             )
-                        )
-                        .font(.caption)
+                            .font(AppFont.caption)
+                            .tint(AppColor.accent)
 
-                        if let source = viewModel.selectedModelSource, !source.isEmpty {
-                            Text("선택 소스: \(source)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                            if let source = viewModel.selectedModelSource, !source.isEmpty {
+                                Text("선택 소스: \(source)")
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                            }
+                            if let reason = viewModel.modelSelectionReason, !reason.isEmpty {
+                                Text("선택 기준: \(reason)")
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            if let message = viewModel.llmLoadMessage, !message.isEmpty {
+                                Text(message)
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            if let selectedPath = viewModel.selectedModelPath, !selectedPath.isEmpty {
+                                Text("사용 경로: \(selectedPath)")
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            if let bundlePath = viewModel.bundleModelPath, !bundlePath.isEmpty {
+                                Text("Bundle: \(bundlePath)")
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            if let documentsPath = viewModel.documentsModelPath, !documentsPath.isEmpty {
+                                Text("Documents: \(documentsPath)")
+                                    .font(AppFont.tag)
+                                    .foregroundStyle(AppColor.textTertiary)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
-
-                        if let reason = viewModel.modelSelectionReason, !reason.isEmpty {
-                            Text("선택 기준: \(reason)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        if let message = viewModel.llmLoadMessage, !message.isEmpty {
-                            Text(message)
+                        .padding(.top, 6)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: viewModel.isUsingFallbackEngine ? "exclamationmark.triangle.fill" : "cpu.fill")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
+                            Text(viewModel.isUsingFallbackEngine
+                                 ? "LLM: \(viewModel.activeEngineName) (fallback)"
+                                 : "LLM: \(viewModel.activeEngineName)")
+                                .font(AppFont.tag)
                         }
-
-                        if let selectedPath = viewModel.selectedModelPath, !selectedPath.isEmpty {
-                            Text("사용 경로: \(selectedPath)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        if let bundlePath = viewModel.bundleModelPath, !bundlePath.isEmpty {
-                            Text("Bundle 경로: \(bundlePath)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        if let documentsPath = viewModel.documentsModelPath, !documentsPath.isEmpty {
-                            Text("Documents 경로: \(documentsPath)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                        .foregroundStyle(viewModel.isUsingFallbackEngine ? AppColor.warning : AppColor.success)
                     }
+                    .tint(AppColor.textSecondary)
+                    .padding(AppSpace.m)
+                    .background(AppColor.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
 
                     // ── LLM 추론 상태 ──────────────────────────────
                     if viewModel.isSummarizing {
                         HStack(spacing: 8) {
-                            ProgressView()
+                            ProgressView().tint(AppColor.accent)
                             Text("판례를 분석하는 중...")
-                                .font(.subheadline).foregroundStyle(.secondary)
+                                .font(AppFont.body)
+                                .foregroundStyle(AppColor.textSecondary)
                         }
                     }
 
@@ -284,30 +295,30 @@ struct CaseSummaryView: View {
                     StudyNoteCard(
                         label: "한 줄 요약",
                         content: viewModel.summary?.oneLineSummary ?? resolved.issue,
-                        accentColor: .blue
+                        accentColor: AppColor.accent
                     )
                     StudyNoteCard(
                         label: "핵심 쟁점",
                         content: viewModel.summary?.keyIssue ?? resolved.issue,
-                        accentColor: .orange
+                        accentColor: AppColor.warning
                     )
                     StudyNoteCard(
                         label: "판결 결론",
                         content: viewModel.summary?.rulingPoint ?? resolved.conclusion,
-                        accentColor: .teal
+                        accentColor: AppColor.success
                     )
                     StudyNoteCard(
                         label: "시험 포인트",
                         content: viewModel.summary?.examTakeaway ?? resolved.examPoint,
-                        accentColor: .purple
+                        accentColor: AppColor.info
                     )
 
                     // IR 키워드 태그
                     if !viewModel.irKeywords.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("추출 키워드")
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
+                                .font(AppFont.tag)
+                                .foregroundStyle(AppColor.textSecondary)
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack {
                                     ForEach(viewModel.irKeywords, id: \.self) { kw in
@@ -321,25 +332,26 @@ struct CaseSummaryView: View {
                     if !viewModel.irStudyFocus.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("학습 가이드")
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
+                                .font(AppFont.tag)
+                                .foregroundStyle(AppColor.textSecondary)
                             HStack(spacing: 6) {
                                 Image(systemName: localizedDomainIcon)
                                     .font(.caption)
                                     .foregroundStyle(localizedDomainAccent)
                                 Text(localizedDomainLabel)
-                                    .font(.caption.bold())
+                                    .font(AppFont.tag)
                                     .foregroundStyle(localizedDomainAccent)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(localizedDomainAccent.opacity(0.14))
+                                    .background(localizedDomainAccent.opacity(0.18))
                                     .clipShape(Capsule())
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
                                 ForEach(Array(viewModel.irStudyFocus.enumerated()), id: \.offset) { idx, item in
                                     Text("\(idx + 1). \(item)")
-                                        .font(.subheadline)
+                                        .font(AppFont.body)
+                                        .foregroundStyle(AppColor.textPrimary)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
@@ -350,27 +362,30 @@ struct CaseSummaryView: View {
                                 Label("이 가이드로 OX 생성", systemImage: "bolt.circle")
                             }
                             .buttonStyle(.bordered)
-                            .tint(.indigo)
+                            .tint(AppColor.accent)
                             .disabled(viewModel.isSummarizing || viewModel.isGeneratingOXQuiz)
                         }
-                        .padding(12)
+                        .padding(AppSpace.m)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(AppColor.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
                     }
 
                     if let err = viewModel.errorMessage {
-                        Text(err).foregroundStyle(.red).font(.caption)
+                        Text(err)
+                            .foregroundStyle(AppColor.danger)
+                            .font(AppFont.caption)
                     }
 
-                    Divider()
+                    Divider().background(AppColor.separator)
 
                     // ── OX 퀴즈 버튼 ───────────────────────────────
                     if viewModel.isGeneratingOXQuiz {
                         HStack(spacing: 8) {
-                            ProgressView()
+                            ProgressView().tint(AppColor.accent)
                             Text("OX 퀴즈를 생성하는 중...")
-                                .font(.subheadline).foregroundStyle(.secondary)
+                                .font(AppFont.body)
+                                .foregroundStyle(AppColor.textSecondary)
                         }
                     } else {
                         Button {
@@ -382,7 +397,8 @@ struct CaseSummaryView: View {
                             )
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.indigo)
+                        .tint(AppColor.accent)
+                        .foregroundStyle(AppColor.background)
                         .disabled(viewModel.isSummarizing)
                     }
 
@@ -401,27 +417,28 @@ struct CaseSummaryView: View {
                             Label("OX 퀴즈 풀기 (\(viewModel.oxQuizItems.count)문항)", systemImage: "arrow.right.circle")
                         }
                         .buttonStyle(.bordered)
-                        .tint(.indigo)
+                        .tint(AppColor.accent)
                     }
 
-                    Divider()
+                    Divider().background(AppColor.separator)
 
                     // 유사 판례
                     VStack(alignment: .leading, spacing: 10) {
                         Text("유사 판례")
-                            .font(.title3.bold())
+                            .font(AppFont.sectionHeader)
+                            .foregroundStyle(AppColor.textPrimary)
 
                         if viewModel.isLoadingSimilarCases {
                             HStack(spacing: 8) {
-                                ProgressView()
+                                ProgressView().tint(AppColor.accent)
                                 Text("유사 판례를 찾는 중...")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(AppFont.body)
+                                    .foregroundStyle(AppColor.textSecondary)
                             }
                         } else if viewModel.similarCases.isEmpty {
                             Text("유사 판례를 찾지 못했습니다.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .font(AppFont.body)
+                                .foregroundStyle(AppColor.textSecondary)
                         } else {
                             ForEach(viewModel.similarCases) { similar in
                                 NavigationLink {
@@ -440,9 +457,11 @@ struct CaseSummaryView: View {
                     }
                 }
             }
-            .padding()
+            .padding(AppSpace.l)
         }
+        .withAppBackground()
         .navigationTitle("판례 요약")
+        .navigationBarTitleDisplayMode(.inline)
         .withSmallBackButton()
         .task {
             if let c = apiCase {
@@ -489,17 +508,17 @@ struct CaseSummaryView: View {
     private var localizedDomainAccent: Color {
         switch viewModel.irDomain {
         case "criminal_law":
-            return .orange
+            return AppColor.warning
         case "criminal_procedure_evidence":
-            return .teal
+            return AppColor.success
         case "criminal_procedure_investigation":
-            return .indigo
+            return AppColor.info
         case "constitutional_law":
-            return .red
+            return AppColor.danger
         case "police_committees":
-            return .mint
+            return AppColor.accent
         default:
-            return .secondary
+            return AppColor.textSecondary
         }
     }
 }
@@ -514,23 +533,24 @@ private struct StudyNoteCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.caption.bold())
+                .font(AppFont.tag)
                 .foregroundStyle(accentColor)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(accentColor.opacity(0.12))
+                .background(accentColor.opacity(0.18))
                 .clipShape(Capsule())
             Text(content)
-                .font(.subheadline)
+                .font(AppFont.body)
+                .foregroundStyle(AppColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(14)
+        .padding(AppSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .background(AppColor.surface)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(accentColor.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppRadius.m)
+                .stroke(accentColor.opacity(0.35), lineWidth: 1)
         )
     }
 }
@@ -556,23 +576,23 @@ struct OXQuizView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("OX 퀴즈")
-                    .font(.largeTitle.bold())
+            VStack(alignment: .leading, spacing: AppSpace.l) {
                 Text(caseTitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(AppFont.caption)
+                    .foregroundStyle(AppColor.textSecondary)
 
                 if finished {
                     // ── 결과 화면 ──────────────────────────────────
                     VStack(spacing: 12) {
                         Image(systemName: correctCount == items.count ? "star.fill" : "checkmark.seal")
                             .font(.system(size: 52))
-                            .foregroundStyle(correctCount == items.count ? .yellow : .teal)
+                            .foregroundStyle(correctCount == items.count ? AppColor.accent : AppColor.success)
                         Text("\(items.count)문항 중 \(correctCount)개 정답")
-                            .font(.title2.bold())
+                            .font(AppFont.title)
+                            .foregroundStyle(AppColor.textPrimary)
                         Text(correctCount == items.count ? "완벽합니다!" : "틀린 문항을 다시 확인해보세요.")
-                            .foregroundStyle(.secondary)
+                            .font(AppFont.body)
+                            .foregroundStyle(AppColor.textSecondary)
                         Button("처음부터 다시") {
                             currentIndex = 0
                             selectedAnswer = nil
@@ -581,6 +601,8 @@ struct OXQuizView: View {
                             finished = false
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(AppColor.accent)
+                        .foregroundStyle(AppColor.background)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 40)
@@ -588,28 +610,30 @@ struct OXQuizView: View {
                 } else if let q = current {
                     // ── 진행 바 ────────────────────────────────────
                     ProgressView(value: Double(currentIndex), total: Double(items.count))
-                        .tint(.indigo)
+                        .tint(AppColor.accent)
                     Text("문항 \(currentIndex + 1) / \(items.count)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
 
                     // ── 진술 ───────────────────────────────────────
                     Text(q.statement)
-                        .font(.headline)
+                        .font(AppFont.bodyEmphasis)
+                        .foregroundStyle(AppColor.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(16)
+                        .padding(AppSpace.m)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .background(AppColor.surface)
+                        .overlay(RoundedRectangle(cornerRadius: AppRadius.m).stroke(AppColor.separator, lineWidth: 0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
 
                     // ── O / X 버튼 ────────────────────────────────
                     HStack(spacing: 24) {
-                        OXButton(label: "O", color: .teal, selected: selectedAnswer == true) {
+                        OXButton(label: "O", color: AppColor.success, selected: selectedAnswer == true) {
                             guard !showResult else { return }
                             selectedAnswer = true
                             commitAnswer(question: q, chosenAnswer: true)
                         }
-                        OXButton(label: "X", color: .red, selected: selectedAnswer == false) {
+                        OXButton(label: "X", color: AppColor.danger, selected: selectedAnswer == false) {
                             guard !showResult else { return }
                             selectedAnswer = false
                             commitAnswer(question: q, chosenAnswer: false)
@@ -622,27 +646,31 @@ struct OXQuizView: View {
                         let isCorrect = chosen == q.answer
                         VStack(alignment: .leading, spacing: 8) {
                             Text(isCorrect ? "정답입니다" : "오답입니다")
-                                .font(.headline)
-                                .foregroundStyle(isCorrect ? .teal : .red)
+                                .font(AppFont.sectionHeader)
+                                .foregroundStyle(isCorrect ? AppColor.success : AppColor.danger)
                             Text(q.explanation)
-                                .font(.subheadline)
+                                .font(AppFont.body)
+                                .foregroundStyle(AppColor.textPrimary)
                         }
-                        .padding(14)
+                        .padding(AppSpace.m)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(AppColor.surfaceElevated)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
 
                         Button(currentIndex + 1 < items.count ? "다음 문항" : "결과 보기") {
                             advance()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.indigo)
+                        .tint(AppColor.accent)
+                        .foregroundStyle(AppColor.background)
                     }
                 }
             }
-            .padding()
+            .padding(AppSpace.l)
         }
+        .withAppBackground()
         .navigationTitle("OX 퀴즈")
+        .navigationBarTitleDisplayMode(.inline)
         .withSmallBackButton()
     }
 
@@ -1081,27 +1109,29 @@ private struct SearchResultCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.blue)
+                .font(AppFont.tag)
+                .foregroundStyle(AppColor.accent)
             Text(title)
-                .font(.headline)
+                .font(AppFont.bodyEmphasis)
+                .foregroundStyle(AppColor.textPrimary)
             Text(summary)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(AppFont.caption)
+                .foregroundStyle(AppColor.textSecondary)
             HStack {
                 ForEach(tags, id: \.self) { tag in
                     TagView(text: tag)
                 }
                 Spacer()
-                Text("상세보기")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.blue)
+                Text("상세보기 →")
+                    .font(AppFont.captionEmphasis)
+                    .foregroundStyle(AppColor.accent)
             }
         }
-        .padding()
+        .padding(AppSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(AppColor.surface)
+        .overlay(RoundedRectangle(cornerRadius: AppRadius.m).stroke(AppColor.separator, lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
     }
 }
 
@@ -1110,10 +1140,11 @@ private struct TagView: View {
 
     var body: some View {
         Text(text)
-            .font(.caption.bold())
+            .font(AppFont.tag)
+            .foregroundStyle(AppColor.accent)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color.blue.opacity(0.12))
+            .background(AppColor.accentSoft)
             .clipShape(Capsule())
     }
 }
@@ -1137,37 +1168,37 @@ struct WeakOXListView: View {
     var body: some View {
         let records = filteredRecords
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("자주 틀린 OX")
-                    .font(.largeTitle.bold())
+            VStack(alignment: .leading, spacing: AppSpace.m) {
                 Text(subjectLabel)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(AppFont.caption)
+                    .foregroundStyle(AppColor.textSecondary)
 
                 if records.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "checkmark.seal")
                             .font(.system(size: 48))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(AppColor.success)
                         Text("이 영역의 오답 기록이 없습니다.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(AppFont.body)
+                            .foregroundStyle(AppColor.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 40)
                 } else {
                     Text("총 \(records.count)건의 오답을 한 번 더 점검하세요.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
 
                     ForEach(records) { rec in
                         WrongOXCard(record: rec)
                     }
                 }
             }
-            .padding()
+            .padding(AppSpace.l)
         }
+        .withAppBackground()
         .navigationTitle("자주 틀린 OX")
+        .navigationBarTitleDisplayMode(.inline)
         .withSmallBackButton()
     }
 
@@ -1189,35 +1220,37 @@ private struct WrongOXCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Text(record.caseNumber)
-                    .font(.caption.bold())
-                    .foregroundStyle(.blue)
+                    .font(AppFont.tag)
+                    .foregroundStyle(AppColor.accent)
                 Spacer()
                 Text(record.solvedAt)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(AppFont.tag)
+                    .foregroundStyle(AppColor.textTertiary)
             }
             Text(record.question)
-                .font(.subheadline)
+                .font(AppFont.body)
+                .foregroundStyle(AppColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 12) {
                 Label("내 답: \(record.userAnswer)", systemImage: "person.fill.questionmark")
-                    .font(.caption)
-                    .foregroundStyle(.red)
+                    .font(AppFont.captionEmphasis)
+                    .foregroundStyle(AppColor.danger)
                 Label("정답: \(record.correctAnswer)", systemImage: "checkmark.seal.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green)
+                    .font(AppFont.captionEmphasis)
+                    .foregroundStyle(AppColor.success)
             }
             if !record.explanation.isEmpty {
                 Text(record.explanation)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(AppFont.caption)
+                    .foregroundStyle(AppColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(14)
+        .padding(AppSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(AppColor.surface)
+        .overlay(RoundedRectangle(cornerRadius: AppRadius.m).stroke(AppColor.separator, lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
     }
 }
 

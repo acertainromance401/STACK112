@@ -27,6 +27,8 @@ enum AppColor {
     static let successSoft = Color(red: 0.314, green: 0.671, blue: 0.435, opacity: 0.18)
     static let info = Color(red: 0.310, green: 0.561, blue: 0.882)              // #4F8FE1
     static let infoSoft = Color(red: 0.310, green: 0.561, blue: 0.882, opacity: 0.18)
+    static let warning = Color(red: 0.929, green: 0.604, blue: 0.220)           // #ED9A38
+    static let warningSoft = Color(red: 0.929, green: 0.604, blue: 0.220, opacity: 0.18)
 
     // 경계선
     static let separator = Color(red: 0.157, green: 0.220, blue: 0.318, opacity: 0.6)
