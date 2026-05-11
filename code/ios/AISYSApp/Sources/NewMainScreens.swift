@@ -220,13 +220,15 @@ struct HomeView: View {
         }()
 
         return AppCard {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
+            VStack(alignment: .leading, spacing: AppSpace.l) {
                 HStack(alignment: .firstTextBaseline) {
-                    SectionHeader(title: "내 스택")
+                    Text("내 스택")
+                        .font(AppFont.sectionHeader)
+                        .foregroundStyle(AppColor.textPrimary)
                     Spacer()
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
                         Text("\(total)")
-                            .font(AppFont.metricNumber.monospacedDigit())
+                            .font(AppFont.title.monospacedDigit())
                             .foregroundStyle(AppColor.accent)
                             .contentTransition(.numericText(value: Double(total)))
                             .animation(.spring(response: 0.45, dampingFraction: 0.7), value: total)
@@ -237,9 +239,7 @@ struct HomeView: View {
                 }
 
                 StackBlocksView(count: total)
-                    .frame(height: 96)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AppSpace.s)
+                    .frame(height: 72)
 
                 // 다음 마일스톤까지의 미니 진행 바
                 VStack(alignment: .leading, spacing: 6) {
