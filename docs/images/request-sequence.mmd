@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor User as 사용자 (병진)
+    participant OCR as OCRView<br/>(iOS)
+    participant Search as SearchView<br/>(iOS)
+    participant Net as NetworkService<br/>(iOS)
+    participant API as FastAPI<br/>백엔드
+    participant DB as PostgreSQL
+    participant LLM as LLMService<br/>(온디바이스)
+
+    User->>OCR: 문제 지문 사진 선택
+    OCR->>OCR: Vision OCR 텍스트 추출
+    OCR->>Search: pendingSearchQuery 전달
+
+    Search->>Net: searchCases(query)
+    Net->>API: GET /search?q={query}
+    API->>DB: cases + case_keywords ILIKE 매칭
+    DB-->>API: 판례 목록 반환
+    API-->>Net: JSON 응답
+    Net-->>Search: [APICase] 결과 표시
+
+    User->>Search: 판례 카드 선택
+    Search->>Net: fetchCase(caseNumber)
+    Net->>API: GET /cases/{caseNumber}
+    API->>DB: 판례 상세 조회
+    DB-->>API: CaseItem 반환
+    API-->>Net: JSON 응답
+    Net-->>Search: CaseSummaryView 진입
+
+    Search->>LLM: summarize(caseItem)
+    Note over LLM: LlamaCppEngine<br/>또는 RuleBasedEngine(폴백)
+    LLM-->>Search: LLMSummary (요약 카드 표시)
+
+    User->>Search: 퀴즈 생성 버튼 탭
+    Search->>LLM: generateQuiz(caseItem, summary)
+    LLM-->>Search: QuizQuestion 반환
+    Search-->>User: 객관식 퀴즈 표시
+
+    User->>Search: 오답 제출
+    Search->>DB: user_case_history 저장 (오답 기록)
+    DB-->>Search: 저장 완료
+    Search-->>User: 해설 + 복습 안내

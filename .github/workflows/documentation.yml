@@ -1,0 +1,53 @@
+name: Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'Project_Descriptions/**'
+      - 'code/**/*.md'
+      - '.github/workflows/documentation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'README.md'
+      - 'Project_Descriptions/**'
+      - 'code/**/*.md'
+      - '.github/workflows/documentation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check-docs:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check README exists
+        run: |
+          if [ ! -f README.md ]; then
+            echo "README.md is missing"
+            exit 1
+          fi
+
+      - name: Check markdown syntax
+        uses: nosborn/github-action-markdown-cli@v3.3.0
+        with:
+          files: .
+          config_file: .markdownlint.json
+
+      - name: Verify Project Descriptions
+        run: |
+          required_docs=("PRD_AI_SYS.md" "Technology_Stack_AI_SYS.md" "WBS_AI_SYS.md")
+          for doc in "${required_docs[@]}"; do
+            if [ ! -f "Project_Descriptions/$doc" ]; then
+              echo "Missing: Project_Descriptions/$doc"
+              exit 1
+            fi
+          done
+          echo "✓ All required documentation present"

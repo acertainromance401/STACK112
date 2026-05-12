@@ -1,0 +1,4 @@
+graph TD
+    DB[(db: pgvector/pgvector:pg17)] --> API[api: FastAPI]
+    API --> USER[Browser / Client]
+    INIT1[schema.sql] --> DB

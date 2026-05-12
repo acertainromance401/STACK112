@@ -1,0 +1,2 @@
+-- AI_SYS PostgreSQL seed data
+-- Intentionally empty: dummy/sample seed data removed.

@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant U as 사용자
+    participant A as FastAPI
+    participant D as PostgreSQL
+
+    U->>A: GET /search?q=위법수집증거
+    A->>D: published + keyword 조건 조회
+    D-->>A: 판례 결과 반환
+    A-->>U: JSON 응답 반환
