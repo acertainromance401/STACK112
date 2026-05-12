@@ -15,11 +15,27 @@ import Foundation
 ///   - `cleanSinglePass(_:)`: 이미 결합된 텍스트(paste 포함) 단일 입력. 페이지 간 처리는 생략하고 라인 단위 정제만.
 enum OCRTextCleaner {
 
+    private struct PageChunk {
+        var originalIndex: Int
+        var lines: [String]
+        var titleScore: Int
+        var sectionScore: Int
+    }
+
     /// 여러 사진의 OCR 결과를 하나의 텍스트로 안전하게 결합한다.
-    /// 사진 순서는 보존하되, 페이지 간 stitch / dedupe / 헤더 제거를 수행.
+    /// 사진 순서는 기본적으로 보존하되, 제목/메타 페이지가 뒤에 붙은 경우는 앞쪽으로 재배치한 뒤
+    /// 페이지 간 stitch / dedupe / 헤더 제거를 수행한다.
     static func mergePages(_ pages: [String]) -> String {
         // 1) 페이지별로 라인 정제 후 의미 라인만 남긴다.
-        let cleanedPages: [[String]] = pages.map { rawLines(in: $0).filter { !isNoiseLine($0) } }
+        let chunks = reorderPagesIfNeeded(pages.enumerated().map { idx, page in
+            PageChunk(
+                originalIndex: idx,
+                lines: rawLines(in: page).filter { !isNoiseLine($0) },
+                titleScore: 0,
+                sectionScore: 0
+            )
+        })
+        let cleanedPages = chunks.map { $0.lines }.filter { !$0.isEmpty }
         guard !cleanedPages.isEmpty else { return "" }
 
         // 2) cross-page 중복 라인 인덱스 결정 — 동일 라인이 ≥2 페이지에 등장하면 헤더/푸터로 보고 모두 제거하지 않고,
@@ -99,6 +115,68 @@ enum OCRTextCleaner {
         text.components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+    }
+
+    /// 사용자가 제목 페이지를 마지막에 선택해도 본문 앞에 오도록 보정한다.
+    ///
+    /// 강한 제목 페이지 신호:
+    /// - 법원 + 선고일 + 사건번호/전원합의체
+    /// - `[모해위증]`, `〈...사건〉` 같은 제목/사건 설명 블록
+    /// - 반대로 `【판시사항】`, `【판결요지】` 등 섹션 헤더가 많으면 본문 페이지로 본다.
+    ///
+    /// 정책:
+    /// - 기본은 원래 순서 유지
+    /// - 첫 페이지가 강한 제목 페이지가 아닌데, 뒤쪽에 강한 제목 페이지가 있으면
+    ///   그 페이지들만 앞쪽으로 stable move
+    private static func reorderPagesIfNeeded(_ chunks: [PageChunk]) -> [PageChunk] {
+        let scored = chunks.map { chunk -> PageChunk in
+            var updated = chunk
+            updated.titleScore = computeTitleScore(lines: chunk.lines)
+            updated.sectionScore = computeSectionScore(lines: chunk.lines)
+            return updated
+        }
+        guard !scored.isEmpty else { return chunks }
+
+        let first = scored[0]
+        let firstIsStrongTitle = first.titleScore >= 6 && first.sectionScore <= 1
+        if firstIsStrongTitle { return scored }
+
+        let promoted = scored.filter { $0.titleScore >= 6 && $0.sectionScore <= 1 }
+        guard !promoted.isEmpty else { return scored }
+
+        let promotedIndexes = Set(promoted.map(\.originalIndex))
+        let remainder = scored.filter { !promotedIndexes.contains($0.originalIndex) }
+        return promoted + remainder
+    }
+
+    private static func computeTitleScore(lines: [String]) -> Int {
+        var score = 0
+        for line in lines {
+            if line.range(of: #"(대법원|헌법재판소|고등법원|지방법원).*(선고|결정)"#, options: .regularExpression) != nil {
+                score += 4
+            }
+            if line.range(of: #"\d{2,4}\s*[가-힣]{1,3}\s*\d+"#, options: .regularExpression) != nil {
+                score += 3
+            }
+            if line.contains("전원합의체") { score += 2 }
+            if line.range(of: #"^\[\s*[가-힣·]{2,20}\s*\]$"#, options: .regularExpression) != nil {
+                score += 2
+            }
+            if line.range(of: #"^[〈<].{4,80}사건[〉>]$"#, options: .regularExpression) != nil {
+                score += 2
+            }
+        }
+        return score
+    }
+
+    private static func computeSectionScore(lines: [String]) -> Int {
+        var score = 0
+        for line in lines {
+            if line.range(of: #"(판시사항|판결요지|결정요지|참조조문|참조판례|전문|이유|주문)"#, options: .regularExpression) != nil {
+                score += 1
+            }
+        }
+        return score
     }
 
     /// dedupe 비교용 normalize — 모든 공백 제거 + 소문자화.

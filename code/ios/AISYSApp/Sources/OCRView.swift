@@ -75,10 +75,15 @@ struct OCRView: View {
                         Label("첨부 가이드", systemImage: "lightbulb")
                             .font(.caption.bold())
                             .foregroundStyle(.indigo)
+                        Text("• 권장 순서 — 제목/선고일이 보이는 첫 화면 → 판시사항 → 판결요지")
+                            .font(.caption2)
                         Text("• 가장 좋음 — 판시사항 + 판결요지")
                             .font(.caption2)
                         Text("• 도움됨 — 참조조문 · 참조판례")
                             .font(.caption2)
+                        Text("• 순서가 뒤집혀도 제목 페이지는 앞쪽으로 재배치하려고 시도합니다")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                         Text("• 보조 — 이유 본문 일부 (없어도 동작)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -621,17 +626,9 @@ struct OCRView: View {
             digest.caseNumber = String(rawText[r]).replacingOccurrences(of: " ", with: "")
         }
 
-        // 2) 사건명: 첫 번째 [...] 대괄호 안 내용 (공백 압축)
-        if let r = rawText.range(of: #"\[[^\]]{2,40}\]"#, options: .regularExpression) {
-            var subj = String(rawText[r])
-            subj = subj.replacingOccurrences(of: "[", with: "")
-            subj = subj.replacingOccurrences(of: "]", with: "")
-            subj = subj.replacingOccurrences(of: " ", with: "")
-            // 잡음(공YYYY 같은 출처 표기) 제외
-            if !subj.hasPrefix("공") && !subj.hasPrefix("미간행") {
-                digest.caseSubject = subj
-            }
-        }
+        // 2) 사건명: 첫 번째 대괄호를 그대로 쓰지 않는다.
+        //    제목 페이지가 뒤에 오거나 판결요지[다수의견]이 먼저 보이면 "다수의견 사건"이 되어버리기 때문.
+        digest.caseSubject = extractPreferredCaseSubject(from: rawText)
 
         // 3) 법원명
         if let r = rawText.range(of: #"(대법원|헌법재판소|고등법원|지방법원|행정법원|가정법원|특허법원)"#, options: .regularExpression) {
@@ -852,6 +849,56 @@ struct OCRView: View {
     /// 사용자가 입력한 문자열이 사건번호 형태인지 판별 (예: "2024다311181", "2022헌마123")
     private func looksLikeCaseNumber(_ s: String) -> Bool {
         return s.range(of: #"^\d{2,4}\s*[가-힣]{1,3}\s*\d+$"#, options: .regularExpression) != nil
+    }
+
+    /// 제목 페이지/메타 블록에서 사건명을 우선 추출한다.
+    ///
+    /// 우선순위:
+    /// 1) `[모해위증]` 같은 짧은 사건명 bracket
+    /// 2) `〈...사건〉` 설명 블록에서 사건명 부분
+    /// 3) `... 사건` 형태 제목 라인
+    ///
+    /// 제외:
+    /// - `[다수의견]`, `[판시사항]`, `[판결요지]`, `[공2026상,1010]` 등 의견/섹션/출처 라벨
+    private func extractPreferredCaseSubject(from rawText: String) -> String {
+        let blacklist: Set<String> = [
+            "판시사항", "판결요지", "결정요지", "참조조문", "참조판례", "전문",
+            "다수의견", "반대의견", "보충의견", "별개의견"
+        ]
+
+        func cleanSubject(_ value: String) -> String {
+            value
+                .replacingOccurrences(of: #"^[\[\]〈〉<>\s]+|[\[\]〈〉<>\s]+$"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        }
+
+        let ns = rawText as NSString
+        if let regex = try? NSRegularExpression(pattern: #"(?:\[([^\]]{2,30})\]|〈([^〉]{2,80})〉|<([^>]{2,80})>)"#) {
+            let matches = regex.matches(in: rawText, range: NSRange(location: 0, length: ns.length))
+            for match in matches {
+                for index in 1..<match.numberOfRanges {
+                    guard match.range(at: index).location != NSNotFound else { continue }
+                    let raw = ns.substring(with: match.range(at: index))
+                    let candidate = cleanSubject(raw)
+                    guard candidate.count >= 2, candidate.count <= 40 else { continue }
+                    if blacklist.contains(candidate) { continue }
+                    if candidate.hasPrefix("공") || candidate.hasPrefix("미간행") { continue }
+                    if candidate.range(of: #"^\d{4}.*\d+$"#, options: .regularExpression) != nil { continue }
+                    if candidate.contains("사건") {
+                        return candidate.replacingOccurrences(of: #"^.*?(?=([가-힣·]{2,20}사건))"#, with: "", options: .regularExpression)
+                    }
+                    if candidate.hasSuffix("죄") || candidate.contains("위증") || candidate.contains("사기") || candidate.contains("강도") || candidate.contains("절도") {
+                        return candidate
+                    }
+                }
+            }
+        }
+
+        if let titleRange = rawText.range(of: #"([가-힣·]{2,20})\s*사건"#, options: .regularExpression) {
+            let title = String(rawText[titleRange]).replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+            if !title.isEmpty { return title }
+        }
+        return ""
     }
 
     /// OCR 키워드/쟁점 문장에서 의미 있는 "○○ 사건" 형태 사건명을 합성한다.
