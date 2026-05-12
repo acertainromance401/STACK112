@@ -685,8 +685,10 @@ struct OCRView: View {
         let majority = parsed.holdings.first(where: { $0.opinion == .majority })
                     ?? parsed.holdings.first(where: { $0.opinion == .unspecified })
         if let m = majority {
-            // 다수의견 원문 첫 문장을 그대로 사용 — "관련 쟁점이 적극적으로 인정되었다" 같은 합성 금지
-            digest.holdingSentence = JudgmentParser.firstSentence(m.text, limit: 200)
+            // 다수의견 본문에서 결론 종결형 문장을 우선 선택.
+            // 첫 문장만 자르면 사실관계 서술이 결론 자리에 들어가 "다는 성폭력범죄..." 처럼 잘리는 문제 발생.
+            // 한국 판례 결론은 보통 본문 마지막에 위치한 "...한다 / ...있다 / ...해당한다 / ...충족한다" 종결문.
+            digest.holdingSentence = JudgmentParser.pickConclusionSentence(from: m.text, limit: 220)
         } else if parsed.issues.count > 1,
                   let issue2 = parsed.issues.last,
                   let conclusion = JudgmentParser.extractConclusionFromIssue2(issue2) {

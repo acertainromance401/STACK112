@@ -1653,7 +1653,55 @@ final class LLMService: ObservableObject {
             break
         }
 
+        // (신규) 두 문장이 합쳐진 statement 가드 — 한 OX 문항에는 한 문장만.
+        // "...여부(적극) 피고인이 ... 입금하면." 처럼 두 줄이 머지되어 들어온 경우 첫 결론부 이후 제거.
+        cleaned = cropToSingleStatement(cleaned)
+
         return String(cleaned.prefix(88))
+    }
+
+    /// 한 OX 진술에 두 문장 이상이 합쳐졌으면 결론부 한 문장만 살린다.
+    /// 우선순위:
+    ///   1) 평서문 종결 동사(`...한다.`, `...있다.`, `...없다.`, `...된다.` 등)에서 끊기
+    ///   2) "...여부(적극/소극)" 같은 polarity 마커 직후에서 끊기
+    ///   3) 첫 마침표 또는 줄바꿈에서 끊기 (마침표가 너무 빨리 나오면 무시)
+    private func cropToSingleStatement(_ text: String) -> String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return t }
+        // 줄바꿈은 무조건 분리 신호
+        if let nl = t.firstIndex(where: { $0 == "\n" }) {
+            let head = String(t[..<nl]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if head.count >= 12 { return head }
+        }
+        // polarity 마커 직후가 문장 끝이면 거기서 자른다
+        let polarityMarkers = ["(적극)", "(소극)", "(한정 적극)", "(한정적극)", "(한정 소극)", "(한정소극)"]
+        for marker in polarityMarkers {
+            if let r = t.range(of: marker) {
+                let after = String(t[r.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !after.isEmpty {
+                    let head = String(t[..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if head.count >= 12 { return head }
+                }
+            }
+        }
+        // 평서문 종결 + 그 뒤 추가 텍스트가 있으면 종결 위치까지만 사용
+        let terminalPatterns = [
+            "한다.", "된다.", "있다.", "없다.", "해당한다.", "성립한다.",
+            "충족한다.", "위법하다.", "정당하다.", "인정된다.", "허용된다.",
+            "적법하다.", "위반된다.", "적용된다.", "한 사례.", "사례."
+        ]
+        for pat in terminalPatterns {
+            if let r = t.range(of: pat) {
+                // 종결 다음에 추가 텍스트가 있으면 거기까지만 살린다
+                let endIdx = r.upperBound
+                let tail = String(t[endIdx...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !tail.isEmpty {
+                    let head = String(t[..<endIdx]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if head.count >= 14 { return head }
+                }
+            }
+        }
+        return t
     }
 
     /// 쟁점 제목/사건 라벨 라인인지 판정 — OX 단정 진술로 부적합.

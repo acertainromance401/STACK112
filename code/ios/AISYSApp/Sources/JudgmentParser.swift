@@ -363,6 +363,76 @@ enum JudgmentParser {
         return String(t.prefix(limit)) + "…"
     }
 
+    /// 판결요지(다수의견) 본문에서 결론 종결형 문장을 우선 선택.
+    /// 한국 판례 결론 패턴:
+    ///   - 형사: "...상고를 기각한다 / 원심을 파기한다 / 파기환송한다"
+    ///   - 판결요지 마지막: "...구성요건을 충족한다 / 해당한다 / 성립한다 / 인정된다 / 위법하다"
+    ///   - 판시사항형: "...법리오해의 잘못이 있다 / 위법하다 / 정당하다 / 한 사례"
+    /// 본문이 사실관계 서술("피고인은 ...하였다")로 시작해 첫 문장만 잘라내면 결론이 안 나오는
+    /// 문제를 회피하기 위해 모든 문장을 split 한 뒤 결론 종결 동사를 갖는 문장을 우선 채택한다.
+    static func pickConclusionSentence(from text: String, limit: Int = 220) -> String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return "" }
+        let sentences = splitIntoSentences(t)
+        guard !sentences.isEmpty else { return firstSentence(t, limit: limit) }
+
+        // 1) 결론 종결 동사로 끝나는 마지막 문장을 우선 선택 (마지막일수록 결론에 가까움)
+        let strongConclusionSuffixes = [
+            "한다.", "기각한다.", "파기한다.", "파기환송한다.", "파기자판한다.",
+            "충족한다.", "해당한다.", "성립한다.", "인정된다.", "위법하다.", "정당하다.",
+            "법리오해의 잘못이 있다.", "잘못이 있다.", "한 사례.", "사례.",
+            "해당하지 아니한다.", "성립하지 아니한다.", "위법하지 않다.", "타당하다.",
+            "허용되지 아니한다.", "허용된다.", "적법하다.", "위반된다.", "적용된다.",
+            "있다.", "없다.", "된다.", "않는다."
+        ]
+        if let conclusion = sentences.reversed().first(where: { sent in
+            strongConclusionSuffixes.contains(where: { sent.hasSuffix($0) })
+        }) {
+            return clampSentence(conclusion, limit: limit)
+        }
+
+        // 2) 마지막 문장이 일반 평서문이면 사용
+        if let last = sentences.last, last.hasSuffix(".") || last.hasSuffix("다") {
+            return clampSentence(last, limit: limit)
+        }
+
+        // 3) 폴백 — 첫 문장
+        return firstSentence(t, limit: limit)
+    }
+
+    /// 한국어 본문을 문장 단위로 split. 인용부호/괄호 안의 마침표는 건드리지 않는다.
+    /// 문장은 마침표(`.`) 다음 공백/줄바꿈 또는 본문 끝으로 구분.
+    static func splitIntoSentences(_ text: String) -> [String] {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return [] }
+        var sentences: [String] = []
+        var current = ""
+        var inQuote = false
+        for ch in t {
+            current.append(ch)
+            if ch == "\"" || ch == "‘" || ch == "’" || ch == "“" || ch == "”" || ch == "'" {
+                inQuote.toggle()
+            }
+            if ch == "." && !inQuote {
+                let trimmed = current.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.count >= 10 {
+                    sentences.append(trimmed)
+                    current = ""
+                }
+            }
+        }
+        let tail = current.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !tail.isEmpty { sentences.append(tail) }
+        return sentences
+    }
+
+    /// 한 문장을 한도 내로 자르되, 마지막 마침표는 보존.
+    private static func clampSentence(_ s: String, limit: Int) -> String {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.count <= limit { return t.hasSuffix(".") ? t : t + "." }
+        return String(t.prefix(limit)) + "…"
+    }
+
     /// 판시사항 [2]가 "...사안에서, ... 한 사례." 패턴이면 "사례" 절만 도출.
     /// 판결요지가 누락된 paste 입력에서도 결론 카드를 명확하게 채우기 위함.
     /// 예) "피고인이 …으로 기소된 사안에서, 피고인이 … 해당하여 같은 법 제13조의 구성요건을 충족한다는 이유로,
