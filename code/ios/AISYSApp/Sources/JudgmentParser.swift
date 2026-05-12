@@ -57,10 +57,21 @@ enum JudgmentParser {
         let sections = splitSections(raw)
 
         // 2) 판시사항 → 항목 분리 + 적극/소극 추출
+        //    같은 [N] 안에 ` / ` 로 구분된 sub-쟁점이 있으면 별도 issue 로 분리.
         if let issuesBody = sections["판시사항"], !issuesBody.isEmpty {
             let items = splitNumberedItems(issuesBody)
-            result.issues = items.map { cleanWhitespace($0) }
-            result.polarities = items.map { detectPolarity($0) }
+            var allIssues: [String] = []
+            var allPolarities: [ParsedJudgment.Polarity] = []
+            for raw in items {
+                let cleaned = cleanWhitespace(raw)
+                let subs = splitSlashClauses(cleaned)
+                for s in subs {
+                    allIssues.append(s)
+                    allPolarities.append(detectPolarity(s))
+                }
+            }
+            result.issues = allIssues
+            result.polarities = allPolarities
         }
 
         // 3) 판결요지 → 항목별/의견별 분리
@@ -207,7 +218,13 @@ enum JudgmentParser {
         "국가공무원법", "지방공무원법", "경찰관 직무집행법", "경찰법",
         "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",
         "도로교통법", "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
-        "공직선거법", "국가보안법", "변호사법", "새마을금고법"
+        "공직선거법", "국가보안법", "변호사법", "새마을금고법",
+        // 특별 형사법 — portal.scourt.go.kr 본문에 등장하는 띄어쓰기/축약 형태 포함
+        "성폭력범죄의 처벌 등에 관한 특례법", "성폭력범죄의처벌등에관한특례법", "성폭력처벌법",
+        "아동·청소년의 성보호에 관한 법률", "아동청소년의 성보호에 관한 법률", "청소년성보호법",
+        "마약류 관리에 관한 법률", "마약류관리에관한법률",
+        "스토킹범죄의 처벌 등에 관한 법률", "교통사고처리 특례법",
+        "폭력행위 등 처벌에 관한 법률", "개인정보 보호법"
     ]
 
     private static func extractActNames(from text: String) -> [String] {
@@ -245,6 +262,23 @@ enum JudgmentParser {
         t = t.replacingOccurrences(of: #"[ \t]+"#, with: " ", options: .regularExpression)
         t = t.replacingOccurrences(of: #"\n{2,}"#, with: "\n", options: .regularExpression)
         return t.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 판시사항 한 항목 안에서 ` / ` 로 구분된 sub-쟁점을 분리.
+    /// - 양옆에 공백이 있는 슬래시만 분리 기준 (분수/URL 보호).
+    /// - 각 절은 최소 6자 이상이어야 분할.
+    private static func splitSlashClauses(_ text: String) -> [String] {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+        // 공백을 양옆에 두는 " / " 패턴
+        let parts = trimmed.components(separatedBy: " / ")
+        if parts.count < 2 { return [trimmed] }
+        var out: [String] = []
+        for raw in parts {
+            let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if s.count >= 6 { out.append(s) }
+        }
+        return out.isEmpty ? [trimmed] : out
     }
 
     // MARK: - 의문형 → 평서형 변환

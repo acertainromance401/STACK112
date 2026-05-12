@@ -90,7 +90,20 @@ enum LocalIRPipeline {
             case "민법", "민사소송법", "상법":           return "civil_law"
             case "행정소송법", "행정심판법", "행정절차법": return "administrative_law"
             case "경찰관 직무집행법", "경찰법":           return "police_committees"
-            default: continue
+            default: break
+            }
+            // 특별 형사법 — 모두 형법 영역
+            if act.contains("성폭력") || act.contains("특정범죄가중") || act.contains("특정경제범죄")
+                || act.contains("정보통신망") || act.contains("아동·청소년") || act.contains("아동청소년")
+                || act.contains("청소년성보호") || act.contains("마약류") || act.contains("도로교통")
+                || act.contains("교통사고처리") || act.contains("폭력행위 등 처벌") || act.contains("스토킹")
+                || act.contains("공직선거법") || act.contains("국가보안법") {
+                return "criminal_law"
+            }
+            // 행정 영역 특별법
+            if act.contains("국가공무원법") || act.contains("지방공무원법") || act.contains("개인정보 보호법")
+                || act.contains("정보공개") {
+                return "administrative_law"
             }
         }
         // 헌법만 단독으로 있을 때만 헌법 도메인

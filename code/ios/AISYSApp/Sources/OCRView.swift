@@ -279,7 +279,9 @@ struct OCRView: View {
 
         // 판결문 구조 파싱 — 판시사항/판결요지/참조조문이 있으면 구조 정보로 분석을 압도적으로 개선.
         // 섹션이 없으면 빈 결과로 떨어져 기존 본문 휴리스틱이 그대로 동작.
-        let parsed = JudgmentParser.parse(recognizedText)
+        // OCR/페이스트 띄어쓰기 깨짐("송금메 모")을 보정해 의문형 변환과 마커 매칭이 정확하도록 normalize 적용.
+        let parserInput = LocalIRPipeline.normalize(recognizedText)
+        let parsed = JudgmentParser.parse(parserInput)
 
         // 구조 인식 시: keySentences/키워드를 판시사항+판결요지[다수의견]으로 재구성.
         // - 판시사항: 사건의 쟁점(질문) 자체. 분류·검색 키로 가장 가치가 높다.
@@ -666,17 +668,24 @@ struct OCRView: View {
 
         // 6) 쟁점/결론 — 파싱 결과가 있으면 의문형(...여부(적극))을 평서문으로 변환해서 사용.
         //    그래야 카드 표시와 OX 퀴즈 모두 의미가 명확해진다.
+        //    같은 [N] 안에 `/`로 묶인 sub-쟁점들 중 polarity(적극/소극) 표시가 있는 절을 우선 선택.
         if !parsed.issues.isEmpty {
-            let firstIssue = parsed.issues[0]
-            let polarity = parsed.polarities.first ?? .unknown
-            let declarative = JudgmentParser.declarativeStatement(issue: firstIssue, polarity: polarity)
-            digest.issueSentence = declarative.isEmpty ? trimToOneSentence(firstIssue) : declarative
+            let primaryIdx = parsed.polarities.firstIndex(where: { $0 != .unknown }) ?? 0
+            let primaryIssue = parsed.issues[primaryIdx]
+            let polarity = primaryIdx < parsed.polarities.count ? parsed.polarities[primaryIdx] : .unknown
+            let declarative = JudgmentParser.declarativeStatement(issue: primaryIssue, polarity: polarity)
+            digest.issueSentence = declarative.isEmpty ? trimToOneSentence(primaryIssue) : declarative
         }
         let majority = parsed.holdings.first(where: { $0.opinion == .majority })
                     ?? parsed.holdings.first(where: { $0.opinion == .unspecified })
         if let m = majority {
             // 다수의견 원문 첫 문장을 그대로 사용 — "관련 쟁점이 적극적으로 인정되었다" 같은 합성 금지
             digest.holdingSentence = JudgmentParser.firstSentence(m.text, limit: 200)
+        } else if parsed.issues.count > 1,
+                  let conclusionIssue = parsed.issues.reversed().first(where: { isConclusionStyleIssue($0) }) {
+            // 판결요지를 못 잡았더라도 판시사항 [2]가 "...법리오해의 잘못이 있다고 한 사례." 처럼
+            // 결론 서술형이면 그것을 결론 카드 텍스트로 사용 (fallback의 엉뚱한 문장 노출 방지).
+            digest.holdingSentence = JudgmentParser.firstSentence(conclusionIssue, limit: 220)
         }
 
         // 7) 폴백: 파싱이 없거나 비었으면 기존 휴리스틱
@@ -703,11 +712,35 @@ struct OCRView: View {
             if act == "민사소송법" || act == "민법" || act == "상법" { return ("civil_procedure", "민사") }
             if act == "행정소송법" || act == "행정심판법" || act == "행정절차법" { return ("administrative_law", "행정법") }
             if act == "경찰관 직무집행법" || act == "경찰법" { return ("police_committees", "경찰") }
+            // 특별 형사법 — 모두 형법 영역으로 분류 (헌법 fallback 차단)
+            if act.contains("성폭력") || act.contains("특정범죄가중") || act.contains("정보통신망")
+                || act.contains("아동·청소년") || act.contains("아동청소년") || act.contains("마약류")
+                || act.contains("도로교통법") || act.contains("교통사고처리") || act.contains("폭력행위 등 처벌")
+                || act.contains("특정경제범죄") || act.contains("스토킹") {
+                return ("criminal_law", "형법")
+            }
+            // 행정 영역 특별법
+            if act.contains("국가공무원법") || act.contains("지방공무원법") || act.contains("국세기본법")
+                || act.contains("정보공개") || act.contains("개인정보 보호법") {
+                return ("administrative_law", "행정법")
+            }
             if act == "헌법" { continue } // 헌법은 다른 법령과 함께면 부수적, 단독일 때만 헌법으로
         }
         if acts == ["헌법"] { return ("constitutional_law", "헌법") }
         if acts.first == "헌법" && acts.count == 1 { return ("constitutional_law", "헌법") }
         return nil
+    }
+
+    /// 판시사항 항목 텍스트가 결론 서술형(`...사례`, `...잘못이 있다`, `...법리오해` 등)인지 판정.
+    /// 판결요지를 못 잡은 경우 결론 카드의 폴백 소스로 쓰인다.
+    private func isConclusionStyleIssue(_ s: String) -> Bool {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.hasSuffix("사례") || t.hasSuffix("사례.") { return true }
+        if t.contains("법리오해의 잘못이 있다") { return true }
+        if t.contains("원심판결에") && t.contains("잘못이 있다") { return true }
+        if t.contains("구성요건을 충족한다") { return true }
+        if t.contains("파기환송한") || t.contains("상고를 기각한") { return true }
+        return false
     }
 
     /// 너무 긴 문단을 한 문장으로 자른다 (마침표·물음표 첫 등장 기준, 최소 30자).
