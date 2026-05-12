@@ -277,8 +277,41 @@ struct OCRView: View {
         // IR API 키워드에도 시간/장소 표기를 같은 규칙으로 제거 ("00경부터", "08경")
         keywords = sanitizeKeywords(keywords)
 
+        // 판결문 구조 파싱 — 판시사항/판결요지/참조조문이 있으면 구조 정보로 분석을 압도적으로 개선.
+        // 섹션이 없으면 빈 결과로 떨어져 기존 본문 휴리스틱이 그대로 동작.
+        let parsed = JudgmentParser.parse(recognizedText)
+
+        // 구조 인식 시: keySentences/키워드를 판시사항+판결요지[다수의견]으로 재구성.
+        // - 판시사항: 사건의 쟁점(질문) 자체. 분류·검색 키로 가장 가치가 높다.
+        // - 판결요지[다수의견]: 사건의 결론(답). 다른 의견은 노이즈가 되므로 분리.
+        if parsed.hasStructure {
+            var pieces: [String] = []
+            if !parsed.issues.isEmpty {
+                pieces.append(parsed.issues.joined(separator: " "))
+            }
+            let majorityHoldings = parsed.holdings.filter { $0.opinion == .majority || $0.opinion == .unspecified }
+            if !majorityHoldings.isEmpty {
+                pieces.append(majorityHoldings.map { $0.text }.joined(separator: " "))
+            }
+            let condensed = pieces.joined(separator: " ")
+            if !condensed.isEmpty {
+                keySentences = condensed
+            }
+            // 참조조문에서 법령명을 키워드 상위로 끌어올린다 — 도메인 판단의 결정적 신호.
+            if !parsed.statuteActs.isEmpty {
+                var merged = parsed.statuteActs
+                for k in keywords where !merged.contains(k) { merged.append(k) }
+                keywords = merged
+            }
+        }
+
         // 학습카드 품질을 위해 OCR 텍스트에서 사건 정보(번호·사건명·도메인·쟁점·결론)를 분리 추출
-        let digest = extractCaseDigest(rawText: recognizedText, keySentences: keySentences, keywords: keywords)
+        let digest = extractCaseDigest(
+            rawText: recognizedText,
+            keySentences: keySentences,
+            keywords: keywords,
+            parsed: parsed
+        )
 
         // 사건번호/사건명 결정: 사용자 입력 > [···] 박타이틀 > 자동 생성(키워드 기반) > 자동 식별자
         // 사용자 입력은 메모용 식별자(예: "2024다311181")로만 쓰고, 실제 표시 이름은 판례 내용을 반영한 자동 이름 우선
@@ -347,9 +380,15 @@ struct OCRView: View {
 
         // 1B Llama 분류 트리로 "과목 > 카테고리 > 세부유형" 경로 산출
         // 결과는 subject 필드 prefix로 주입 (실패 시 기존 subject 유지)
-        let classifyText = [digest.issueSentence, digest.holdingSentence, keySentences]
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
+        // 구조 파싱이 됐다면 판시사항만 사용 — 본문에 산발적으로 등장하는 다른 법령 언급에 휘둘리지 않게.
+        let classifyText: String
+        if parsed.hasStructure, !parsed.issues.isEmpty {
+            classifyText = parsed.issues.joined(separator: " ")
+        } else {
+            classifyText = [digest.issueSentence, digest.holdingSentence, keySentences]
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+        }
         let taxonomyPath = await summaryViewModel.classifyByTaxonomy(text: classifyText)
         let finalCase: APICase
         if !taxonomyPath.isEmpty {
@@ -558,15 +597,15 @@ struct OCRView: View {
 
     /// 도메인 후보와 키워드 매핑. 점수가 가장 높은 항목을 도메인으로 채택한다.
     private static let domainKeywordMap: [(domain: String, label: String, hints: [String])] = [
-        ("criminal_law", "형법", ["고의", "과실", "정당방위", "긴급피난", "구성요건", "공범", "정범", "교사범", "방조범", "절도", "강도", "사기", "횡령", "배임", "상해", "폭행", "살인", "강간", "협박", "감금", "주거침입", "재물", "유죄", "무죄"]),
-        ("criminal_procedure_evidence", "형소법", ["영장", "체포", "구속", "압수", "수색", "검증", "긴급체포", "현행범", "공소", "기소", "공판", "증거능력", "위법수집증거", "전문법칙", "탄핵증거", "자백배제법칙", "임의수사", "강제수사"]),
+        ("criminal_law", "형법", ["고의", "과실", "정당방위", "긴급피난", "구성요건", "공범", "공동피고인", "공동정범", "정범", "교사범", "방조범", "위증", "모해위증", "증인적격", "위증죄", "절도", "강도", "사기", "횡령", "배임", "상해", "폭행", "살인", "강간", "협박", "감금", "주거침입", "재물", "유죄", "무죄"]),
+        ("criminal_procedure_evidence", "형소법", ["영장", "체포", "구속", "압수", "수색", "검증", "긴급체포", "현행범", "공소", "기소", "공판", "증거능력", "위법수집증거", "전문법칙", "탄핵증거", "자백배제법칙", "임의수사", "강제수사", "진술거부권", "자기부죄"]),
         ("constitutional_law", "헌법", ["기본권", "평등권", "자유권", "참정권", "위헌", "합헌", "한정위헌", "헌법불합치", "과잉금지", "비례원칙", "본질적", "최소침해", "법익균형성", "수단적합성"]),
         ("administrative_law", "행정법", ["행정처분", "재량", "기속", "재량권", "비례원칙", "신뢰보호", "취소소송", "무효확인", "처분", "행정행위", "공법상", "행정청"]),
         ("police_committees", "경찰위", ["경찰위원회", "국가경찰위원회", "시도자치경찰위원회", "위원장", "부위원장", "의결정족수", "재적위원", "표결권", "직무대행"]),
         ("civil_procedure", "민사", ["가압류", "가처분", "담보공탁", "담보취소", "권리행사최고", "공탁금", "손해배상", "소송비용", "소송요건", "기판력", "재심", "강제집행"]),
     ]
 
-    private func extractCaseDigest(rawText: String, keySentences: String, keywords: [String]) -> CaseDigest {
+    private func extractCaseDigest(rawText: String, keySentences: String, keywords: [String], parsed: ParsedJudgment) -> CaseDigest {
         var digest = CaseDigest(caseNumber: "", caseSubject: "", court: "", date: "",
                                 domain: "general_legal", domainLabel: "", issueSentence: "", holdingSentence: "")
 
@@ -597,33 +636,86 @@ struct OCRView: View {
             digest.date = String(rawText[r]).replacingOccurrences(of: " ", with: "")
         }
 
-        // 5) 도메인 — 키워드 + 본문 동시 매칭, 가산점 합산
-        let lowerText = rawText
-        var bestScore = 0
-        for entry in OCRView.domainKeywordMap {
-            var score = 0
-            for hint in entry.hints {
-                if lowerText.contains(hint) { score += 1 }
-                if keywords.contains(where: { $0.contains(hint) || hint.contains($0) }) { score += 1 }
+        // 5) 도메인 결정
+        //    우선순위 1: 참조조문에서 추출된 법령명 (가장 결정적인 신호)
+        //    우선순위 2: 판시사항 텍스트에 한정해 키워드 매칭 (본문 산발 언급 무시)
+        //    우선순위 3: 기존 전체 본문 키워드 매칭 (폴백)
+        if let (dom, lab) = domainFromActs(parsed.statuteActs) {
+            digest.domain = dom
+            digest.domainLabel = lab
+        } else {
+            let scoringText = parsed.issues.isEmpty ? rawText : parsed.issues.joined(separator: " ")
+            var bestScore = 0
+            for entry in OCRView.domainKeywordMap {
+                var score = 0
+                for hint in entry.hints {
+                    if scoringText.contains(hint) { score += 2 }
+                    if keywords.contains(where: { $0.contains(hint) || hint.contains($0) }) { score += 1 }
+                }
+                if score > bestScore {
+                    bestScore = score
+                    digest.domain = entry.domain
+                    digest.domainLabel = entry.label
+                }
             }
-            if score > bestScore {
-                bestScore = score
-                digest.domain = entry.domain
-                digest.domainLabel = entry.label
+            if bestScore < 2 {
+                digest.domain = "general_legal"
+                digest.domainLabel = "일반"
             }
-        }
-        if bestScore < 2 {
-            digest.domain = "general_legal"
-            digest.domainLabel = "일반"
         }
 
-        // 6) 쟁점 문장 / 결론 문장 추출
-        let sentences = collectCandidateSentences(rawText: rawText, keySentences: keySentences)
-        digest.issueSentence = pickIssueSentence(from: sentences) ?? "쟁점 정보를 OCR에서 추출하지 못했다."
-        digest.holdingSentence = pickHoldingSentence(from: sentences, issueSentence: digest.issueSentence)
-            ?? "결론을 OCR에서 추출하지 못했다. 원문을 확인하라."
+        // 6) 쟁점/결론 — 파싱 결과가 있으면 그대로 사용 (시작이 잘리지 않도록)
+        if !parsed.issues.isEmpty {
+            digest.issueSentence = trimToOneSentence(parsed.issues.first ?? "")
+        }
+        let majority = parsed.holdings.first(where: { $0.opinion == .majority })
+                    ?? parsed.holdings.first(where: { $0.opinion == .unspecified })
+        if let m = majority {
+            digest.holdingSentence = trimToOneSentence(m.text)
+        }
+
+        // 7) 폴백: 파싱이 없거나 비었으면 기존 휴리스틱
+        if digest.issueSentence.isEmpty || digest.holdingSentence.isEmpty {
+            let sentences = collectCandidateSentences(rawText: rawText, keySentences: keySentences)
+            if digest.issueSentence.isEmpty {
+                digest.issueSentence = pickIssueSentence(from: sentences) ?? "쟁점 정보를 OCR에서 추출하지 못했다."
+            }
+            if digest.holdingSentence.isEmpty {
+                digest.holdingSentence = pickHoldingSentence(from: sentences, issueSentence: digest.issueSentence)
+                    ?? "결론을 OCR에서 추출하지 못했다. 원문을 확인하라."
+            }
+        }
 
         return digest
+    }
+
+    /// 법령명 → 도메인 매핑 (참조조문이 가장 확실한 도메인 신호)
+    private func domainFromActs(_ acts: [String]) -> (String, String)? {
+        // 첫 번째로 매칭되는 매핑을 사용 — 법령 등장 순서가 곧 본 사건의 핵심 법령 순서
+        for act in acts {
+            if act == "형법" { return ("criminal_law", "형법") }
+            if act == "형사소송법" { return ("criminal_procedure_evidence", "형소법") }
+            if act == "민사소송법" || act == "민법" || act == "상법" { return ("civil_procedure", "민사") }
+            if act == "행정소송법" || act == "행정심판법" || act == "행정절차법" { return ("administrative_law", "행정법") }
+            if act == "경찰관 직무집행법" || act == "경찰법" { return ("police_committees", "경찰") }
+            if act == "헌법" { continue } // 헌법은 다른 법령과 함께면 부수적, 단독일 때만 헌법으로
+        }
+        if acts == ["헌법"] { return ("constitutional_law", "헌법") }
+        if acts.first == "헌법" && acts.count == 1 { return ("constitutional_law", "헌법") }
+        return nil
+    }
+
+    /// 너무 긴 문단을 한 문장으로 자른다 (마침표·물음표 첫 등장 기준, 최소 30자).
+    private func trimToOneSentence(_ s: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return "" }
+        if t.count <= 160 { return t }
+        // 한국어 종결 패턴까지 자르기
+        if let r = t.range(of: #"[.?!](\s|$)"#, options: .regularExpression),
+           t.distance(from: t.startIndex, to: r.lowerBound) >= 30 {
+            return String(t[..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return String(t.prefix(160)) + "…"
     }
 
     /// 사용자가 입력한 문자열이 사건번호 형태인지 판별 (예: "2024다311181", "2022헌마123")
