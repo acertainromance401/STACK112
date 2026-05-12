@@ -23,6 +23,14 @@ enum LocalIRPipeline {
             return APIIRExtractResponse(keywords: [], keySentences: "", domain: "general_legal", studyFocus: [])
         }
 
+        // 1) 판결문 구조 파싱 — 【판시사항】【판결요지】【참조조문】을 인식하면 분석을 그 위에 올린다.
+        //    이 경로가 잡히면 이유(理由) 본문의 잡음(헌법 부수언급, 기본권 등) 영향이 사라진다.
+        let parsed = JudgmentParser.parse(normalized)
+        if parsed.hasStructure {
+            return extractFromParsed(parsed: parsed, fallbackText: normalized, topKeywords: topKeywords, topSentences: topSentences)
+        }
+
+        // 2) 폴백 — 구조가 없으면 기존 본문 휴리스틱.
         let keywords = extractKeyphrases(from: normalized, topN: topKeywords)
         let sentences = extractKeySentences(from: normalized, topN: topSentences)
         let domain = inferDomain(text: normalized, keywords: keywords)
@@ -30,6 +38,69 @@ enum LocalIRPipeline {
 
         return APIIRExtractResponse(keywords: keywords, keySentences: sentences, domain: domain, studyFocus: focus)
     }
+
+    /// 구조 인식 판결문 전용 추출 경로 — 분석 대상 텍스트를 판시사항+판결요지[다수의견]로 한정한다.
+    private static func extractFromParsed(parsed: ParsedJudgment, fallbackText: String, topKeywords: Int, topSentences: Int) -> APIIRExtractResponse {
+        // 분석 대상 = 판시사항 + 판결요지[다수의견|단일]
+        var pieces: [String] = parsed.issues
+        let majority = parsed.holdings.filter { $0.opinion == .majority || $0.opinion == .unspecified }
+        pieces.append(contentsOf: majority.map { $0.text })
+        let analysisCorpus = pieces.joined(separator: "\n")
+
+        // 도메인 — 참조조문 법령명이 가장 결정적인 신호
+        let domain = inferDomainFromParsed(parsed: parsed, analysisCorpus: analysisCorpus)
+
+        // 키워드 — 분석 대상에서만 추출 (이유 본문 잡음 차단)
+        var keywords = extractKeyphrases(from: analysisCorpus.isEmpty ? fallbackText : analysisCorpus, topN: topKeywords)
+
+        // 참조조문 법령명은 상위로 끌어올린다 (시험적 관점에서 가장 중요)
+        for act in parsed.statuteActs.reversed() {
+            keywords.removeAll { $0 == act }
+            keywords.insert(act, at: 0)
+        }
+
+        // 도메인과 무관한 다른 도메인 신호 키워드는 제거 — 형법인데 기본권/과잉금지가 남는 현상 방지
+        keywords = filterOffDomainKeywords(keywords, domain: domain)
+        if keywords.count > topKeywords { keywords = Array(keywords.prefix(topKeywords)) }
+
+        // 핵심 문장 — 판시사항(쟁점) + 다수의견(결론)을 그대로 사용. 잘리지 않게 항목별로 줄바꿈.
+        let issueLines = parsed.issues
+        let holdingLines = majority.map { $0.text }
+        let keySentencesParts = issueLines + holdingLines
+        let keySentences = keySentencesParts.prefix(max(topSentences, 4)).joined(separator: "\n")
+
+        // 학습 포인트 — 도메인에 맞춰 만들되, 첫 줄은 판시사항으로 대체해 본문 문장 노출
+        let focus = buildStudyFocus(domain: domain, keywords: keywords, keySentences: keySentences)
+
+        return APIIRExtractResponse(keywords: keywords, keySentences: keySentences, domain: domain, studyFocus: focus)
+    }
+
+    /// 참조조문(법령명) → 도메인 매핑. 없으면 분석 대상 텍스트로 폴백.
+    private static func inferDomainFromParsed(parsed: ParsedJudgment, analysisCorpus: String) -> String {
+        for act in parsed.statuteActs {
+            switch act {
+            case "형법":                                  return "criminal_law"
+            case "형사소송법":                            return "criminal_procedure_evidence"
+            case "민법", "민사소송법", "상법":           return "civil_law"
+            case "행정소송법", "행정심판법", "행정절차법": return "administrative_law"
+            case "경찰관 직무집행법", "경찰법":           return "police_committees"
+            default: continue
+            }
+        }
+        // 헌법만 단독으로 있을 때만 헌법 도메인
+        if parsed.statuteActs == ["헌법"] { return "constitutional_law" }
+        // 참조조문이 없으면 분석 대상 텍스트로 inferDomain
+        let kws = extractKeyphrases(from: analysisCorpus, topN: 10)
+        return inferDomain(text: analysisCorpus, keywords: kws)
+    }
+
+    /// 도메인 외 키워드 제거 — 형법 사건의 키워드에 헌법 전용 용어가 남지 않도록.
+    private static func filterOffDomainKeywords(_ keywords: [String], domain: String) -> [String] {
+        let constitutionalOnly: Set<String> = ["기본권", "과잉금지", "최소침해", "법익균형", "목적의 정당성", "수단적합성", "위헌", "합헌", "한정위헌", "헌법불합치"]
+        if domain == "constitutional_law" { return keywords }
+        return keywords.filter { !constitutionalOnly.contains($0) }
+    }
+
 
     // MARK: - Normalize
 
@@ -414,6 +485,18 @@ enum LocalIRPipeline {
             return [
                 "10초 분기: 구성요건-위법성-책임 순서로 쟁점 위치 확인",
                 "정당방위/긴급피난, 미수/불능미수처럼 자주 섞이는 쌍을 분리 암기",
+                topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
+            ]
+        case "civil_law":
+            return [
+                "10초 분기: 청구원인-항변-재항변 구조로 쟁점 위치 확인",
+                "요건사실과 입증책임 분담을 먼저 정리하고 결론으로 연결",
+                topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
+            ]
+        case "administrative_law":
+            return [
+                "10초 분기: 처분성-원고적격-협의의 소익 순서로 본안 전 점검",
+                "재량/기속 구분 후 비례·신뢰보호 위반 여부 확인",
                 topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
             ]
         case "police_committees":
