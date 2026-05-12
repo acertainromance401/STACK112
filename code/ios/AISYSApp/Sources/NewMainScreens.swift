@@ -111,7 +111,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 14) {
                 // 상단: 섬션 라벨 + streak 칩 우정렬
                 HStack(alignment: .center) {
-                    Text("시험일까지 D-데이")
+                    Text("시험일까지")
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(1.2)
                         .foregroundStyle(AppColor.textSecondary)
@@ -525,6 +525,11 @@ struct PracticeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpace.l) {
+                Text("문제풀이")
+                    .font(AppFont.displayTitle)
+                Text("스캔한 판례에서 즉석 OX 문제를 풀어 약점을 보강하세요.")
+                    .font(AppFont.caption)
+                    .foregroundStyle(AppColor.textSecondary)
                 header
                 if quiz.isEmpty {
                     emptyCard
@@ -539,8 +544,7 @@ struct PracticeView: View {
             }
             .padding(AppSpace.l)
         }
-        .navigationTitle("문제풀이")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(true)
         .task { if quiz.isEmpty { await loadQuizFromMostRecentScan() } }
         .sheet(isPresented: $showWrongMemoSheet) {
             NavigationStack {
@@ -622,9 +626,17 @@ struct PracticeView: View {
                     .foregroundStyle(AppColor.textSecondary)
                 HStack(spacing: AppSpace.m) {
                     Button("다시 풀기") { restart() }
-                        .buttonStyle(.bordered).tint(AppColor.accent)
+                        .font(AppFont.bodyEmphasis)
+                        .foregroundStyle(AppColor.textPrimary)
+                        .padding(.horizontal, 18).padding(.vertical, 12)
+                        .background(AppColor.surfaceElevated)
+                        .clipShape(Capsule())
                     Button("새 문제 생성") { Task { restart(); await loadQuizFromMostRecentScan() } }
-                        .buttonStyle(.borderedProminent).tint(AppColor.accent)
+                        .font(AppFont.bodyEmphasis)
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 18).padding(.vertical, 12)
+                        .background(AppColor.accent)
+                        .clipShape(Capsule())
                 }
             }
         }
