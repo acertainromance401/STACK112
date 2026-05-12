@@ -362,4 +362,27 @@ enum JudgmentParser {
         }
         return String(t.prefix(limit)) + "…"
     }
+
+    /// 판시사항 [2]가 "...사안에서, ... 한 사례." 패턴이면 "사례" 절만 도출.
+    /// 판결요지가 누락된 paste 입력에서도 결론 카드를 명확하게 채우기 위함.
+    /// 예) "피고인이 …으로 기소된 사안에서, 피고인이 … 해당하여 같은 법 제13조의 구성요건을 충족한다는 이유로,
+    ///       이와 달리 입장을 취한 원심판결에 법리오해의 잘못이 있다고 한 사례."
+    ///   → "피고인이 … 해당하여 같은 법 제13조의 구성요건을 충족한다는 이유로, 이와 달리 입장을 취한 원심판결에 법리오해의 잘못이 있다고 한 사례."
+    static func extractConclusionFromIssue2(_ text: String) -> String? {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return nil }
+        // "사례"에서 끝나는 패턴이 아니면 결론형 아님
+        guard t.hasSuffix("사례") || t.hasSuffix("사례.") else { return nil }
+        // 머리의 "사안에서," 이후 부분만 취한다 — "사안에서,"가 없으면 원문 그대로.
+        var s = t
+        if let r = s.range(of: "사안에서,") {
+            s = String(s[r.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        } else if let r = s.range(of: "사안에서 ") {
+            s = String(s[r.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if !s.hasSuffix(".") { s += "." }
+        // 너무 짧으면 취소 (머리만 잘린 경우)
+        guard s.count >= 20 else { return nil }
+        return s
+    }
 }

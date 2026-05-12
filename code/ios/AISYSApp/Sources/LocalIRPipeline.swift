@@ -108,9 +108,46 @@ enum LocalIRPipeline {
         }
         // 헌법만 단독으로 있을 때만 헌법 도메인
         if parsed.statuteActs == ["헌법"] { return "constitutional_law" }
-        // 참조조문이 없으면 분석 대상 텍스트로 inferDomain
+        // 참조조문이 비었더라도 판시사항/판결요지 본문에 법령명이 직접 등장하면 그것으로 결정.
+        // paste 텍스트에 [참조조문] 섹션이 누락되어도 도메인이 헌법으로 잘못 빠지지 않게 하는 가드.
+        if let inferred = inferDomainFromCorpusLaws(analysisCorpus) {
+            return inferred
+        }
+        // 그 외에는 분석 대상 텍스트로 inferDomain
         let kws = extractKeyphrases(from: analysisCorpus, topN: 10)
         return inferDomain(text: analysisCorpus, keywords: kws)
+    }
+
+    /// 본문(판시사항+판결요지)에 직접 등장하는 법령명을 스캔해 도메인을 결정한다.
+    /// 공백/줄바꿈 깨짐을 고려해 양쪽을 모두 공백 제거 후 비교.
+    private static func inferDomainFromCorpusLaws(_ text: String) -> String? {
+        let stripped = text.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        // 형법 영역 특별법 (긴 이름부터)
+        let criminalNeedles = [
+            "성폭력범죄의처벌등에관한특례법", "성폭력처벌법",
+            "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",
+            "아동·청소년의성보호에관한법률", "아동청소년의성보호에관한법률", "청소년성보호법",
+            "마약류관리에관한법률", "정보통신망이용촉진및정보보호등에관한법률",
+            "스토킹범죄의처벌등에관한법률", "교통사고처리특례법", "폭력행위등처벌에관한법률",
+            "도로교통법", "공직선거법", "국가보안법",
+            "형법"
+        ]
+        for needle in criminalNeedles where stripped.contains(needle.replacingOccurrences(of: " ", with: "")) {
+            return "criminal_law"
+        }
+        if stripped.contains("형사소송법") { return "criminal_procedure_evidence" }
+        if stripped.contains("행정소송법") || stripped.contains("행정심판법")
+            || stripped.contains("행정절차법") || stripped.contains("국가공무원법")
+            || stripped.contains("지방공무원법") || stripped.contains("개인정보보호법") {
+            return "administrative_law"
+        }
+        if stripped.contains("민사소송법") || stripped.contains("민법") || stripped.contains("상법") {
+            return "civil_law"
+        }
+        if stripped.contains("경찰관직무집행법") || stripped.contains("경찰법") {
+            return "police_committees"
+        }
+        return nil
     }
 
     /// 도메인 외 키워드 제거 — 형법 사건의 키워드에 헌법 전용 용어가 남지 않도록.

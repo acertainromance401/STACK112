@@ -640,9 +640,15 @@ struct OCRView: View {
 
         // 5) 도메인 결정
         //    우선순위 1: 참조조문에서 추출된 법령명 (가장 결정적인 신호)
+        //    우선순위 1.5: 판시사항/판결요지 본문에 법령명이 직접 등장하면 그것으로 결정
         //    우선순위 2: 판시사항 텍스트에 한정해 키워드 매칭 (본문 산발 언급 무시)
         //    우선순위 3: 기존 전체 본문 키워드 매칭 (폴백)
         if let (dom, lab) = domainFromActs(parsed.statuteActs) {
+            digest.domain = dom
+            digest.domainLabel = lab
+        } else if let (dom, lab) = domainFromCorpusLaws(parsed.issues.joined(separator: "\n")
+                                                        + "\n"
+                                                        + parsed.holdings.map { $0.text }.joined(separator: "\n")) {
             digest.domain = dom
             digest.domainLabel = lab
         } else {
@@ -682,9 +688,14 @@ struct OCRView: View {
             // 다수의견 원문 첫 문장을 그대로 사용 — "관련 쟁점이 적극적으로 인정되었다" 같은 합성 금지
             digest.holdingSentence = JudgmentParser.firstSentence(m.text, limit: 200)
         } else if parsed.issues.count > 1,
+                  let issue2 = parsed.issues.last,
+                  let conclusion = JudgmentParser.extractConclusionFromIssue2(issue2) {
+            // 판결요지 섹션이 paste에 누락된 경우의 1차 폴백 — 판시사항 [2]가 "…사안에서, … 한 사례." 형태면
+            // "사안에서," 이후 결론부만 추출해서 결론 카드를 채운다 (머리가 200자에서 잘리는 문제 회피).
+            digest.holdingSentence = conclusion
+        } else if parsed.issues.count > 1,
                   let conclusionIssue = parsed.issues.reversed().first(where: { isConclusionStyleIssue($0) }) {
-            // 판결요지를 못 잡았더라도 판시사항 [2]가 "...법리오해의 잘못이 있다고 한 사례." 처럼
-            // 결론 서술형이면 그것을 결론 카드 텍스트로 사용 (fallback의 엉뚱한 문장 노출 방지).
+            // 2차 폴백 — 판시사항 항목 중 결론 서술형이 있으면 그것을 사용
             digest.holdingSentence = JudgmentParser.firstSentence(conclusionIssue, limit: 220)
         }
 
@@ -706,12 +717,21 @@ struct OCRView: View {
             if !digest.issueSentence.isEmpty && !isRawIssueFragment(digest.issueSentence) {
                 digest.holdingSentence = digest.issueSentence
             } else {
-                digest.holdingSentence = "결론을 OCR에서 추출하지 못했다. 원문을 확인하라."
+                digest.holdingSentence = OCRView.holdingMissingNotice
             }
+        }
+        // 결론 추출 자체가 실패해 placeholder가 그대로 들어간 경우 사용자에게 무엇을 추가해야 하는지 안내.
+        if digest.holdingSentence == "결론을 OCR에서 추출하지 못했다. 원문을 확인하라." {
+            digest.holdingSentence = OCRView.holdingMissingNotice
         }
 
         return digest
     }
+
+    /// 결론(다수의견/판결요지)을 추출하지 못한 paste 입력에 대한 안내 문구.
+    /// 사용자가 "어떤 데이터를 더 넣어야 결론 카드가 채워지는지" 즉시 알 수 있게 한다.
+    static let holdingMissingNotice =
+        "판결요지(다수의견) 본문이 입력에 포함되지 않아 결론을 자동 추출하지 못했습니다. 원문에서 【판결요지】 단락을 함께 붙여넣으면 결론 카드가 채워집니다."
 
     /// 법령명 → 도메인 매핑 (참조조문이 가장 확실한 도메인 신호)
     private func domainFromActs(_ acts: [String]) -> (String, String)? {
@@ -751,6 +771,36 @@ struct OCRView: View {
         if t.contains("구성요건을 충족한다") { return true }
         if t.contains("파기환송한") || t.contains("상고를 기각한") { return true }
         return false
+    }
+
+    /// 참조조문 섹션 없이도 본문(판시사항/판결요지)에 법령명이 직접 등장하면 그것으로 도메인 결정.
+    /// 공백/줄바꿈 깨짐을 고려해 양쪽 모두 공백 제거 후 비교.
+    private func domainFromCorpusLaws(_ corpus: String) -> (String, String)? {
+        let stripped = corpus.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        let criminalNeedles = [
+            "성폭력범죄의처벌등에관한특례법", "성폭력처벌법",
+            "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",
+            "아동·청소년의성보호에관한법률", "아동청소년의성보호에관한법률", "청소년성보호법",
+            "마약류관리에관한법률", "정보통신망이용촉진및정보보호등에관한법률",
+            "스토킹범죄의처벌등에관한법률", "교통사고처리특례법", "폭력행위등처벌에관한법률",
+            "도로교통법", "공직선거법", "국가보안법", "형법"
+        ]
+        for needle in criminalNeedles where stripped.contains(needle) {
+            return ("criminal_law", "형법")
+        }
+        if stripped.contains("형사소송법") { return ("criminal_procedure_evidence", "형소법") }
+        if stripped.contains("행정소송법") || stripped.contains("행정심판법")
+            || stripped.contains("행정절차법") || stripped.contains("국가공무원법")
+            || stripped.contains("지방공무원법") || stripped.contains("개인정보보호법") {
+            return ("administrative_law", "행정법")
+        }
+        if stripped.contains("민사소송법") || stripped.contains("민법") || stripped.contains("상법") {
+            return ("civil_procedure", "민사")
+        }
+        if stripped.contains("경찰관직무집행법") || stripped.contains("경찰법") {
+            return ("police_committees", "경찰")
+        }
+        return nil
     }
 
     /// 너무 긴 문단을 한 문장으로 자른다 (마침표·물음표 첫 등장 기준, 최소 30자).

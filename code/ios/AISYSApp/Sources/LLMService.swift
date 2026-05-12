@@ -613,7 +613,9 @@ final class LLMService: ObservableObject {
         // 4) 결론 방향어 추출 — 위법/적법/포함/배제/유죄/무죄 등
         let verdict = extractVerdictPhrase(holdingShort)
 
-        // 5) 조립
+        // 5) 조립 — 판례 요약은 핵심 쟁점 카드와 차별화되어야 한다.
+        //    핵심 쟁점이 이미 한 문장 평서문(`...해당한다.` 등)일 때, 요약에 같은 문장을 다시 노출하면
+        //    두 카드가 사실상 동일해진다. 그래서 요약은 항상 메타 한 줄(도메인+사건명+결론 방향/쟁점 키워드)로 합성한다.
         var parts: [String] = []
         if !domainLabel.isEmpty {
             parts.append("[\(domainLabel)]")
@@ -621,23 +623,62 @@ final class LLMService: ObservableObject {
         if !name.isEmpty {
             parts.append(nameEndsWithEvent ? "\(name)." : "\(name) 사건.")
         }
-        if issueIsDeclarative {
-            // 핵심 쟁점이 이미 한 문장으로 결론을 포함 → 그대로 사용
-            let issueClean = (issueCore.isEmpty ? issueShort : issueCore).trimmingCharacters(in: .whitespacesAndNewlines)
-            parts.append(issueClean.hasSuffix(".") ? issueClean : issueClean + ".")
-        } else if !issueCore.isEmpty {
-            if !verdict.isEmpty {
-                parts.append("\(issueCore)에 관해 \(verdict) 판단한 사례.")
-            } else {
-                parts.append("\(issueCore)\(koreanObjectMarker(issueCore)) 다툰 판례.")
-            }
+        if !verdict.isEmpty && !issueCore.isEmpty {
+            parts.append("\(issueCore)에 관해 \(verdict) 판단한 사례.")
         } else if !verdict.isEmpty {
             parts.append("\(verdict) 판단한 사례.")
+        } else if issueIsDeclarative {
+            // 결론 방향어를 못 뽑았지만 쟁점이 평서문이면 결론을 함축한 짧은 라벨로 합성.
+            // 평서문 그대로 노출하면 핵심 쟁점 카드와 중복되므로, 쟁점에서 핵심 명사구만 뽑아 "...논점 확인 사례." 로 표현.
+            let topic = compactTopicFromDeclarative(issueShort)
+            if !topic.isEmpty {
+                parts.append("\(topic) 논점 확인 사례.")
+            } else {
+                parts.append("핵심 쟁점이 정리된 판례이다.")
+            }
+        } else if !issueCore.isEmpty {
+            parts.append("\(issueCore)\(koreanObjectMarker(issueCore)) 다툰 판례.")
         } else {
             parts.append("핵심 쟁점이 정리된 판례이다.")
         }
         let line = parts.joined(separator: " ")
         return smartTruncateKorean(line, limit: oneLineLimit)
+    }
+
+    /// 평서문 쟁점에서 핵심 명사구만 추출 — 요약 한 줄에 사용.
+    /// 예) "통신매체이용음란죄에서 '통신매체'의 의미 및 전자금융거래에서 사용되는 '송금메모'가 이에 해당한다."
+    ///   → "통신매체이용음란죄 / 송금메모"
+    private func compactTopicFromDeclarative(_ s: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return "" }
+        // 우선 따옴표 안 명사를 추출 ('통신매체', '송금메모' 등)
+        var quoted: [String] = []
+        if let regex = try? NSRegularExpression(pattern: #"['‘’"]([가-힣A-Za-z0-9]{2,12})['‘’"]"#) {
+            let ns = t as NSString
+            let matches = regex.matches(in: t, range: NSRange(location: 0, length: ns.length))
+            for m in matches where m.numberOfRanges >= 2 {
+                let w = ns.substring(with: m.range(at: 1))
+                if !quoted.contains(w) { quoted.append(w) }
+            }
+        }
+        // 죄명 추출 ("...죄")
+        var crime: String? = nil
+        if let regex = try? NSRegularExpression(pattern: #"([가-힣]{2,15}죄)"#) {
+            let ns = t as NSString
+            let matches = regex.matches(in: t, range: NSRange(location: 0, length: ns.length))
+            if let first = matches.first, first.numberOfRanges >= 2 {
+                crime = ns.substring(with: first.range(at: 1))
+            }
+        }
+        var pieces: [String] = []
+        if let c = crime { pieces.append(c) }
+        pieces.append(contentsOf: quoted.prefix(2))
+        if pieces.isEmpty {
+            // 폴백: 첫 어절 2~3개
+            let tokens = t.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+            return tokens.prefix(2).joined(separator: " ")
+        }
+        return pieces.joined(separator: " / ")
     }
 
     /// 입력 문장이 이미 결론을 포함한 평서문인지 판정.

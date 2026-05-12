@@ -81,15 +81,15 @@ struct PasteJudgmentSheet: View {
             }
             if showGuide {
                 VStack(alignment: .leading, spacing: 6) {
-                    guideRow(rank: "최고", title: "판시사항 + 판결요지",
-                             detail: "쟁점과 결론이 압축되어 있어 OX 정답 자동 추출까지 가능합니다.")
-                    guideRow(rank: "유용", title: "참조조문 · 참조판례",
-                             detail: "관련 법령·선례 연결에 사용됩니다.")
-                    guideRow(rank: "보조", title: "이유 본문 일부",
-                             detail: "논거 보강용. 일부 단락만 있어도 괜찮습니다.")
-                    Text("전부 없어도 됩니다. 평문 30자 이상이면 본문 기반 분석으로 동작합니다.")
+                    guideRow(rank: "필수", title: "판시사항 + 판결요지(다수의견)",
+                             detail: "핵심 쟁점과 결론 카드를 둘 다 채우려면 두 단락 모두 필요합니다. 하나만 넣으면 그 카드만 채워집니다.")
+                    guideRow(rank: "권장", title: "참조조문 · 참조판례",
+                             detail: "도메인(형법/민사/행정 등) 분류와 관련 선례 연결 정확도가 크게 올라갑니다.")
+                    guideRow(rank: "선택", title: "이유 본문 일부",
+                             detail: "논거 보강용. 시간이 없으면 생략해도 됩니다.")
+                    Text("⚠ 판시사항만 넣으면 결론 카드는 ‘판결요지를 함께 넣어주세요’ 안내로 표시됩니다. portal.scourt.go.kr 탭을 위→아래로 끝까지 스크롤한 뒤 통째로 복사하시면 가장 정확합니다.")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.orange)
                         .padding(.top, 2)
                 }
             }
@@ -107,7 +107,7 @@ struct PasteJudgmentSheet: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(rank == "최고" ? Color.indigo : (rank == "유용" ? Color.teal : Color.gray))
+                .background(rank == "필수" ? Color.red : (rank == "권장" ? Color.indigo : Color.gray))
                 .clipShape(Capsule())
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.caption.bold())
@@ -140,6 +140,27 @@ struct PasteJudgmentSheet: View {
                     if d.hasOpinionSplit { chip("다수/반대의견", .orange) }
                 }
                 .padding(.horizontal)
+            }
+            // 분석 품질에 결정적인 누락 경고 — 사용자가 어떤 데이터를 더 넣어야 하는지 즉시 알 수 있게 한다.
+            if d.hasIssues && !d.hasHolding {
+                Label("판결요지(다수의견)가 감지되지 않았습니다. 결론 카드가 부정확할 수 있어요. portal.scourt.go.kr에서 【판결요지】 단락까지 함께 복사해 주세요.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal)
+            } else if !d.hasIssues && d.hasHolding {
+                Label("판시사항이 감지되지 않았습니다. 핵심 쟁점 카드가 누락될 수 있어요. 【판시사항】 단락도 함께 붙여넣어 주세요.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal)
+            }
+            if d.hasIssues && d.hasHolding && !d.hasStatutes {
+                Label("참조조문이 없어 도메인 분류 정확도가 낮을 수 있습니다.",
+                      systemImage: "info.circle")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
             }
         }
     }
