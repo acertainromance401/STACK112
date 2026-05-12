@@ -207,6 +207,9 @@ enum OCRTextCleaner {
             "대한민국 법원", "법제처", "국가법령정보센터"
         ]
         if knownHeaders.contains(s) { return true }
+        if s == "PDF로 보기" { return true }
+        if s == "판결 내용은 붙임과 같습니다." { return true }
+        if s.hasPrefix("상세내용 안에 있는 표나 도형 등이 제대로 표시가 되지 않을 경우") { return true }
         // 5) 한 글자만 있는 라인 — OCR 잔재
         if s.count <= 1 { return true }
         // 6) 숫자/기호만으로 이루어진 라인 — 페이지 번호 변형

@@ -327,6 +327,15 @@ struct OCRView: View {
         if let overridden = preferredDigestDomain(from: domain) {
             digest.domain = overridden.domain
             digest.domainLabel = overridden.label
+        } else if domain == "general_legal", !digest.domain.isEmpty, digest.domain != "general_legal" {
+            domain = digest.domain
+        }
+        if studyFocus.isEmpty || studyFocus.first == "핵심 쟁점-결론-시험포인트 순서로 1회 요약" {
+            studyFocus = LocalIRPipeline.buildStudyFocus(
+                domain: domain,
+                keywords: keywords,
+                keySentences: [digest.issueSentence, digest.holdingSentence].filter { !$0.isEmpty }.joined(separator: "\n")
+            )
         }
 
         // 사건번호/사건명 결정: 사용자 입력 > [···] 박타이틀 > 자동 생성(키워드 기반) > 자동 식별자
@@ -616,7 +625,7 @@ struct OCRView: View {
         ("criminal_law", "형법", ["고의", "과실", "정당방위", "긴급피난", "구성요건", "공범", "공동피고인", "공동정범", "정범", "교사범", "방조범", "위증", "모해위증", "증인적격", "위증죄", "절도", "강도", "사기", "횡령", "배임", "상해", "폭행", "살인", "강간", "협박", "감금", "주거침입", "재물", "유죄", "무죄"]),
         ("criminal_procedure_evidence", "형소법", ["영장", "체포", "구속", "압수", "수색", "검증", "긴급체포", "현행범", "공소", "기소", "공판", "증거능력", "위법수집증거", "전문법칙", "탄핵증거", "자백배제법칙", "임의수사", "강제수사", "진술거부권", "자기부죄"]),
         ("constitutional_law", "헌법", ["기본권", "평등권", "자유권", "참정권", "위헌", "합헌", "한정위헌", "헌법불합치", "과잉금지", "비례원칙", "본질적", "최소침해", "법익균형성", "수단적합성"]),
-        ("administrative_law", "행정법", ["행정처분", "재량", "기속", "재량권", "비례원칙", "신뢰보호", "취소소송", "무효확인", "처분", "행정행위", "공법상", "행정청"]),
+        ("administrative_law", "행정법", ["행정처분", "재량", "기속", "재량권", "비례원칙", "신뢰보호", "취소소송", "무효확인", "처분", "행정행위", "공법상", "행정청", "부가가치세", "법인세", "국세", "세무서장", "국세청장", "과세처분", "경정고지", "경정·고지", "면세", "과세대상"]),
         ("police_committees", "경찰위", ["경찰위원회", "국가경찰위원회", "시도자치경찰위원회", "위원장", "부위원장", "의결정족수", "재적위원", "표결권", "직무대행"]),
         ("civil_procedure", "민사", ["가압류", "가처분", "담보공탁", "담보취소", "권리행사최고", "공탁금", "손해배상", "소송비용", "소송요건", "기판력", "재심", "강제집행"]),
     ]
@@ -630,8 +639,7 @@ struct OCRView: View {
             digest.caseNumber = String(rawText[r]).replacingOccurrences(of: " ", with: "")
         }
 
-        // 2) 사건명: 첫 번째 대괄호를 그대로 쓰지 않는다.
-        //    제목 페이지가 뒤에 오거나 판결요지[다수의견]이 먼저 보이면 "다수의견 사건"이 되어버리기 때문.
+        // 2) 사건명: `사 건` 줄을 최우선으로 보고, 없을 때만 bracket/제목 패턴으로 폴백.
         digest.caseSubject = extractPreferredCaseSubject(from: rawText)
 
         // 3) 법원명
@@ -704,6 +712,9 @@ struct OCRView: View {
             // 2차 폴백 — 판시사항 항목 중 결론 서술형이 있으면 그것을 사용
             digest.holdingSentence = JudgmentParser.firstSentence(conclusionIssue, limit: 220)
         }
+        if digest.holdingSentence.isEmpty, let disposition = extractDispositionFromRawText(rawText) {
+            digest.holdingSentence = disposition
+        }
 
         // 다수의견 본문에서 "위의 진술..." 같은 중간 문장을 잡은 경우,
         // 판시사항 [2]의 결론형 "...한 사례."를 더 선명한 결론 카드로 우선 사용한다.
@@ -767,6 +778,9 @@ struct OCRView: View {
             if act == "형법" { return ("criminal_law", "형법") }
             if act == "형사소송법" { return ("criminal_procedure_evidence", "형소법") }
             if act == "민사소송법" || act == "민법" || act == "상법" { return ("civil_procedure", "민사") }
+            if act == "부가가치세법" || act == "법인세법" || act == "국세기본법" {
+                return ("administrative_law", "행정법")
+            }
             if act == "행정소송법" || act == "행정심판법" || act == "행정절차법" { return ("administrative_law", "행정법") }
             if act == "경찰관 직무집행법" || act == "경찰법" { return ("police_committees", "경찰") }
             // 특별 형사법 — 모두 형법 영역으로 분류 (헌법 fallback 차단)
@@ -842,6 +856,9 @@ struct OCRView: View {
         // 헌법재판소/헌법상은 헌법 도메인 신호가 아니므로 사전 제거.
         stripped = stripped.replacingOccurrences(of: "헌법재판소", with: "")
             .replacingOccurrences(of: "헌법상", with: "")
+        if stripped.contains("부가가치세법") || stripped.contains("법인세법") || stripped.contains("국세기본법") {
+            return ("administrative_law", "행정법")
+        }
         if stripped.contains("행정소송법") || stripped.contains("행정심판법")
             || stripped.contains("행정절차법") || stripped.contains("국가공무원법")
             || stripped.contains("지방공무원법") || stripped.contains("개인정보보호법") {
@@ -867,6 +884,24 @@ struct OCRView: View {
             return String(t[..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return String(t.prefix(160)) + "…"
+    }
+
+    private func extractDispositionFromRawText(_ rawText: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: #"주\s*문\s*\n+([\s\S]{0,240}?)(?:\n\s*이\s*유|\n\s*이유|\n\s*1\.)"#, options: []) else {
+            return nil
+        }
+        let ns = rawText as NSString
+        guard let match = regex.firstMatch(in: rawText, options: [], range: NSRange(location: 0, length: ns.length)),
+              match.numberOfRanges >= 2,
+              match.range(at: 1).location != NSNotFound else {
+            return nil
+        }
+        let body = ns.substring(with: match.range(at: 1))
+        let lines = body.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !lines.isEmpty else { return nil }
+        return lines.prefix(2).joined(separator: " ")
     }
 
     /// 사용자가 입력한 문자열이 사건번호 형태인지 판별 (예: "2024다311181", "2022헌마123")
@@ -975,6 +1010,13 @@ struct OCRView: View {
             value
                 .replacingOccurrences(of: #"^[\[\]〈〉<>\s]+|[\[\]〈〉<>\s]+$"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        }
+
+        if let range = rawText.range(of: #"사\s*건\s*\n\s*\d{2,4}\s*[가-힣]{1,3}\s*\d+\s+([^\n]{2,60})"#, options: .regularExpression) {
+            let line = String(rawText[range])
+            let subject = line.replacingOccurrences(of: #"^사\s*건\s*\n\s*\d{2,4}\s*[가-힣]{1,3}\s*\d+\s+"#, with: "", options: .regularExpression)
+            let cleaned = cleanSubject(subject)
+            if !cleaned.isEmpty { return cleaned }
         }
 
         let ns = rawText as NSString

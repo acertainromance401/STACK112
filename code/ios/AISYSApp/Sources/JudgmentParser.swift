@@ -55,6 +55,7 @@ enum JudgmentParser {
 
         // 1) 섹션 분리. 마커는 【…】 [..] <..> "키워드\n" 모두 허용.
         let sections = splitSections(raw)
+        let yojiParsed = sections["요지"].map(parseYojiIssues)
 
         // 2) 판시사항 → 항목 분리 + 적극/소극 추출
         //    같은 [N] 안에 ` / ` 로 구분된 sub-쟁점이 있으면 별도 issue 로 분리.
@@ -72,6 +73,9 @@ enum JudgmentParser {
             }
             result.issues = allIssues
             result.polarities = allPolarities
+        } else if let yoji = yojiParsed, !yoji.issues.isEmpty {
+            result.issues = yoji.issues
+            result.polarities = yoji.polarities
         }
 
         // 3) 판결요지 → 항목별/의견별 분리
@@ -97,7 +101,8 @@ enum JudgmentParser {
     // MARK: - Section splitting
 
     private static let sectionKeys: [String] = [
-        "판시사항", "판결요지", "결정요지", "참조조문", "참조판례",
+        "판시사항", "판결요지", "결정요지", "요지", "요 지", "참조조문", "참조판례",
+        "판결내용", "판결 내용", "상세내용", "상세 내용", "사 건", "사건",
         "전 문", "전문", "피 고 인", "피고인", "상 고 인", "상고인",
         "원심판결", "주 문", "주문", "이 유", "이유"
     ]
@@ -124,6 +129,7 @@ enum JudgmentParser {
                 key = ns.substring(with: m.range(at: g)).replacingOccurrences(of: " ", with: "")
                 if key == "전문" { key = "전 문" }
                 if key == "이유" { key = "이 유" }
+                if key == "사건" { key = "사 건" }
                 break
             }
             if key.isEmpty { continue }
@@ -156,6 +162,63 @@ enum JudgmentParser {
             if !cleaned.isEmpty { items.append(cleaned) }
         }
         return items.isEmpty ? [body] : items
+    }
+
+    /// 국가법령정보센터 `요지`는 `○ (쟁점①) 질문 - 답변` bullet 패턴을 자주 사용한다.
+    /// 화면/OX에는 질문형보다 `-` 뒤의 짧은 결론 요약이 유용하므로 answer 절을 issue 로 채택한다.
+    private static func parseYojiIssues(_ body: String) -> (issues: [String], polarities: [ParsedJudgment.Polarity]) {
+        let items = splitBulletItems(body)
+        var issues: [String] = []
+        var polarities: [ParsedJudgment.Polarity] = []
+
+        for raw in items {
+            var cleaned = cleanWhitespace(raw)
+            cleaned = cleaned.replacingOccurrences(of: #"^○\s*"#, with: "", options: .regularExpression)
+            cleaned = cleaned.replacingOccurrences(of: #"^\(?\s*쟁점\s*[①②③④⑤⑥⑦⑧⑨⑩0-9]+\s*\)?\s*"#, with: "", options: .regularExpression)
+
+            let (question, answer) = splitQuestionAndAnswer(cleaned)
+            let issueText = (!answer.isEmpty ? answer : question).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard issueText.count >= 8 else { continue }
+
+            issues.append(issueText)
+            let polarity = detectPolarity(question)
+            polarities.append(polarity == .unknown ? detectPolarity(answer) : polarity)
+        }
+        return (issues, polarities)
+    }
+
+    private static func splitBulletItems(_ body: String) -> [String] {
+        let ns = body as NSString
+        let pattern = #"(?m)^\s*○\s*"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return [body]
+        }
+        let matches = regex.matches(in: body, options: [], range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else { return [body] }
+
+        var items: [String] = []
+        for (index, match) in matches.enumerated() {
+            let start = match.range.location
+            let end = (index + 1 < matches.count) ? matches[index + 1].range.location : ns.length
+            let chunk = ns.substring(with: NSRange(location: start, length: max(0, end - start)))
+            let cleaned = chunk.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !cleaned.isEmpty { items.append(cleaned) }
+        }
+        return items.isEmpty ? [body] : items
+    }
+
+    private static func splitQuestionAndAnswer(_ text: String) -> (String, String) {
+        guard let regex = try? NSRegularExpression(pattern: #"\s*[-–—]\s*"#) else {
+            return (text, "")
+        }
+        let ns = text as NSString
+        guard let match = regex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: ns.length)) else {
+            return (text, "")
+        }
+        let left = ns.substring(with: NSRange(location: 0, length: match.range.location))
+        let rightStart = match.range.location + match.range.length
+        let right = ns.substring(with: NSRange(location: rightStart, length: max(0, ns.length - rightStart)))
+        return (left.trimmingCharacters(in: .whitespacesAndNewlines), right.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     // MARK: - Holdings (다수의견 / 반대의견 ...)
@@ -214,6 +277,7 @@ enum JudgmentParser {
 
     private static let knownActs: [String] = [
         "헌법", "형법", "형사소송법", "민법", "민사소송법", "상법",
+        "부가가치세법", "법인세법", "국세기본법",
         "행정소송법", "행정심판법", "행정절차법",
         "국가공무원법", "지방공무원법", "경찰관 직무집행법", "경찰법",
         "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",

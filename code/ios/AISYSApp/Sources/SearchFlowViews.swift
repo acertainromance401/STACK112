@@ -493,6 +493,8 @@ struct CaseSummaryView: View {
             return "형소-수사"
         case "constitutional_law":
             return "헌법"
+        case "administrative_law":
+            return "행정-조세"
         case "police_committees":
             return "경찰학-위원회"
         default:
@@ -510,6 +512,8 @@ struct CaseSummaryView: View {
             return "person.text.rectangle"
         case "constitutional_law":
             return "scale.3d"
+        case "administrative_law":
+            return "building.columns.circle"
         case "police_committees":
             return "person.3"
         default:
@@ -527,6 +531,8 @@ struct CaseSummaryView: View {
             return AppColor.info
         case "constitutional_law":
             return AppColor.danger
+        case "administrative_law":
+            return AppColor.info
         case "police_committees":
             return AppColor.accent
         default:

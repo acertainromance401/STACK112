@@ -503,6 +503,7 @@ enum LocalIRPipeline {
     // MARK: - Domain & Study Focus
 
     private static let domainHints: [(name: String, hints: Set<String>)] = [
+        ("administrative_law",                ["부가가치세","법인세","국세","국세청장","세무서장","과세처분","과세자료","경정고지","경정·고지","면세","과세대상","취소소송"]),
         ("police_committees",                ["위원회","국가경찰위원회","자치경찰위원회","정보공개위원회","징계위원회","소청심사위원회","심의위원회"]),
         ("constitutional_law",               ["헌법","위헌","합헌","과잉금지원칙","목적","수단","최소침해","법익균형","헌법재판소"]),
         ("criminal_procedure_evidence",      ["형사소송법","증거","전문법칙","자백","압수","수색","영장","증거능력","위법수집증거","유류물"]),
