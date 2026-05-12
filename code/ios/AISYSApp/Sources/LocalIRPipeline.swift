@@ -162,7 +162,11 @@ enum LocalIRPipeline {
 
     static func normalize(_ text: String) -> String {
         guard !text.isEmpty else { return "" }
-        var s = text
+        // 0) 라인 단위 잡음 제거 + 중복 라인 dedupe.
+        //    OCR/paste 모든 진입로에 일관되게 적용되어 IR 키워드 추출이 페이지 헤더 같은 잡음을 학습하지 않게 한다.
+        //    OCR 멀티 사진 경로는 OCRView가 이미 OCRTextCleaner.mergePages 로 더 강한 처리(stitch 포함)를 수행했으므로
+        //    여기서는 paste 흐름을 주 대상으로 한 cleanSinglePass(라인 dedup + 잡음 제거)만 다시 적용.
+        var s = OCRTextCleaner.cleanSinglePass(text)
         s = s.replacingOccurrences(of: #"https?://\S+"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"www\.\S+"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"portal\.scourt\.go\.kr\S*"#, with: " ", options: .regularExpression)

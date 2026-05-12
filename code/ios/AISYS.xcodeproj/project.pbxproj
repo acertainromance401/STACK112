@@ -17,6 +17,7 @@
 		24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE170875E59DB4941C4441FB /* NetworkService.swift */; };
 		26EE9CC3E5F97651A9BF416C /* LegalIssueDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BED8D1443AD6C8C128FC4C /* LegalIssueDictionary.swift */; };
 		33B554E67648A09D2B3FA223 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FD11294844C01BF1B041A12 /* RootTabView.swift */; };
+		3C27BD5F8E35647F9FF64A13 /* OCRTextCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2844DCE34BF3555754E4A009 /* OCRTextCleaner.swift */; };
 		4E3AA712F44889CCA43FE258 /* AppRuntimeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */; };
 		513C47C9CDDB2B78639D796A /* NewMainScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90624E4F59B2689EC5885F6 /* NewMainScreens.swift */; };
 		5ED93C1DBCD4871901E32373 /* DemoSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9F668837C28CE9BD27A040 /* DemoSeed.swift */; };
@@ -54,6 +55,7 @@
 		08F3689615872CAE1509250B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		188D4A67A763047523D31AE1 /* OCRView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRView.swift; sourceTree = "<group>"; };
 		2374C03FE8EFE6589FB705B7 /* LegalAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalAnalyzer.swift; sourceTree = "<group>"; };
+		2844DCE34BF3555754E4A009 /* OCRTextCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRTextCleaner.swift; sourceTree = "<group>"; };
 		28BED8D1443AD6C8C128FC4C /* LegalIssueDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalIssueDictionary.swift; sourceTree = "<group>"; };
 		353E1A434AF9C763B420648A /* AISYSAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AISYSAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E9F668837C28CE9BD27A040 /* DemoSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSeed.swift; sourceTree = "<group>"; };
@@ -153,6 +155,7 @@
 				FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */,
 				FE170875E59DB4941C4441FB /* NetworkService.swift */,
 				C90624E4F59B2689EC5885F6 /* NewMainScreens.swift */,
+				2844DCE34BF3555754E4A009 /* OCRTextCleaner.swift */,
 				188D4A67A763047523D31AE1 /* OCRView.swift */,
 				D89D87DA9C3E581310F65BAA /* PasteJudgmentSheet.swift */,
 				48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */,
@@ -284,6 +287,7 @@
 				F4D032582C2307BE5B20F222 /* NavigationBackButton.swift in Sources */,
 				24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */,
 				513C47C9CDDB2B78639D796A /* NewMainScreens.swift in Sources */,
+				3C27BD5F8E35647F9FF64A13 /* OCRTextCleaner.swift in Sources */,
 				A562AF02780501D1737514AE /* OCRView.swift in Sources */,
 				C1EC3E930647A6CFE50BA8C3 /* PasteJudgmentSheet.swift in Sources */,
 				0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */,

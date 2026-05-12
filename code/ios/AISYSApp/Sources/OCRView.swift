@@ -195,7 +195,12 @@ struct OCRView: View {
             }
         }
 
-        let merged = mergedTexts.joined(separator: "\n\n")
+        // 여러 사진을 단순히 줄바꿈으로 잇기만 하면 IR/LLM 단계에 다음 잡음이 들어간다:
+        //  - 페이지마다 반복되는 헤더/푸터/사이트 주소
+        //  - 사진 경계에서 종결되지 않은 채 잘린 문장
+        //  - 사용자가 실수로 같은 페이지를 두 장 찍은 중복
+        // OCRTextCleaner.mergePages 가 페이지 간 stitch + dedupe + 잡음 제거를 한 번에 처리.
+        let merged = OCRTextCleaner.mergePages(mergedTexts)
         if merged.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             ocrError = "인식된 텍스트가 없습니다. 다른 사진으로 시도해 주세요."
             return
