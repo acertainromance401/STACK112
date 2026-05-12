@@ -36,10 +36,10 @@ final class LLMService: ObservableObject {
     private let logger = Logger(subsystem: "com.acertainromance401.aisys", category: "LLMService")
     private let primaryLoadAttempts = 3
     private let primaryGenerateAttempts = 2
-    private let oneLineLimit = 140
-    private let keyIssueLimit = 220
-    private let rulingLimit = 260
-    private let examLimit = 180
+    private let oneLineLimit = 240
+    private let keyIssueLimit = 360
+    private let rulingLimit = 420
+    private let examLimit = 260
     private let lowMemoryPromptLimit = 720
     private let normalPromptLimit = 960
     private let lowMemoryTokenCap = 160
@@ -443,29 +443,22 @@ final class LLMService: ObservableObject {
             return buildSummaryOutput(caseItem: caseItem)
         }
 
-        // 1B 모델이 만든 첫 한 줄이 너무 짧거나 의미없으면 학습카드 스타일을 직접 합성한다.
-        let llmHint = semanticLines.first ?? ""
-        let composed = composeStudyCardOneLine(
+        // 카드 화면의 기준값은 정제된 구조 필드(caseItem)이다.
+        // 1B 모델의 첫 줄 힌트는 fragment/ellipsis를 만들기 쉬워 여기서는 사용하지 않는다.
+        let oneLine = composeStudyCardOneLine(
             caseItem: caseItem,
-            issueShort: keyIssue ?? "",
-            holdingShort: ruling ?? ""
+            issueShort: canonicalIssueText(keyIssue ?? ""),
+            holdingShort: canonicalRulingText(ruling ?? "")
         )
-        let oneLine: String
-        if llmHint.count >= 24 && hasKoreanTerminal(llmHint) {
-            // 모델 출력이 충분히 길고 종결어미가 있으면 그쪽을 우선 사용
-            oneLine = shrink(llmHint, limit: oneLineLimit)
-        } else {
-            oneLine = composed
-        }
 
         let finalKeyIssue = (keyIssue?.isEmpty == false)
-            ? ensureKoreanTerminal(shrink(scrubResidualNoise(keyIssue!), limit: 130))
+            ? canonicalIssueText(keyIssue!)
             : "핵심 쟁점 정보가 부족합니다."
         let finalRuling = (ruling?.isEmpty == false)
-            ? ensureKoreanTerminal(shrink(scrubResidualNoise(ruling!), limit: 130))
+            ? canonicalRulingText(ruling!)
             : "판결 결론 정보가 부족합니다."
         let finalExam = (exam?.isEmpty == false)
-            ? ensureKoreanTerminal(shrink(exam!, limit: examLimit))
+            ? canonicalExamText(exam!)
             : "시험 포인트 정보가 부족합니다."
 
         return """
@@ -477,22 +470,19 @@ final class LLMService: ObservableObject {
     }
 
     private func postprocessSummary(_ summary: LLMSummary, caseItem: APICase) -> LLMSummary? {
-        var oneLine = shrink(summary.oneLineSummary, limit: oneLineLimit)
-        var keyIssue = shrink(summary.keyIssue, limit: keyIssueLimit)
-        var ruling = shrink(summary.rulingPoint, limit: rulingLimit)
-        var exam = shrink(summary.examTakeaway, limit: examLimit)
-
-        // 필드 간 중복이 크면 사례 메타 정보로 대체해 카드별 의미를 분리합니다.
-        if isTooSimilar(oneLine, keyIssue) {
-            keyIssue = shrink(caseItem.issueSummary ?? keyIssue, limit: keyIssueLimit)
-        }
-        if isTooSimilar(keyIssue, ruling) {
-            ruling = shrink(caseItem.holdingSummary ?? ruling, limit: rulingLimit)
-        }
-        if isTooSimilar(exam, keyIssue) || isTooSimilar(exam, ruling) {
-            let fallbackExam = caseItem.examPoints?.trimmingCharacters(in: .whitespacesAndNewlines)
-            exam = shrink(fallbackExam?.isEmpty == false ? fallbackExam! : exam, limit: examLimit)
-        }
+        let keyIssue = {
+            let fallback = canonicalIssueText(caseItem.issueSummary ?? "")
+            return fallback.contains("복원하지 못했습니다") ? canonicalIssueText(summary.keyIssue) : fallback
+        }()
+        let ruling = {
+            let fallback = canonicalRulingText(caseItem.holdingSummary ?? "")
+            return fallback.contains("복원하지 못했습니다") ? canonicalRulingText(summary.rulingPoint) : fallback
+        }()
+        let exam = {
+            let fallback = canonicalExamText(caseItem.examPoints ?? "")
+            return fallback.contains("복원하지 못했습니다") ? canonicalExamText(summary.examTakeaway) : fallback
+        }()
+        let oneLine = composeStudyCardOneLine(caseItem: caseItem, issueShort: keyIssue, holdingShort: ruling)
 
         return LLMSummary(rawOutput: canonicalSummaryRaw(oneLine: oneLine, keyIssue: keyIssue, ruling: ruling, exam: exam))
     }
@@ -563,9 +553,9 @@ final class LLMService: ObservableObject {
             return smartTruncateKorean(cleaned, limit: limit)
         }
         let name = sanitize(caseItem.caseName, limit: 80)
-        let issue = sanitize(caseItem.issueSummary ?? "주요 쟁점 정보가 부족하다.", limit: keyIssueLimit)
-        let holding = sanitize(caseItem.holdingSummary ?? "판결 결론 정보가 부족하다.", limit: rulingLimit)
-        let examPoint = sanitize(caseItem.examPoints ?? "시험 포인트 정보가 부족하다.", limit: examLimit)
+        let issue = canonicalIssueText(sanitize(caseItem.issueSummary ?? "주요 쟁점 정보가 부족하다.", limit: keyIssueLimit))
+        let holding = canonicalRulingText(sanitize(caseItem.holdingSummary ?? "판결 결론 정보가 부족하다.", limit: rulingLimit))
+        let examPoint = canonicalExamText(sanitize(caseItem.examPoints ?? "시험 포인트 정보가 부족하다.", limit: examLimit))
         let oneLine = composeStudyCardOneLine(caseItem: caseItem, issueShort: issue, holdingShort: holding)
 
         return """
@@ -1144,7 +1134,80 @@ final class LLMService: ObservableObject {
         if stripped.hasSuffix("다") || stripped.hasSuffix("요") {
             return stripped + "."
         }
-        return stripped + "…"
+        return stripped + "."
+    }
+
+    private func canonicalIssueText(_ raw: String) -> String {
+        var s = scrubResidualNoise(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return "핵심 쟁점 정보가 부족합니다." }
+
+        if let slash = s.range(of: #"\s*/\s*"#, options: .regularExpression) {
+            let left = String(s[..<slash.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            let right = String(s[slash.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            s = (left.isEmpty || left.hasPrefix("여부")) ? right : left
+        }
+        s = s.replacingOccurrences(of: #"^여부\s*(\((적극|소극|한정 적극|한정 소극|한정적극|한정소극)\))?\s*"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"^위증죄의 주체와 관련하여,\s*"#, with: "", options: .regularExpression)
+
+        if s.contains("(적극)") || s.contains("(한정 적극)") || s.contains("(한정적극)") {
+            let decl = JudgmentParser.declarativeStatement(issue: s, polarity: .positive)
+            if !decl.isEmpty { s = decl }
+        } else if s.contains("(소극)") || s.contains("(한정 소극)") || s.contains("(한정소극)") {
+            let decl = JudgmentParser.declarativeStatement(issue: s, polarity: .negative)
+            if !decl.isEmpty { s = decl }
+        } else if s.hasSuffix("여부") || s.hasSuffix("여부.") || s.hasSuffix("는지") || s.hasSuffix("는지.") {
+            let decl = JudgmentParser.declarativeStatement(issue: s, polarity: .positive)
+            if !decl.isEmpty { s = decl }
+        }
+
+        s = s.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if looksLikeBrokenDisplayText(s) || looksLikeRawIssueFragment(s) {
+            return "핵심 쟁점 문장을 완전하게 복원하지 못했습니다."
+        }
+        return ensureKoreanTerminal(shrink(s, limit: keyIssueLimit))
+    }
+
+    private func canonicalRulingText(_ raw: String) -> String {
+        let s = scrubResidualNoise(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return "판결 결론 정보가 부족합니다." }
+        if (s.hasPrefix("위의 진술") || s.hasPrefix("이와 같은 진술"))
+            && !(s.contains("한 사례") || s.contains("정당하다") || s.contains("잘못이 있다")) {
+            return "판결 결론 문장을 완전하게 복원하지 못했습니다."
+        }
+        if looksLikeBrokenDisplayText(s) { return "판결 결론 문장을 완전하게 복원하지 못했습니다." }
+        return ensureKoreanTerminal(shrink(s, limit: rulingLimit))
+    }
+
+    private func canonicalExamText(_ raw: String) -> String {
+        let s = scrubResidualNoise(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return "시험 포인트 정보가 부족합니다." }
+        if looksLikeBrokenDisplayText(s) { return "시험 포인트 문장을 완전하게 복원하지 못했습니다." }
+        return ensureKoreanTerminal(shrink(s, limit: examLimit))
+    }
+
+    private func looksLikeBrokenDisplayText(_ text: String) -> Bool {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return true }
+        if t.hasPrefix("여부") { return true }
+        if t.contains(" / ") || t.contains("/") { return true }
+        if t.hasSuffix("…") || t.hasSuffix("...") || t.hasSuffix("(이하 생략)") { return true }
+        if t.count < 12 { return true }
+        return false
+    }
+
+    private func canonicalQuizSeeds(from caseItem: APICase) -> [String] {
+        var seeds: [String] = []
+        let issue = canonicalIssueText(caseItem.issueSummary ?? "")
+        let ruling = canonicalRulingText(caseItem.holdingSummary ?? "")
+        let exam = canonicalExamText(caseItem.examPoints ?? "")
+        if !issue.contains("복원하지 못했습니다") { seeds.append(issue) }
+        if !ruling.contains("복원하지 못했습니다") && !seeds.contains(ruling) { seeds.append(ruling) }
+        if !exam.contains("복원하지 못했습니다") && !seeds.contains(exam) { seeds.append(exam) }
+        if seeds.isEmpty {
+            seeds.append("\(caseItem.caseName) 사건의 핵심 쟁점을 확인한 판례이다.")
+        }
+        return seeds
     }
 
     private func buildComparisonOutput(question: String, cases: [APICase]) -> String {
@@ -1370,27 +1433,23 @@ final class LLMService: ObservableObject {
             issueShort: caseItem.issueSummary ?? "",
             holdingShort: caseItem.holdingSummary ?? ""
         )
-        let oneLine: String
-        if cleanedOneLine.count >= 20 && hasKoreanTerminal(cleanedOneLine) {
-            oneLine = shrink(cleanedOneLine, limit: oneLineLimit)
-        } else {
-            oneLine = composedOneLine
-        }
+        _ = cleanedOneLine
+        let oneLine = composedOneLine
 
         // 핵심 쟁점/결론은 OCR 원문 덤프가 들어가지 않도록 짧게 정제한 형태로 사용
         let keyIssue: String = {
             let raw = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             if raw.isEmpty { return "핵심 쟁점 정보 부족" }
-            return ensureKoreanTerminal(shrink(scrubResidualNoise(raw), limit: 130))
+            return canonicalIssueText(raw)
         }()
         let ruling: String = {
             let raw = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             if raw.isEmpty { return "판결 결론 정보 부족" }
-            return ensureKoreanTerminal(shrink(scrubResidualNoise(raw), limit: 130))
+            return canonicalRulingText(raw)
         }()
-        let exam = ensureKoreanTerminal(shrink(caseItem.examPoints?.isEmpty == false
+        let exam = canonicalExamText(caseItem.examPoints?.isEmpty == false
                           ? caseItem.examPoints!
-                          : "시험 포인트 정보 부족", limit: examLimit))
+                          : "시험 포인트 정보 부족")
 
         return LLMSummary(rawOutput: canonicalSummaryRaw(oneLine: oneLine, keyIssue: keyIssue, ruling: ruling, exam: exam))
     }
@@ -1527,6 +1586,7 @@ final class LLMService: ObservableObject {
             }
             // (신규) 쟁점 제목/사건 라벨 라인 거부 — "...된 사건", "...된 사안", "...문제된 경우" 등은 OX 단정 진술 아님
             if isMetaTopicLine(s) { return false }
+            if looksLikeRawIssueFragment(s) || looksLikeBrokenDisplayText(s) { return false }
             // 종결어미 또는 "여부" 같은 의문 종결이 있어야 OX 변환 가치가 있음
             if !hasKoreanTerminal(s) && !s.contains("여부") && !s.contains("되는지") && !s.contains("해당하는지") {
                 return false
@@ -1536,38 +1596,19 @@ final class LLMService: ObservableObject {
 
         let fallbackSentences: [String]
         if sentences.isEmpty {
-            // 정말 후보가 없으면 caseItem 메타 정보로 안전한 문장 합성
-            let issue = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let holding = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            var seeds: [String] = []
-            // holding(결론)을 우선 — 보통 단정문이므로 OX 적합도가 높음.
-            // 단, holding이 raw 판시사항 단편(여부/적극/소극 마커 포함, 인용부호 단편 시작)이면
-            // OX 진술로 부적합하므로 제외하고 issue(평서화된 핵심 쟁점)만 사용.
-            if !holding.isEmpty
-                && !holding.contains("OCR에서 추출하지 못했")
-                && !isMetaTopicLine(holding)
-                && !looksLikeRawIssueFragment(holding) {
-                seeds.append(holding)
-            }
-            if !issue.isEmpty && !issue.contains("OCR에서 추출하지 못했") && !isMetaTopicLine(issue) {
-                seeds.append(issue)
-            }
-            if seeds.isEmpty {
-                seeds.append("\(caseItem.caseName) 사건은 핵심 쟁점이 정리된 판례이다")
-            }
-            fallbackSentences = seeds
+            fallbackSentences = canonicalQuizSeeds(from: caseItem)
         } else {
             fallbackSentences = sentences
         }
 
         let caseNum = caseItem.caseNumber
 
-        // 후보 수 만큼만 생성(메타 placeholder 노출 방지). count 보다 적으면 적은 대로 반환.
-        let workingSentences = fallbackSentences
-        let actualCount = min(count, max(1, workingSentences.count))
+        // 요청 개수만큼 생성한다. 후보가 부족하면 순환 사용하되 O/X를 섞어 학습가치를 유지한다.
+        let workingSentences = fallbackSentences.isEmpty ? canonicalQuizSeeds(from: caseItem) : fallbackSentences
+        let actualCount = max(1, count)
 
-        // O 문항: 원문 그대로 (정답), X 문항: 핵심어를 반대로 표현
-        return workingSentences.prefix(actualCount).enumerated().map { idx, sentence in
+        return (0..<actualCount).map { idx in
+            let sentence = workingSentences[idx % workingSentences.count]
             let isOAnswer = idx % 2 == 0
             let base = sanitizeQuizStatement(sentence)
             if isOAnswer {
@@ -1590,6 +1631,7 @@ final class LLMService: ObservableObject {
     private func isUsefulOXItem(_ item: OXQuizQuestion) -> Bool {
         let statement = item.statement.trimmingCharacters(in: .whitespacesAndNewlines)
         guard statement.count >= 8 && statement.count <= 96 else { return false }
+        if looksLikeRawIssueFragment(statement) || looksLikeBrokenDisplayText(statement) { return false }
 
         let legalRefCount = countMatches(in: statement, pattern: #"제\s*\d+\s*조"#)
         if legalRefCount >= 4 { return false }

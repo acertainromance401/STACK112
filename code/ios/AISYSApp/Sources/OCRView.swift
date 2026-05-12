@@ -739,6 +739,16 @@ struct OCRView: View {
             digest.holdingSentence = OCRView.holdingMissingNotice
         }
 
+        // 쟁점 카드가 "여부(적극) / ..." 같은 raw fragment 로 끝나는 경우는 화면/퀴즈 모두를 망친다.
+        // 저장 직전에 한 번 더 수리하고, 끝까지 수리되지 않으면 안내 문구로 교체한다.
+        if isRawIssueFragment(digest.issueSentence),
+           let repaired = repairedIssueSentence(rawText: rawText, keySentences: keySentences, parsed: parsed) {
+            digest.issueSentence = repaired
+        }
+        if isRawIssueFragment(digest.issueSentence) {
+            digest.issueSentence = OCRView.issueMissingNotice
+        }
+
         return digest
     }
 
@@ -746,6 +756,9 @@ struct OCRView: View {
     /// 사용자가 "어떤 데이터를 더 넣어야 결론 카드가 채워지는지" 즉시 알 수 있게 한다.
     static let holdingMissingNotice =
         "판결요지(다수의견) 본문이 입력에 포함되지 않아 결론을 자동 추출하지 못했습니다. 원문에서 【판결요지】 단락을 함께 붙여넣으면 결론 카드가 채워집니다."
+
+    static let issueMissingNotice =
+        "판시사항 [1] 핵심 문장을 완전한 평서문으로 복원하지 못했습니다. 판시사항 첫 부분이 보이도록 다시 촬영하거나 붙여넣으면 쟁점 카드와 OX가 더 정확해집니다."
 
     /// 법령명 → 도메인 매핑 (참조조문이 가장 확실한 도메인 신호)
     private func domainFromActs(_ acts: [String]) -> (String, String)? {
@@ -922,6 +935,27 @@ struct OCRView: View {
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private func repairedIssueSentence(rawText: String, keySentences: String, parsed: ParsedJudgment) -> String? {
+        if let picked = preferredIssueForDisplay(parsed: parsed) {
+            let sanitized = sanitizeIssueFragmentForDisplay(picked.issue)
+            let declarative = JudgmentParser.declarativeStatement(issue: sanitized, polarity: picked.polarity)
+            let candidate = declarative.isEmpty ? finalizeKoreanSentence(sanitized, limit: 240) : declarative
+            if !candidate.isEmpty && !isRawIssueFragment(candidate) {
+                return candidate
+            }
+        }
+
+        let sentences = collectCandidateSentences(rawText: rawText, keySentences: keySentences)
+        for line in sentences {
+            let cleaned = sanitizeIssueFragmentForDisplay(stripBracketNoise(line))
+            if cleaned.isEmpty || isRawIssueFragment(cleaned) { continue }
+            if cleaned.contains("증인이 될 수") || cleaned.contains("증인적격") || cleaned.contains("소송절차의 분리") {
+                return finalizeKoreanSentence(cleaned, limit: 240)
+            }
+        }
+        return nil
+    }
+
     /// 제목 페이지/메타 블록에서 사건명을 우선 추출한다.
     ///
     /// 우선순위:
@@ -1079,7 +1113,7 @@ struct OCRView: View {
 
     /// 쟁점 후보: "여부", "기준", "문제 된", "할 수 있는지", "되는지", "판단", "해당하는지" 포함 문장 우선
     private func pickIssueSentence(from sentences: [String]) -> String? {
-        let strong = ["여부", "되는지", "할 수 있는지", "허용되는지", "해당하는지", "문제 된 사건", "문제된 사건"]
+        let strong = ["되는지", "할 수 있는지", "허용되는지", "해당하는지", "문제 된 사건", "문제된 사건", "증인이 될 수", "증인적격"]
         let weak = ["기준", "판단 기준", "판단", "쟁점"]
 
         // 결과 후처리: 조사·접속사로 시작하는 단편이면 prefix 제거
@@ -1093,13 +1127,19 @@ struct OCRView: View {
             return out
         }
 
-        if let picked = sentences.first(where: { line in strong.contains(where: { line.contains($0) }) }) {
-            return finalizeKoreanSentence(cleanLeading(stripBracketNoise(picked)), limit: 130)
+        if let picked = sentences.first(where: { line in
+            strong.contains(where: { line.contains($0) }) && !isRawIssueFragment(line)
+        }) {
+            return finalizeKoreanSentence(cleanLeading(stripBracketNoise(picked)), limit: 240)
         }
-        if let picked = sentences.first(where: { line in weak.contains(where: { line.contains($0) }) }) {
-            return finalizeKoreanSentence(cleanLeading(stripBracketNoise(picked)), limit: 130)
+        if let picked = sentences.first(where: { line in
+            weak.contains(where: { line.contains($0) }) && !isRawIssueFragment(line)
+        }) {
+            return finalizeKoreanSentence(cleanLeading(stripBracketNoise(picked)), limit: 240)
         }
-        return sentences.first.map { finalizeKoreanSentence(cleanLeading(stripBracketNoise($0)), limit: 130) }
+        return sentences.first(where: { !isRawIssueFragment($0) }).map {
+            finalizeKoreanSentence(cleanLeading(stripBracketNoise($0)), limit: 240)
+        }
     }
 
     /// 결론 후보: 결과 동사 우선. 쟁점과 같은 문장이면 다음 후보를 찾는다.
@@ -1150,6 +1190,8 @@ struct OCRView: View {
     private func isRawIssueFragment(_ s: String) -> Bool {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return true }
+        if t.contains(" / ") || t.contains("/") { return true }
+        if t.hasPrefix("여부") { return true }
         if t.contains("(적극)") || t.contains("(소극)")
             || t.contains("(한정 적극)") || t.contains("(한정적극)")
             || t.contains("(한정 소극)") || t.contains("(한정소극)") {
@@ -1159,6 +1201,7 @@ struct OCRView: View {
             || t.hasSuffix("는지") || t.hasSuffix("는지.") {
             return true
         }
+        if t.hasSuffix("…") || t.hasSuffix("...") { return true }
         // 단어 중간이 잘린 인용부호 fragment — "모'가", "방'에 대해" 등
         if let r = t.range(of: #"^[가-힣]{1,2}['‘’"][가-힣]?\s*(가|이|을|를|은|는|의|에|로|와|과)\s"#, options: .regularExpression),
            r.lowerBound == t.startIndex {
@@ -1216,7 +1259,7 @@ struct OCRView: View {
         guard collapsed.count > limit else {
             if collapsed.hasSuffix(".") || collapsed.hasSuffix("…") { return collapsed }
             if collapsed.hasSuffix("다") || collapsed.hasSuffix("요") { return collapsed + "." }
-            return collapsed.isEmpty ? collapsed : collapsed + "…"
+            return collapsed
         }
         let snippet = String(collapsed.prefix(limit))
         let endings = ["다.", "다 ", "요.", "다고 한다.", "였다.", "한다.", "된다.", "이다."]
@@ -1230,10 +1273,13 @@ struct OCRView: View {
            snippet.distance(from: snippet.startIndex, to: idx) >= max(20, limit / 3) {
             return String(snippet[..<idx]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        if collapsed.count <= limit * 2 {
+            return collapsed
+        }
         if let space = snippet.range(of: " ", options: .backwards),
            snippet.distance(from: snippet.startIndex, to: space.lowerBound) >= max(20, limit / 3) {
-            return String(snippet[..<space.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+            return String(snippet[..<space.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines) + " (이하 생략)"
         }
-        return snippet.trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+        return snippet.trimmingCharacters(in: .whitespacesAndNewlines) + " (이하 생략)"
     }
 }

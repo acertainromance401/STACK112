@@ -302,25 +302,25 @@ struct CaseSummaryView: View {
                     // ── 암기 수첩 카드 ──────────────────────────────
                     StudyNoteCard(
                         label: "판례 요약",
-                        content: viewModel.summary?.oneLineSummary ?? resolved.issue,
+                        content: displaySummaryText(resolved: resolved),
                         accentColor: AppColor.accent,
                         memoStorageKey: memoKey(resolved, "summary")
                     )
                     StudyNoteCard(
                         label: "핵심 쟁점",
-                        content: viewModel.summary?.keyIssue ?? resolved.issue,
+                        content: displayIssueText(resolved: resolved),
                         accentColor: AppColor.warning,
                         memoStorageKey: memoKey(resolved, "issue")
                     )
                     StudyNoteCard(
                         label: "판결 결론",
-                        content: viewModel.summary?.rulingPoint ?? resolved.conclusion,
+                        content: displayRulingText(resolved: resolved),
                         accentColor: AppColor.success,
                         memoStorageKey: memoKey(resolved, "ruling")
                     )
                     StudyNoteCard(
                         label: "시험 포인트",
-                        content: viewModel.summary?.examTakeaway ?? resolved.examPoint,
+                        content: displayExamText(resolved: resolved),
                         accentColor: AppColor.info,
                         memoStorageKey: memoKey(resolved, "exam")
                     )
@@ -417,7 +417,7 @@ struct CaseSummaryView: View {
                     if !viewModel.oxQuizItems.isEmpty {
                         NavigationLink {
                             let caseNumber = apiCase?.caseNumber ?? resolved.title
-                            let caseSummary = "쟁점: \(viewModel.summary?.keyIssue ?? resolved.issue)\n결론: \(viewModel.summary?.rulingPoint ?? resolved.conclusion)\n시험포인트: \(viewModel.summary?.examTakeaway ?? resolved.examPoint)"
+                            let caseSummary = "쟁점: \(displayIssueText(resolved: resolved))\n결론: \(displayRulingText(resolved: resolved))\n시험포인트: \(displayExamText(resolved: resolved))"
                             OXQuizView(
                                 caseNumber: caseNumber,
                                 caseTitle: resolved.title,
@@ -532,6 +532,90 @@ struct CaseSummaryView: View {
         default:
             return AppColor.textSecondary
         }
+    }
+
+    private func displaySummaryText(resolved: CaseDetail) -> String {
+        let issue = displayIssueText(resolved: resolved)
+        let ruling = displayRulingText(resolved: resolved)
+        let domainLabel = apiCase?.subject.components(separatedBy: "·").first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var parts: [String] = []
+        if !domainLabel.isEmpty && domainLabel.count <= 8 {
+            parts.append("[\(domainLabel)]")
+        }
+        parts.append(resolved.title.hasSuffix("사건") ? "\(resolved.title)." : "\(resolved.title) 사건.")
+        if !issue.isEmpty && !issue.contains("복원하지 못했습니다") {
+            parts.append("쟁점: \(issue)")
+        }
+        if !ruling.isEmpty && !ruling.contains("복원하지 못했습니다") {
+            parts.append("결론: \(ruling)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private func displayIssueText(resolved: CaseDetail) -> String {
+        let base = apiCase?.issueSummary ?? resolved.issue
+        let normalized = normalizeCardText(base, role: .issue)
+        return normalized.isEmpty ? "핵심 쟁점 문장을 완전하게 복원하지 못했습니다." : normalized
+    }
+
+    private func displayRulingText(resolved: CaseDetail) -> String {
+        let base = apiCase?.holdingSummary ?? resolved.conclusion
+        let normalized = normalizeCardText(base, role: .ruling)
+        return normalized.isEmpty ? "판결 결론 문장을 완전하게 복원하지 못했습니다." : normalized
+    }
+
+    private func displayExamText(resolved: CaseDetail) -> String {
+        let base = apiCase?.examPoints ?? resolved.examPoint
+        let normalized = normalizeCardText(base, role: .exam)
+        return normalized.isEmpty ? "시험 포인트 문장을 완전하게 복원하지 못했습니다." : normalized
+    }
+
+    private enum CardTextRole {
+        case issue
+        case ruling
+        case exam
+    }
+
+    private func normalizeCardText(_ raw: String, role: CardTextRole) -> String {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return "" }
+        text = text.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+
+        if role == .issue {
+            if let slash = text.range(of: #"\s*/\s*"#, options: .regularExpression) {
+                let left = String(text[..<slash.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let right = String(text[slash.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                text = (left.isEmpty || left.hasPrefix("여부")) ? right : left
+            }
+            text = text.replacingOccurrences(of: #"^여부\s*(\((적극|소극|한정 적극|한정 소극|한정적극|한정소극)\))?\s*"#, with: "", options: .regularExpression)
+            text = text.replacingOccurrences(of: #"^위증죄의 주체와 관련하여,\s*"#, with: "", options: .regularExpression)
+            if text.contains("(적극)") || text.contains("(한정 적극)") || text.contains("(한정적극)") {
+                let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .positive)
+                if !decl.isEmpty { text = decl }
+            } else if text.contains("(소극)") || text.contains("(한정 소극)") || text.contains("(한정소극)") {
+                let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .negative)
+                if !decl.isEmpty { text = decl }
+            } else if text.hasSuffix("여부") || text.hasSuffix("여부.") || text.hasSuffix("는지") || text.hasSuffix("는지.") {
+                let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .positive)
+                if !decl.isEmpty { text = decl }
+            }
+        }
+
+        if text.hasPrefix("위의 진술") && role == .ruling { return "" }
+        if text.hasPrefix("여부") { return "" }
+        if text.contains(" / ") || text.contains("/") { return "" }
+        if text.hasSuffix("…") || text.hasSuffix("...") || text.hasSuffix("(이하 생략)") { return "" }
+        if text.count < 12 { return "" }
+
+        if !(text.hasSuffix(".") || text.hasSuffix("?") || text.hasSuffix("!")) {
+            if text.hasSuffix("다") || text.hasSuffix("요") {
+                text += "."
+            } else if role == .exam {
+                text += "."
+            }
+        }
+        return text
     }
 }
 
