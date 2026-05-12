@@ -700,6 +700,16 @@ struct OCRView: View {
             }
         }
 
+        // 8) 최종 안전망 — holdingSentence가 raw 판시사항 단편/의문형/인용부호 fragment면
+        //    issueSentence(이미 평서화됨)로 대체. 결론 카드와 OX의 가독성을 결정짓는 마지막 가드.
+        if isRawIssueFragment(digest.holdingSentence) {
+            if !digest.issueSentence.isEmpty && !isRawIssueFragment(digest.issueSentence) {
+                digest.holdingSentence = digest.issueSentence
+            } else {
+                digest.holdingSentence = "결론을 OCR에서 추출하지 못했다. 원문을 확인하라."
+            }
+        }
+
         return digest
     }
 
@@ -907,14 +917,23 @@ struct OCRView: View {
             "성립하지 않는다", "성립한다",
             "인정되지 않는다", "인정된다",
             "정당하다", "부당하다",
-            "(적극)", "(소극)"  // 판례집 스타일 결론 표기
         ]
-        // 1순위: 쟁점에 (적극)/(소극) 마커가 있고, 본문에서 실제 결론 동사 포함 문장이 있으면 그것을 사용.
-        //         이전에는 "관련 쟁점이 적극적으로 인정되었다(적극)." 합성 문장을 만들었으나,
-        //         사용자가 보기에 무의미한 진술이라 제거하고 실제 본문에서 찾은 문장으로 폴백한다.
-        // 2순위: 쟁점과 다른 본문 중 결론 동사 포함 문장
-        let pool = sentences.filter { $0 != issueSentence }
+        // raw 판시사항 단편(여부/적극/소극)이거나, 인용부호 단편으로 시작하는 후보는 제외.
+        let pool = sentences.filter { line in
+            if line == issueSentence { return false }
+            if isRawIssueFragment(line) { return false }
+            return true
+        }
+        // 1순위: 결론 동사 포함 본문 문장
         if let picked = pool.first(where: { line in verdicts.contains(where: { line.contains($0) }) }) {
+            return finalizeKoreanSentence(stripBracketNoise(picked), limit: 130)
+        }
+        // 2순위: "...사례" 또는 "...법리오해" 결론형 본문
+        if let picked = pool.first(where: { line in
+            line.hasSuffix("사례") || line.hasSuffix("사례.")
+                || line.contains("법리오해의 잘못이 있다")
+                || line.contains("구성요건을 충족한다")
+        }) {
             return finalizeKoreanSentence(stripBracketNoise(picked), limit: 130)
         }
         // 3순위: 쟁점에 결론 동사가 들어가 있으면 그대로
@@ -923,6 +942,28 @@ struct OCRView: View {
         }
         // 결론 후보 없음 — nil 반환 (호출부 placeholder)
         return nil
+    }
+
+    /// 한 문장이 raw 판시사항 단편(여부/적극/소극 마커, 의문형 종결, 인용부호 단편 시작)인지 판정.
+    /// OX/결론 카드에 노출되면 가독성이 크게 떨어지는 형태를 차단한다.
+    private func isRawIssueFragment(_ s: String) -> Bool {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return true }
+        if t.contains("(적극)") || t.contains("(소극)")
+            || t.contains("(한정 적극)") || t.contains("(한정적극)")
+            || t.contains("(한정 소극)") || t.contains("(한정소극)") {
+            return true
+        }
+        if t.hasSuffix("여부") || t.hasSuffix("여부.")
+            || t.hasSuffix("는지") || t.hasSuffix("는지.") {
+            return true
+        }
+        // 단어 중간이 잘린 인용부호 fragment — "모'가", "방'에 대해" 등
+        if let r = t.range(of: #"^[가-힣]{1,2}['‘’"][가-힣]?\s*(가|이|을|를|은|는|의|에|로|와|과)\s"#, options: .regularExpression),
+           r.lowerBound == t.startIndex {
+            return true
+        }
+        return false
     }
 
     /// `[ ... ]` 같은 출처/제목 잡음과 페이지 마커 제거 — 학습카드용 본문 정제

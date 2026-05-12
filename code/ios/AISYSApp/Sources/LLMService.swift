@@ -601,9 +601,14 @@ final class LLMService: ObservableObject {
         if name.count > 40 {
             name = String(name.prefix(40))
         }
+        // 자동 합성된 사건명(예: "구성요건 사건")이 이미 "사건"으로 끝나면 다시 " 사건." 을 붙이지 않도록 정규화.
+        let nameEndsWithEvent = name.hasSuffix("사건")
 
         // 3) 쟁점 핵심구 추출 — "...여부" / "...에 관한 사건" 패턴이면 그 절만 떼어 사용
         let issueCore = extractIssueCore(issueShort)
+        // 이미 평서문(`...한다.` / `...된다.` / `...해당한다.`)이면 그대로 한 문장으로 노출하고
+        // "에 관해 ... 판단한 사례." 꼬리를 붙이지 않는다(이중 종결 방지).
+        let issueIsDeclarative = looksLikeDeclarativeStatement(issueCore.isEmpty ? issueShort : issueCore)
 
         // 4) 결론 방향어 추출 — 위법/적법/포함/배제/유죄/무죄 등
         let verdict = extractVerdictPhrase(holdingShort)
@@ -614,9 +619,13 @@ final class LLMService: ObservableObject {
             parts.append("[\(domainLabel)]")
         }
         if !name.isEmpty {
-            parts.append("\(name) 사건.")
+            parts.append(nameEndsWithEvent ? "\(name)." : "\(name) 사건.")
         }
-        if !issueCore.isEmpty {
+        if issueIsDeclarative {
+            // 핵심 쟁점이 이미 한 문장으로 결론을 포함 → 그대로 사용
+            let issueClean = (issueCore.isEmpty ? issueShort : issueCore).trimmingCharacters(in: .whitespacesAndNewlines)
+            parts.append(issueClean.hasSuffix(".") ? issueClean : issueClean + ".")
+        } else if !issueCore.isEmpty {
             if !verdict.isEmpty {
                 parts.append("\(issueCore)에 관해 \(verdict) 판단한 사례.")
             } else {
@@ -629,6 +638,29 @@ final class LLMService: ObservableObject {
         }
         let line = parts.joined(separator: " ")
         return smartTruncateKorean(line, limit: oneLineLimit)
+    }
+
+    /// 입력 문장이 이미 결론을 포함한 평서문인지 판정.
+    /// 예) "…에 해당한다.", "…는 위법하다.", "…할 수 있다.", "…된다." → true
+    /// 예) "…여부", "…문제 된 사건", "…되는지" → false (질문/단편)
+    private func looksLikeDeclarativeStatement(_ s: String) -> Bool {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard t.count >= 10 else { return false }
+        // 질문/단편 패턴은 false
+        if t.hasSuffix("여부") || t.hasSuffix("여부.") { return false }
+        if t.hasSuffix("는지") || t.hasSuffix("는지.") { return false }
+        if t.hasSuffix("문제 된 사건") || t.hasSuffix("문제된 사건") { return false }
+        // 평서 종결 패턴
+        let declEndings = [
+            "한다.", "된다.", "있다.", "없다.", "해당한다.", "성립한다.", "허용된다.",
+            "위반된다.", "적용된다.", "필요하다.", "타당하다.", "정당하다.",
+            "위법하다.", "적법하다.", "인정된다.", "부정된다.",
+            "해당하지 않는다.", "성립하지 않는다.", "인정되지 않는다.",
+        ]
+        for end in declEndings where t.hasSuffix(end) { return true }
+        // "...다." 로 끝나면 일단 평서로 본다 (마지막 음절 "다" + "." 패턴)
+        if t.hasSuffix("다.") { return true }
+        return false
     }
 
     /// LLMService 단계에서 한 번 더 OCR 잔재(닫히지 않은 [공YYYY..., 〉/〈, 잘못된 띄어쓰기)를 제거한다.
@@ -1467,8 +1499,13 @@ final class LLMService: ObservableObject {
             let issue = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let holding = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             var seeds: [String] = []
-            // holding(결론)을 우선 — 보통 단정문이므로 OX 적합도가 높음
-            if !holding.isEmpty && !holding.contains("OCR에서 추출하지 못했") && !isMetaTopicLine(holding) {
+            // holding(결론)을 우선 — 보통 단정문이므로 OX 적합도가 높음.
+            // 단, holding이 raw 판시사항 단편(여부/적극/소극 마커 포함, 인용부호 단편 시작)이면
+            // OX 진술로 부적합하므로 제외하고 issue(평서화된 핵심 쟁점)만 사용.
+            if !holding.isEmpty
+                && !holding.contains("OCR에서 추출하지 못했")
+                && !isMetaTopicLine(holding)
+                && !looksLikeRawIssueFragment(holding) {
                 seeds.append(holding)
             }
             if !issue.isEmpty && !issue.contains("OCR에서 추출하지 못했") && !isMetaTopicLine(issue) {
@@ -1592,6 +1629,34 @@ final class LLMService: ObservableObject {
             "문제된 판례", "된 판례"
         ]
         for suf in metaSuffixes where stripped.hasSuffix(suf) {
+            return true
+        }
+        return false
+    }
+
+    /// holding 텍스트가 raw 판시사항 단편처럼 보이는지 판정 — OX 진술 후보에서 제외.
+    /// 다음 중 하나라도 해당하면 OX 부적합:
+    ///  - "(적극)", "(소극)", "(한정 적극)", "(한정 소극)" 마커가 문장 중간 또는 끝에 있음
+    ///  - "여부" 단독 표시 혹은 종결("...여부", "...는지")
+    ///  - 인용부호 단편으로 시작 ("모'가", "은행'에", "는'에 대해") — 단어 중간이 잘린 형태
+    ///  - 문장이 작은따옴표 + 조사로 시작 (`'송금...`처럼 정상 시작이 아닌 형태)
+    private func looksLikeRawIssueFragment(_ s: String) -> Bool {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return true }
+        // polarity 마커 — 문장 어디에 있어도 raw 판시사항 신호
+        if t.contains("(적극)") || t.contains("(소극)")
+            || t.contains("(한정 적극)") || t.contains("(한정적극)")
+            || t.contains("(한정 소극)") || t.contains("(한정소극)") {
+            return true
+        }
+        // 의문형 종결
+        if t.hasSuffix("여부") || t.hasSuffix("여부.")
+            || t.hasSuffix("는지") || t.hasSuffix("는지.") {
+            return true
+        }
+        // 단어 중간이 잘린 인용부호 fragment — 한글 1~2자 + ' 또는 ' + 조사로 시작
+        if let r = t.range(of: #"^[가-힣]{1,2}['‘’"][가-힣]?\s*(가|이|을|를|은|는|의|에|로|와|과)\s"#, options: .regularExpression),
+           r.lowerBound == t.startIndex {
             return true
         }
         return false

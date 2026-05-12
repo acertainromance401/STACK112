@@ -230,9 +230,13 @@ enum JudgmentParser {
     private static func extractActNames(from text: String) -> [String] {
         var acts: [String] = []
         var seen: Set<String> = []
-        // 단순 부분 문자열 매칭으로 충분 (긴 이름부터)
+        // 공백 무시 매칭 — paste/OCR로 들어온 "성폭력 처벌 등에 관한 특례 법" 같은 변형도 잡는다.
+        // 텍스트와 act 이름 모두에서 공백/탭을 모두 제거한 뒤 비교.
+        let stripped = text.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
         for act in knownActs.sorted(by: { $0.count > $1.count }) {
-            if text.contains(act), !seen.contains(act) {
+            let actNoWS = act.replacingOccurrences(of: " ", with: "")
+            if seen.contains(act) { continue }
+            if stripped.contains(actNoWS) {
                 seen.insert(act); acts.append(act)
             }
         }
@@ -302,6 +306,12 @@ enum JudgmentParser {
 
         let isNegative = (polarity == .negative || polarity == .limitedNegative)
         let prefix = (polarity == .limitedPositive || polarity == .limitedNegative) ? "일정한 경우 " : ""
+
+        // 머리 정리 — 직전 sub-issue를 가리키는 "위 "는 카드 단독 표시 시 가독성 저하.
+        //   "위 통신매체이용음란죄에서…" → "통신매체이용음란죄에서…"
+        if s.hasPrefix("위 ") { s = String(s.dropFirst(2)) }
+        // "및 " 로 시작하면 앞 절이 잘린 흔적 — 제거.
+        if s.hasPrefix("및 ") { s = String(s.dropFirst(2)) }
 
         // 3) 의문형 종결 어미 치환 — 긴 패턴부터 매칭
         let replacements: [(suffix: String, positive: String, negative: String)] = [

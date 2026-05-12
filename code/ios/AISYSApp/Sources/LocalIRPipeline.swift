@@ -143,9 +143,30 @@ enum LocalIRPipeline {
     /// OCR 결과에서 단일 음절 어미가 공백으로 떨어져 나오는 인공물을 보정한다.
     /// 예) "담보하 는" → "담보하는", "문제 된" → "문제된", "대 한" → "대한"
     private static func fixOCRSpacing(_ text: String) -> String {
+        // 0) 알려진 법률 합성어 — paste 시 줄바꿈/양끝맞춤 공백으로 깨진 형태를 복원.
+        //    portal.scourt.go.kr 같은 사이트는 단어 중간에서 줄바꿈이 발생해 한 음절이 따로 떨어진다.
+        var s = text
+        let knownCompounds: [String] = [
+            "송금메모", "통신매체", "통신매체이용음란", "전자금융거래",
+            "성폭력처벌법", "성폭력범죄", "성적자기결정권", "성적수치심",
+            "정보통신망", "도로교통법", "교통사고처리", "스토킹범죄",
+            "청소년성보호", "마약류관리", "보호법익", "구성요건",
+            "법리오해", "원심판결", "공소사실", "유죄판결", "무죄판결",
+            "헌법재판소", "대법원판결", "위법수집증거", "전문법칙",
+            "임의제출", "강제수사", "임의수사", "수색영장", "체포영장",
+            "공무집행방해", "주거침입", "음주운전", "특정범죄가중처벌",
+            "정당방위", "긴급피난", "과잉방위", "공동정범", "간접정범",
+        ]
+        for compound in knownCompounds {
+            let chars = Array(compound)
+            guard chars.count >= 3 else { continue }
+            // 각 인접 음절 사이에 공백/줄바꿈이 0~2개 들어간 변형까지 매칭.
+            let pattern = chars.map { String($0) }.joined(separator: "[ \\t\\n]{0,2}")
+            s = s.replacingOccurrences(of: pattern, with: compound, options: .regularExpression)
+        }
+
         // 1) 동사어간 + 공백 + 어미: "하 는/되 는/있 는/없 는/이 는" 등
         let verbStemPattern = #"([하되있없이리기쓰오가받두주]|[하되있없]였|[하되있없]었)\s+(는|던|면|어|아|니|고|자|지|며|여|였|었)"#
-        var s = text
         if let regex = try? NSRegularExpression(pattern: verbStemPattern) {
             let range = NSRange(s.startIndex..<s.endIndex, in: s)
             s = regex.stringByReplacingMatches(in: s, range: range, withTemplate: "$1$2")
