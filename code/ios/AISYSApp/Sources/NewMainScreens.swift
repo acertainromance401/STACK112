@@ -51,6 +51,7 @@ struct HomeView: View {
                 dDayCard
                 stackGaugeCard
                 todayProgressCard
+                startTodayButton
                 quickActionsRow
                 if !weakSubjects.isEmpty { weakAreasCard }
                 aiRoutineCard
@@ -80,22 +81,24 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("STACK112")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("STACK112 PREMIUM")
                     .font(AppFont.tag)
-                    .foregroundStyle(AppColor.accent)
+                    .tracking(1.2)
+                    .foregroundStyle(AppColor.textSecondary)
                 Text("공부는 당신이,\n기록은 우리가.")
-                    .font(AppFont.displayTitle)
+                    .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(AppColor.textPrimary)
+                    .lineSpacing(2)
             }
             Spacer()
             Button {
                 showSettings = true
             } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.title3)
+                Image(systemName: "person.fill")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(AppColor.textSecondary)
-                    .padding(10)
+                    .frame(width: 44, height: 44)
                     .background(AppColor.surface)
                     .clipShape(Circle())
             }
@@ -104,55 +107,54 @@ struct HomeView: View {
     }
 
     private var dDayCard: some View {
-        AppCard {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(studyStore.dDayName)
-                        .font(AppFont.caption)
+        AppCard(padding: AppSpace.xl) {
+            HStack(alignment: .top, spacing: AppSpace.m) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("TARGET EXAM COUNTDOWN")
+                        .font(AppFont.tag)
+                        .tracking(1.4)
                         .foregroundStyle(AppColor.textSecondary)
 
-                    // 일·시·분·초 실시간 카운트다운
                     let parts = countdownParts(now: nowTick, target: studyStore.dDayDate)
                     if parts.isPast {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text("D-DAY")
-                                .font(AppFont.metricNumber)
-                                .foregroundStyle(AppColor.danger)
-                            Text("시험일이 지났습니다")
-                                .font(AppFont.caption)
-                                .foregroundStyle(AppColor.textSecondary)
-                        }
+                        Text("D-DAY")
+                            .font(.system(size: 56, weight: .heavy, design: .rounded))
+                            .foregroundStyle(AppColor.danger)
+                        Text("시험일이 지났습니다")
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
                     } else {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text("D-\(parts.days)")
-                                .font(AppFont.metricNumber)
-                                .foregroundStyle(AppColor.accent)
-                            Text("일 남음")
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text("D-\n\(parts.days)")
+                                .font(.system(size: 56, weight: .heavy, design: .rounded))
+                                .foregroundStyle(AppColor.textPrimary)
+                                .lineSpacing(-8)
+                            Text(studyStore.dDayName)
                                 .font(AppFont.caption)
                                 .foregroundStyle(AppColor.textSecondary)
+                                .frame(width: 80, alignment: .leading)
+                                .padding(.top, 22)
                         }
-                        // 시·분·초 라인 — monospacedDigit 으로 글자 떨림 방지
-                        HStack(spacing: 4) {
-                            timeChip(value: parts.hours, unit: "시")
-                            timeChip(value: parts.minutes, unit: "분")
-                            timeChip(value: parts.seconds, unit: "초")
-                        }
-                        .padding(.top, 2)
                     }
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 6) {
-                    Text("연속 학습")
-                        .font(AppFont.caption)
+                // 우측 상단 streak 알약 칩
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(AppColor.accent)
+                        .frame(width: 6, height: 6)
+                    Text("\(studyStore.streakDays)일")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AppColor.textPrimary)
+                    Text("Streak")
+                        .font(AppFont.tag)
                         .foregroundStyle(AppColor.textSecondary)
-                    HStack(spacing: 4) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(AppColor.accent)
-                        Text("\(studyStore.streakDays)일")
-                            .font(AppFont.bodyEmphasis)
-                            .foregroundStyle(AppColor.textPrimary)
-                    }
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(AppColor.surfaceElevated)
+                .clipShape(Capsule())
+                .padding(.top, 4)
             }
         }
     }
@@ -299,41 +301,66 @@ struct HomeView: View {
     }
 
     private var todayProgressCard: some View {
-        AppCard {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
-                SectionHeader(title: "오늘의 학습", trailing: "목표 \(studyStore.dailyGoalQuestions)문항")
-                HStack(spacing: AppSpace.l) {
-                    MetricBlock(value: "\(studyStore.todaySolved)", label: "푼 문제")
-                    MetricBlock(value: "\(studyStore.todayWrong)", label: "오답", tint: AppColor.danger)
-                    MetricBlock(
-                        value: studyStore.todaySolved > 0 ? "\(Int((Double(studyStore.todayCorrect)/Double(studyStore.todaySolved)) * 100))" : "—",
-                        label: "정답률",
-                        tint: AppColor.success,
-                        trailingSymbol: studyStore.todaySolved > 0 ? "%" : nil
-                    )
-                }
-                ProgressView(value: studyStore.todayProgress)
-                    .progressViewStyle(.linear)
-                    .tint(AppColor.accent)
-                    .background(AppColor.surfaceElevated)
-                    .clipShape(Capsule())
-                Button {
-                    runtime.selectedTab = 2
-                } label: {
-                    HStack {
-                        Image(systemName: "play.fill")
-                        Text("오늘의 문제 시작")
-                            .font(AppFont.bodyEmphasis)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                    }
-                    .padding(.vertical, AppSpace.m)
-                    .padding(.horizontal, AppSpace.l)
-                    .background(AppColor.accent)
-                    .foregroundStyle(AppColor.background)
-                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.m, style: .continuous))
+        AppCard(padding: AppSpace.xl) {
+            VStack(alignment: .leading, spacing: AppSpace.l) {
+                Text("TODAY'S METRICS")
+                    .font(AppFont.tag)
+                    .tracking(1.4)
+                    .foregroundStyle(AppColor.textSecondary)
+
+                metricRow(icon: "tray.full.fill",
+                          label: "Solved",
+                          value: "\(studyStore.todaySolved)",
+                          unit: "문항",
+                          valueColor: AppColor.textPrimary)
+                Divider().background(AppColor.separator)
+                metricRow(icon: "exclamationmark.circle.fill",
+                          label: "Wrong",
+                          value: "\(studyStore.todayWrong)",
+                          unit: "문항",
+                          valueColor: AppColor.textPrimary)
+                Divider().background(AppColor.separator)
+                metricRow(icon: "circle.hexagongrid.fill",
+                          label: "Accuracy",
+                          value: studyStore.todaySolved > 0
+                                ? "\(Int((Double(studyStore.todayCorrect)/Double(studyStore.todaySolved)) * 100))"
+                                : "—",
+                          unit: studyStore.todaySolved > 0 ? "%" : nil,
+                          valueColor: AppColor.accent)
+            }
+        }
+    }
+
+    private func metricRow(icon: String, label: String, value: String, unit: String?, valueColor: Color) -> some View {
+        HStack(spacing: AppSpace.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(AppColor.surfaceElevated)
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AppColor.textSecondary)
+            }
+            Text(label)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AppColor.textPrimary)
+            Spacer()
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 28, weight: .heavy, design: .rounded).monospacedDigit())
+                    .foregroundStyle(valueColor)
+                if let unit {
+                    Text(unit)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
                 }
             }
+        }
+    }
+
+    private var startTodayButton: some View {
+        AppPrimaryButton(title: "오늘의 문제 시작") {
+            runtime.selectedTab = 2
         }
     }
 
