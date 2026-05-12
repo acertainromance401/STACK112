@@ -591,7 +591,7 @@ struct PracticeView: View {
             HStack(spacing: AppSpace.l) {
                 MetricBlock(value: "\(sessionSolved)", label: "푼 문제")
                 MetricBlock(value: "\(sessionCorrect)", label: "정답", tint: AppColor.success)
-                MetricBlock(value: quiz.isEmpty ? "—" : "\(currentIndex + 1)/\(quiz.count)", label: "진행률", tint: AppColor.accent)
+                MetricBlock(value: quiz.isEmpty ? "—" : "\(min(currentIndex + 1, quiz.count))/\(quiz.count)", label: "진행률", tint: AppColor.accent)
             }
         }
     }
