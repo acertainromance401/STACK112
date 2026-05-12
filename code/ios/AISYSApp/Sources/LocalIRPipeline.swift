@@ -63,10 +63,16 @@ enum LocalIRPipeline {
         keywords = filterOffDomainKeywords(keywords, domain: domain)
         if keywords.count > topKeywords { keywords = Array(keywords.prefix(topKeywords)) }
 
-        // 핵심 문장 — 판시사항(쟁점) + 다수의견(결론)을 그대로 사용. 잘리지 않게 항목별로 줄바꿈.
-        let issueLines = parsed.issues
-        let holdingLines = majority.map { $0.text }
-        let keySentencesParts = issueLines + holdingLines
+        // 핵심 문장 — 판시사항(쟁점)은 평서문으로 변환, 다수의견은 첫 문장만.
+        var keySentencesParts: [String] = []
+        for (idx, issue) in parsed.issues.enumerated() {
+            let polarity = (idx < parsed.polarities.count) ? parsed.polarities[idx] : .unknown
+            let decl = JudgmentParser.declarativeStatement(issue: issue, polarity: polarity)
+            if !decl.isEmpty { keySentencesParts.append(decl) }
+        }
+        for h in majority {
+            keySentencesParts.append(JudgmentParser.firstSentence(h.text, limit: 200))
+        }
         let keySentences = keySentencesParts.prefix(max(topSentences, 4)).joined(separator: "\n")
 
         // 학습 포인트 — 도메인에 맞춰 만들되, 첫 줄은 판시사항으로 대체해 본문 문장 노출

@@ -246,4 +246,76 @@ enum JudgmentParser {
         t = t.replacingOccurrences(of: #"\n{2,}"#, with: "\n", options: .regularExpression)
         return t.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    // MARK: - 의문형 → 평서형 변환
+
+    /// 판시사항(`...는지 여부(적극)` 형태)을 자연스러운 평서문으로 변환한다.
+    /// 변환 실패 시 입력을 그대로(또는 마커만 제거하고) 반환.
+    static func declarativeStatement(issue: String, polarity: ParsedJudgment.Polarity) -> String {
+        var s = issue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return "" }
+
+        // 1) 꼬리 (적극)/(소극)/(한정 적극)/(한정 소극) 제거
+        s = s.replacingOccurrences(of: #"\s*\(\s*한정\s*적극\s*\)\s*\.?\s*$"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\s*\(\s*한정\s*소극\s*\)\s*\.?\s*$"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\s*\(\s*적극\s*\)\s*\.?\s*$"#, with: "", options: .regularExpression)
+        s = s.replacingOccurrences(of: #"\s*\(\s*소극\s*\)\s*\.?\s*$"#, with: "", options: .regularExpression)
+
+        // 2) 꼬리 "여부" 제거
+        s = s.replacingOccurrences(of: #"\s*여\s*부\s*\.?\s*$"#, with: "", options: .regularExpression)
+        s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return "" }
+
+        let isNegative = (polarity == .negative || polarity == .limitedNegative)
+        let prefix = (polarity == .limitedPositive || polarity == .limitedNegative) ? "일정한 경우 " : ""
+
+        // 3) 의문형 종결 어미 치환 — 긴 패턴부터 매칭
+        let replacements: [(suffix: String, positive: String, negative: String)] = [
+            ("할 수 있는지", "할 수 있다.", "할 수 없다."),
+            ("할 수 없는지", "할 수 없다.", "할 수 있다."),
+            ("수 있는지",   "수 있다.",   "수 없다."),
+            ("해당하는지", "해당한다.",  "해당하지 않는다."),
+            ("성립하는지", "성립한다.",  "성립하지 않는다."),
+            ("인정되는지", "인정된다.",  "인정되지 않는다."),
+            ("적용되는지", "적용된다.",  "적용되지 않는다."),
+            ("허용되는지", "허용된다.",  "허용되지 않는다."),
+            ("위반되는지", "위반된다.",  "위반되지 않는다."),
+            ("필요한지",   "필요하다.",  "필요하지 않다."),
+            ("가능한지",   "가능하다.",  "가능하지 않다."),
+            ("타당한지",   "타당하다.",  "타당하지 않다."),
+            ("정당한지",   "정당하다.",  "정당하지 않다."),
+            ("위법한지",   "위법하다.",  "위법하지 않다."),
+            ("적법한지",   "적법하다.",  "적법하지 않다."),
+            ("되는지",     "된다.",      "되지 않는다."),
+            ("하는지",     "한다.",      "하지 않는다."),
+            ("있는지",     "있다.",      "없다."),
+            ("없는지",     "없다.",      "있다."),
+        ]
+        for (suffix, pos, neg) in replacements {
+            if s.hasSuffix(suffix) {
+                let base = String(s.dropLast(suffix.count))
+                return prefix + base + (isNegative ? neg : pos)
+            }
+        }
+        // 4) 일반 "...는지" — 동사 어간을 추정하기 어려우면 마침표만 붙여 반환
+        if s.hasSuffix("는지") {
+            let base = String(s.dropLast(2))
+            return prefix + base + (isNegative ? "지 않는다." : "다.")
+        }
+        // 5) 변환 불가 — 마침표만 정리
+        if !s.hasSuffix(".") { s += "." }
+        return prefix + s
+    }
+
+    /// 판결요지 본문이 너무 길 때 첫 문장 한 개로 압축.
+    static func firstSentence(_ text: String, limit: Int = 200) -> String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return "" }
+        if t.count <= limit { return t }
+        if let r = t.range(of: #"[.](\s|$)"#, options: .regularExpression),
+           t.distance(from: t.startIndex, to: r.lowerBound) >= 40 {
+            return String(t[..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return String(t.prefix(limit)) + "…"
+    }
 }

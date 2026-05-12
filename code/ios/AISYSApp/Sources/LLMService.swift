@@ -1554,6 +1554,20 @@ final class LLMService: ObservableObject {
         // (신규) 쟁점 제목 꼬리 "...되는지가 문제된 사건" → "...된다" 진술형 변환
         cleaned = convertTopicLabelToAssertion(cleaned)
 
+        // (신규) 판시사항 의문형 "...할 수 있는지 여부(적극)" → "...할 수 있다" 평서문 변환.
+        //        polarity 마커를 단서로 OX 답을 결정적으로 만들기 위한 핵심 전처리.
+        if cleaned.contains("(적극)") || cleaned.contains("(한정 적극)") || cleaned.contains("(한정적극)") {
+            let decl = JudgmentParser.declarativeStatement(issue: cleaned, polarity: .positive)
+            if !decl.isEmpty { cleaned = decl }
+        } else if cleaned.contains("(소극)") || cleaned.contains("(한정 소극)") || cleaned.contains("(한정소극)") {
+            let decl = JudgmentParser.declarativeStatement(issue: cleaned, polarity: .negative)
+            if !decl.isEmpty { cleaned = decl }
+        } else if cleaned.hasSuffix("여부") || cleaned.hasSuffix("는지") {
+            // polarity 미상의 의문문 — 임시로 적극으로 평서화 (이후 OX는 본문에 일치 시 O)
+            let decl = JudgmentParser.declarativeStatement(issue: cleaned, polarity: .positive)
+            if !decl.isEmpty { cleaned = decl }
+        }
+
         // 조사·접속사로 시작하면 떼어낸다
         let leading = ["는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 ", "로 ", "으로 "]
         for p in leading where cleaned.hasPrefix(p) {

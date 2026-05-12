@@ -664,14 +664,19 @@ struct OCRView: View {
             }
         }
 
-        // 6) 쟁점/결론 — 파싱 결과가 있으면 그대로 사용 (시작이 잘리지 않도록)
+        // 6) 쟁점/결론 — 파싱 결과가 있으면 의문형(...여부(적극))을 평서문으로 변환해서 사용.
+        //    그래야 카드 표시와 OX 퀴즈 모두 의미가 명확해진다.
         if !parsed.issues.isEmpty {
-            digest.issueSentence = trimToOneSentence(parsed.issues.first ?? "")
+            let firstIssue = parsed.issues[0]
+            let polarity = parsed.polarities.first ?? .unknown
+            let declarative = JudgmentParser.declarativeStatement(issue: firstIssue, polarity: polarity)
+            digest.issueSentence = declarative.isEmpty ? trimToOneSentence(firstIssue) : declarative
         }
         let majority = parsed.holdings.first(where: { $0.opinion == .majority })
                     ?? parsed.holdings.first(where: { $0.opinion == .unspecified })
         if let m = majority {
-            digest.holdingSentence = trimToOneSentence(m.text)
+            // 다수의견 원문 첫 문장을 그대로 사용 — "관련 쟁점이 적극적으로 인정되었다" 같은 합성 금지
+            digest.holdingSentence = JudgmentParser.firstSentence(m.text, limit: 200)
         }
 
         // 7) 폴백: 파싱이 없거나 비었으면 기존 휴리스틱
@@ -871,19 +876,9 @@ struct OCRView: View {
             "정당하다", "부당하다",
             "(적극)", "(소극)"  // 판례집 스타일 결론 표기
         ]
-        // 1순위: 쟁점 또는 후보 문장 어디에든 (적극)/(소극) 마커가 있으면 합성 결론 사용
-        let activeRegex = #"\(\s*적\s*극\s*\)"#
-        let passiveRegex = #"\(\s*소\s*극\s*\)"#
-        let activeMarker = issueSentence.range(of: activeRegex, options: .regularExpression) != nil
-            || sentences.contains { $0.range(of: activeRegex, options: .regularExpression) != nil }
-        let passiveMarker = issueSentence.range(of: passiveRegex, options: .regularExpression) != nil
-            || sentences.contains { $0.range(of: passiveRegex, options: .regularExpression) != nil }
-        if activeMarker {
-            return "관련 쟁점이 적극적으로 인정되었다(적극)."
-        }
-        if passiveMarker {
-            return "관련 쟁점이 소극적으로 부정되었다(소극)."
-        }
+        // 1순위: 쟁점에 (적극)/(소극) 마커가 있고, 본문에서 실제 결론 동사 포함 문장이 있으면 그것을 사용.
+        //         이전에는 "관련 쟁점이 적극적으로 인정되었다(적극)." 합성 문장을 만들었으나,
+        //         사용자가 보기에 무의미한 진술이라 제거하고 실제 본문에서 찾은 문장으로 폴백한다.
         // 2순위: 쟁점과 다른 본문 중 결론 동사 포함 문장
         let pool = sentences.filter { $0 != issueSentence }
         if let picked = pool.first(where: { line in verdicts.contains(where: { line.contains($0) }) }) {
