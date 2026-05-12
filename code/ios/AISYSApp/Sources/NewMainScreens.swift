@@ -82,9 +82,9 @@ struct HomeView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("STACK112 PREMIUM")
-                    .font(AppFont.tag)
-                    .tracking(1.2)
+                Text("STACK112")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.4)
                     .foregroundStyle(AppColor.textSecondary)
                 Text("공부는 당신이,\n기록은 우리가.")
                     .font(.system(size: 30, weight: .bold))
@@ -108,53 +108,57 @@ struct HomeView: View {
 
     private var dDayCard: some View {
         AppCard(padding: AppSpace.xl) {
-            HStack(alignment: .top, spacing: AppSpace.m) {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("TARGET EXAM COUNTDOWN")
-                        .font(AppFont.tag)
-                        .tracking(1.4)
+            VStack(alignment: .leading, spacing: 14) {
+                // 상단: 섬션 라벨 + streak 칩 우정렬
+                HStack(alignment: .center) {
+                    Text("시험일까지 D-데이")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(1.2)
                         .foregroundStyle(AppColor.textSecondary)
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(AppColor.accent)
+                            .frame(width: 6, height: 6)
+                        Text("\(studyStore.streakDays)일 연속")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(AppColor.textPrimary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(AppColor.surfaceElevated)
+                    .clipShape(Capsule())
+                }
 
-                    let parts = countdownParts(now: nowTick, target: studyStore.dDayDate)
-                    if parts.isPast {
+                let parts = countdownParts(now: nowTick, target: studyStore.dDayDate)
+                if parts.isPast {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text("D-DAY")
                             .font(.system(size: 56, weight: .heavy, design: .rounded))
                             .foregroundStyle(AppColor.danger)
                         Text("시험일이 지났습니다")
                             .font(AppFont.caption)
                             .foregroundStyle(AppColor.textSecondary)
-                    } else {
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text("D-\n\(parts.days)")
-                                .font(.system(size: 56, weight: .heavy, design: .rounded))
-                                .foregroundStyle(AppColor.textPrimary)
-                                .lineSpacing(-8)
-                            Text(studyStore.dDayName)
-                                .font(AppFont.caption)
-                                .foregroundStyle(AppColor.textSecondary)
-                                .frame(width: 80, alignment: .leading)
-                                .padding(.top, 22)
-                        }
+                    }
+                } else {
+                    // D-N 한 줄 + 우측에 시험명
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text("D-\(parts.days)")
+                            .font(.system(size: 56, weight: .heavy, design: .rounded).monospacedDigit())
+                            .foregroundStyle(AppColor.textPrimary)
+                            .contentTransition(.numericText(value: Double(parts.days)))
+                            .animation(.easeOut(duration: 0.3), value: parts.days)
+                        Text(studyStore.dDayName)
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
+                    }
+                    // 실시간 시·분·초 칩 (1초마다 갱신)
+                    HStack(spacing: 6) {
+                        timeChip(value: parts.hours, unit: "시")
+                        timeChip(value: parts.minutes, unit: "분")
+                        timeChip(value: parts.seconds, unit: "초")
                     }
                 }
-                Spacer()
-                // 우측 상단 streak 알약 칩
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(AppColor.accent)
-                        .frame(width: 6, height: 6)
-                    Text("\(studyStore.streakDays)일")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(AppColor.textPrimary)
-                    Text("Streak")
-                        .font(AppFont.tag)
-                        .foregroundStyle(AppColor.textSecondary)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(AppColor.surfaceElevated)
-                .clipShape(Capsule())
-                .padding(.top, 4)
             }
         }
     }
@@ -303,25 +307,25 @@ struct HomeView: View {
     private var todayProgressCard: some View {
         AppCard(padding: AppSpace.xl) {
             VStack(alignment: .leading, spacing: AppSpace.l) {
-                Text("TODAY'S METRICS")
-                    .font(AppFont.tag)
-                    .tracking(1.4)
+                Text("오늘의 학습")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.2)
                     .foregroundStyle(AppColor.textSecondary)
 
                 metricRow(icon: "tray.full.fill",
-                          label: "Solved",
+                          label: "풀이 문항",
                           value: "\(studyStore.todaySolved)",
                           unit: "문항",
                           valueColor: AppColor.textPrimary)
                 Divider().background(AppColor.separator)
                 metricRow(icon: "exclamationmark.circle.fill",
-                          label: "Wrong",
+                          label: "오답",
                           value: "\(studyStore.todayWrong)",
                           unit: "문항",
                           valueColor: AppColor.textPrimary)
                 Divider().background(AppColor.separator)
                 metricRow(icon: "circle.hexagongrid.fill",
-                          label: "Accuracy",
+                          label: "정답률",
                           value: studyStore.todaySolved > 0
                                 ? "\(Int((Double(studyStore.todayCorrect)/Double(studyStore.todaySolved)) * 100))"
                                 : "—",
@@ -537,8 +541,6 @@ struct PracticeView: View {
         }
         .navigationTitle("문제풀이")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(AppColor.surface, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
         .task { if quiz.isEmpty { await loadQuizFromMostRecentScan() } }
         .sheet(isPresented: $showWrongMemoSheet) {
             NavigationStack {

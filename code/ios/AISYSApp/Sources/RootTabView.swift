@@ -35,6 +35,9 @@ struct RootTabView: View {
         NavigationStack {
             content()
                 .withAppBackground()
+                .toolbarBackground(AppColor.background, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .tabItem { Label(label, systemImage: icon) }
         .tag(tag)
