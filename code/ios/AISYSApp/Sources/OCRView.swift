@@ -16,6 +16,8 @@ struct OCRView: View {
     @State private var isExtractingIR = false
     @State private var ocrError: String?
     @State private var navigateToSummary = false
+    @State private var showPasteSheet = false
+    @State private var pastedText = ""
     @StateObject private var summaryViewModel = CaseSummaryViewModel()
 
     var body: some View {
@@ -58,6 +60,21 @@ struct OCRView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(isRecognizing || isExtractingIR)
+
+                    Button {
+                        showPasteSheet = true
+                    } label: {
+                        Label("판례 전문 텍스트 붙여넣기", systemImage: "doc.on.clipboard")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.indigo)
+                    .disabled(isRecognizing || isExtractingIR)
+
+                    Text("판시사항·판결요지·참조조문 같은 구조가 포함되면 분석 정확도가 더 높아집니다.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("판례 이름/번호")
@@ -124,6 +141,19 @@ struct OCRView: View {
                 if let ocrCase = runtime.pendingOCRCase {
                     CaseSummaryView(apiCase: ocrCase, viewModel: summaryViewModel)
                 }
+            }
+            .sheet(isPresented: $showPasteSheet) {
+                PasteJudgmentSheet(
+                    pastedText: $pastedText,
+                    onConfirm: { text in
+                        showPasteSheet = false
+                        recognizedText = text
+                        selectedPhotoCount = 0
+                        ocrError = nil
+                        Task { await processOCRText() }
+                    },
+                    onCancel: { showPasteSheet = false }
+                )
             }
             .onChange(of: selectedPhotos) { newValue in
                 guard !newValue.isEmpty else { return }
