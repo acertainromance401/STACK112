@@ -338,29 +338,29 @@ enum JudgmentParser {
         for (suffix, pos, neg) in replacements {
             if s.hasSuffix(suffix) {
                 let base = String(s.dropLast(suffix.count))
-                return prefix + base + (isNegative ? neg : pos)
+                return resolveAnaphora(prefix + base + (isNegative ? neg : pos))
             }
         }
         // 4) 일반 "...는지" — 동사 어간을 추정하기 어려우면 마침표만 붙여 반환
         if s.hasSuffix("는지") {
             let base = String(s.dropLast(2))
-            return prefix + base + (isNegative ? "지 않는다." : "다.")
+            return resolveAnaphora(prefix + base + (isNegative ? "지 않는다." : "다."))
         }
         // 5) 변환 불가 — 마침표만 정리
         if !s.hasSuffix(".") { s += "." }
-        return prefix + s
+        return resolveAnaphora(prefix + s)
     }
 
     /// 판결요지 본문이 너무 길 때 첫 문장 한 개로 압축.
     static func firstSentence(_ text: String, limit: Int = 200) -> String {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return "" }
-        if t.count <= limit { return t }
+        if t.count <= limit { return resolveAnaphora(t) }
         if let r = t.range(of: #"[.](\s|$)"#, options: .regularExpression),
            t.distance(from: t.startIndex, to: r.lowerBound) >= 40 {
-            return String(t[..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            return resolveAnaphora(String(t[..<r.upperBound]).trimmingCharacters(in: .whitespacesAndNewlines))
         }
-        return String(t.prefix(limit)) + "…"
+        return resolveAnaphora(String(t.prefix(limit))) + "…"
     }
 
     /// 판결요지(다수의견) 본문에서 결론 종결형 문장을 우선 선택.
@@ -429,8 +429,9 @@ enum JudgmentParser {
     /// 한 문장을 한도 내로 자르되, 마지막 마침표는 보존.
     private static func clampSentence(_ s: String, limit: Int) -> String {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        if t.count <= limit { return t.hasSuffix(".") ? t : t + "." }
-        return String(t.prefix(limit)) + "…"
+        let resolved = resolveAnaphora(t)
+        if resolved.count <= limit { return resolved.hasSuffix(".") ? resolved : resolved + "." }
+        return String(resolved.prefix(limit)) + "…"
     }
 
     /// 판시사항 [2]가 "...사안에서, ... 한 사례." 패턴이면 "사례" 절만 도출.
@@ -453,6 +454,71 @@ enum JudgmentParser {
         if !s.hasSuffix(".") { s += "." }
         // 너무 짧으면 취소 (머리만 잘린 경우)
         guard s.count >= 20 else { return nil }
-        return s
+        return resolveAnaphora(s)
+    }
+
+    /// 한국 판시사항/판결요지에서 흔한 지시어("이에", "이를", "이는", "이가", "이러한 경우")를
+    /// 같은 문장의 선행 인용 명사로 치환한다.
+    ///
+    /// 한국 판례 판시사항 [1]은 전형적으로 다음 구조를 갖는다:
+    ///   `"X에서 '<선행명사>'의 의미 및 ... '<후행명사>'가 이에 해당하는지 여부(적극)"`
+    /// 여기서 "이에"는 **첫 번째 따옴표 명사**(선행 정의 대상)를 가리키는 지시어다.
+    /// OX 진술/요약 카드에 그대로 노출되면 사용자가 "이에"가 무엇인지 알 수 없어 학습 효과가 떨어진다.
+    ///
+    /// 알고리즘:
+    ///   1) 문장에서 따옴표(`'…'` / `‘…’` / `"…"`)로 감싼 명사를 등장 순서대로 수집
+    ///   2) 첫 번째 따옴표 명사를 antecedent 후보로 선택
+    ///   3) "이에" → "'<antecedent>'에", "이를" → "'<antecedent>'를" 등 조사 보존 치환
+    ///   4) antecedent 후보가 없으면 원문 그대로 반환 (잘못된 치환 방지)
+    static func resolveAnaphora(_ text: String) -> String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return text }
+        // 1) "이에/이를/이가/이는" 같은 지시어가 없으면 즉시 반환 — 비용 절약
+        let demonstrativePatterns = [
+            "이에 ", "이를 ", "이가 ", "이는 ", "이도 ", "이와 ",
+            "이러한 경우", "이러한 행위", "이러한 사정"
+        ]
+        guard demonstrativePatterns.contains(where: { t.contains($0) }) else { return t }
+
+        // 2) 따옴표 명사 추출 — 등장 순서 유지, 중복 제거
+        var antecedents: [String] = []
+        if let regex = try? NSRegularExpression(pattern: #"['‘’"“”]([가-힣A-Za-z0-9·\s]{2,18})['‘’"“”]"#) {
+            let ns = t as NSString
+            let matches = regex.matches(in: t, range: NSRange(location: 0, length: ns.length))
+            for m in matches where m.numberOfRanges >= 2 {
+                let w = ns.substring(with: m.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !w.isEmpty, w.count <= 18 else { continue }
+                if !antecedents.contains(w) { antecedents.append(w) }
+            }
+        }
+        guard let antecedent = antecedents.first else { return t }
+
+        // 3) 안전망 — "이에" 등의 지시어가 등장하는 위치가 antecedent 등장 위치보다 뒤에 있어야 함
+        guard let demoRange = t.range(of: #"이[에를가는도와]\s"#, options: .regularExpression),
+              let firstQuoteRange = t.range(of: antecedent),
+              firstQuoteRange.lowerBound < demoRange.lowerBound else {
+            return t
+        }
+
+        // 4) 조사별 치환 — 같은 문장 내 모든 "이에/이를/..." 발생을 치환
+        let replacements: [(String, String)] = [
+            ("이에 ",  "'\(antecedent)'에 "),
+            ("이를 ",  "'\(antecedent)'를 "),
+            ("이가 ",  "'\(antecedent)'가 "),
+            ("이는 ",  "'\(antecedent)'는 "),
+            ("이도 ",  "'\(antecedent)'도 "),
+            ("이와 ",  "'\(antecedent)'와 ")
+        ]
+        var out = t
+        for (from, to) in replacements {
+            // 머리에 따옴표가 이미 중첩되어 "''통신매체''에" 가 되는 것을 방지하기 위해
+            // antecedent 따옴표가 직전에 있는 경우는 건너뛴다.
+            out = out.replacingOccurrences(of: from, with: to)
+        }
+        // 중첩 따옴표 정리 — "''통신매체''" → "'통신매체'"
+        out = out.replacingOccurrences(of: "''", with: "'")
+        out = out.replacingOccurrences(of: "‘‘", with: "‘")
+        out = out.replacingOccurrences(of: "’’", with: "’")
+        return out
     }
 }

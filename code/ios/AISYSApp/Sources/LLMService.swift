@@ -1657,6 +1657,11 @@ final class LLMService: ObservableObject {
         // "...여부(적극) 피고인이 ... 입금하면." 처럼 두 줄이 머지되어 들어온 경우 첫 결론부 이후 제거.
         cleaned = cropToSingleStatement(cleaned)
 
+        // (신규) 지시어 해소 — "이에 해당한다" → "'통신매체'에 해당한다" 처럼
+        // OX 진술의 모호한 지시어를 같은 문장의 선행 인용 명사로 치환한다.
+        // 사용자가 "이에"가 무엇을 가리키는지 다른 카드를 참조하지 않고도 판단할 수 있게 함.
+        cleaned = JudgmentParser.resolveAnaphora(cleaned)
+
         return String(cleaned.prefix(88))
     }
 
