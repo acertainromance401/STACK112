@@ -1,26 +1,30 @@
 # 사용 기술 설명: AI_SYS
 
 작성일: 2026-04-02  
-최종 업데이트: 2026-05-10  
-문서 버전: v1.3
+최종 업데이트: 2026-05-12  
+문서 버전: v1.4
 
 > 안내: 본 문서는 기획 기준과 실제 적용 기술을 함께 기록합니다.
 
-## 0. 현재 적용 기술 (구현 기준)
+## 0. 현재 적용 기술 (구현 기준 — 2026-05-12)
 
 | 구분 | 실제 적용 기술 | 비고 |
 |------|----------------|------|
-| iOS 앱 | SwiftUI, NavigationStack, TabView | Home/OCR/Search/Review/My Page 구성 |
-| OCR | Vision + PhotosPicker | OCR 텍스트를 검색 쿼리로 전달 |
-| 온디바이스 LLM | LlamaSwift (llama.cpp) + GGUF | 요약/퀴즈 생성 경로 연결 |
-| API 서버 | FastAPI + Uvicorn | /health, /search, /cases, /dashboard/* |
-| DB | PostgreSQL + pgvector | schema.sql 기반 초기화 |
-| 컨테이너 | Docker Compose | ai_sys_team 프로젝트로 운영 |
+| iOS 앱 | SwiftUI, NavigationStack, TabView, SwiftData | Home/OCR/Search/Review/My Page, iOS 17.0+ |
+| OCR | Apple Vision + PhotosPicker | 한국어 인식 + OCR 띄어쓰기 보정 (`fixOCRSpacing`) |
+| 온디바이스 LLM | LlamaSwift(llama.cpp) + Llama-3.2-1B-Instruct-Q4_K_M.gguf (807MB) | `.app` 번들에 포함, 최종 앱 783MB |
+| 텍스트 분석 | Apple `NLTagger` (lexicalClass=.noun), `NLEmbedding(.korean)` | 명사 추출 + 한국어 임베딩 유사도 |
+| 법률 도메인 | `LegalIssueDictionary` (60+ 쟁점) + `LegalAnalyzer` (5도메인 분류·함정 카탈로그·개인화) | LLM 외부 분류기 |
+| 검색 | `LocalCaseSearchEngine` (토큰 점수: 제목×3, 키워드×2, 본문×1, 사전 확장) | 풀 텍스트 + 사전 확장 |
+| 저장소 | SwiftData (`LocalCaseStore`, `StudyStore`, `WrongQuizRecord`) + UserDefaults | 외부 DB 없음 |
+| 응답 캐시 | dict 캐시 (summary/OX/RAG, capacity 32) | 동일 입력 재호출 시 LLM skip |
+| 운영 | 외부 서버·API 호출 0, App Privacy "Data Not Collected" | EC2/RDS 비용 0, 인증·CORS 이슈 0 |
+| (Deprecated) | FastAPI + Uvicorn, PostgreSQL + pgvector, Docker Compose | 2026-05-11 이후 사용 안 함, 레거시 문서/코드만 유지 |
 
 운영 메모
-- iOS deployment target은 16.4 기준으로 정렬했다.
-- 실기기 연결 시 My Page에서 API base URL 오버라이드로 Mac 서버 주소를 저장해 사용한다.
-- 2026-05-10 업데이트: 1B Llama Q4 모델은 분류기(택소노미·결론 라벨)·OX 변형기로만 호출되며 본문 생성은 룰베이스가 담당한다.
+- iOS deployment target: 17.0
+- 외부 네트워크 호출 없음 → 디버그 빌드의 서버 설정 UI는 `#if DEBUG` 로 가려짐
+- 2026-05-12 업데이트: LegalAnalyzer 도입으로 1B Llama Q4 모델은 (a) OX 변형, (b) 결론 라벨링, (c) 짧은 요약 강화로 한정 운영. 본문 생성은 룰베이스, 도메인 분류는 LegalAnalyzer 가 담당.
 
 ## 1. 문서 목적
 이 문서는 AI_SYS 구현에 사용할 기술 스택과 그 선택 이유를 정리한다.  

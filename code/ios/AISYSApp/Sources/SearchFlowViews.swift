@@ -791,12 +791,19 @@ struct OXQuizView: View {
                             Text(q.explanation)
                                 .font(AppFont.body)
                                 .foregroundStyle(AppColor.textPrimary)
-                            if !isCorrect {
-                                Button("오답 메모 남기기") {
-                                    showWrongMemoSheet = true
-                                }
+                            Button {
+                                showWrongMemoSheet = true
+                            } label: {
+                                Label(
+                                    (pendingWrongRecordId.flatMap { id in store.wrongQuizRecords.first(where: { $0.id == id })?.userMemo }?.isEmpty == false) ? "메모 수정" : "메모 남기기",
+                                    systemImage: "square.and.pencil"
+                                )
                                 .font(AppFont.captionEmphasis)
-                                .foregroundStyle(AppColor.accent)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background((isCorrect ? AppColor.accent : AppColor.danger).opacity(0.14))
+                                .foregroundStyle(isCorrect ? AppColor.accent : AppColor.danger)
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
                             }
                         }
                         .padding(AppSpace.m)
@@ -863,21 +870,18 @@ struct OXQuizView: View {
         let correct = chosenAnswer == question.answer
         showResult = true
         if correct { correctCount += 1 }
-        if !correct {
-            let savedId = store.saveWrongQuizRecord(
-                caseNumber: caseNumber,
-                caseTitle: caseTitle,
-                question: question.statement,
-                userAnswer: chosenAnswer,
-                correctAnswer: question.answer,
-                explanation: question.explanation,
-                caseSummary: caseSummary,
-                subject: caseSubject
-            )
-            pendingWrongRecordId = savedId
-            wrongMemoDraft = ""
-            showWrongMemoSheet = true
-        }
+        let savedId = store.saveWrongQuizRecord(
+            caseNumber: caseNumber,
+            caseTitle: caseTitle,
+            question: question.statement,
+            userAnswer: chosenAnswer,
+            correctAnswer: question.answer,
+            explanation: question.explanation,
+            caseSummary: caseSummary,
+            subject: caseSubject
+        )
+        pendingWrongRecordId = savedId
+        wrongMemoDraft = ""
     }
 
     private func advance() {
@@ -1233,7 +1237,11 @@ struct MyPageView: View {
                 Text("STACK112 사용자")
                 Text("경찰 공무원 시험 준비")
             }
-            Section("서버 설정") {
+            // App Store Release 빌드에서는 외부 서버 입력 UI 숨김 — 본 앱은
+            // 풀 온디바이스 모드로 전환되어 해당 옵션이 사용자에게 불필요하며,
+            // 심사관이 "외부 전송 가능성" 으로 오해하지 않도록 노출 자체를 제거.
+            #if DEBUG
+            Section("서버 설정 (개발 전용)") {
                 TextField("http://192.168.x.x:8000", text: $serverURLInput)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
@@ -1256,6 +1264,7 @@ struct MyPageView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            #endif
             Section("앱 정보") {
                 Text("버전 1.0.0")
             }
@@ -1393,6 +1402,9 @@ struct WeakOXListView: View {
     private var filteredRecords: [WrongQuizRecord] {
         let key = subjectLabel.trimmingCharacters(in: .whitespacesAndNewlines)
         return store.wrongQuizRecords.filter { rec in
+            let hasMemo = (rec.userMemo?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+            let isWrong = rec.userAnswer != rec.correctAnswer
+            guard isWrong || hasMemo else { return false }
             guard let subj = rec.subject?.trimmingCharacters(in: .whitespacesAndNewlines), !subj.isEmpty else {
                 return false
             }

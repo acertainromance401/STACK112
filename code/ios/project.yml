@@ -11,7 +11,7 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: 15.0
     MACCATALYST_DEPLOYMENT_TARGET: 15.0
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "6S5ZH3ZJ93"
     CURRENT_PROJECT_VERSION: 1
     MARKETING_VERSION: 1.0.0
     GENERATE_INFOPLIST_FILE: YES
@@ -40,7 +40,8 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIRequiresFullScreen: YES
         INFOPLIST_KEY_UIFileSharingEnabled: NO
-        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
+        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: NO
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_LLAMA_MODEL_FILE: Llama-3.2-1B-Instruct-Q4_K_M.gguf
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "판례 이미지를 선택해 OCR 분석을 수행합니다. 이미지는 기기 내에서만 처리되며 외부로 전송되지 않습니다."
         SUPPORTS_MACCATALYST: NO

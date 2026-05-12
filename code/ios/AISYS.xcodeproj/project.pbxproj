@@ -7,32 +7,33 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0042D590C6D02D0F60225B52 /* LegalAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2374C03FE8EFE6589FB705B7 /* LegalAnalyzer.swift */; };
+		00CDBBF1CA556EF7C5E74DFF /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836C35DF55C518ACC513E98F /* DesignSystem.swift */; };
 		0134EB00FCADE9C6760E94C3 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71F7EC6215383E28B8504D6 /* Models.swift */; };
 		0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */; };
 		0D8B09BABDDB4ECA59B0D5F9 /* ScannedCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */; };
 		17842704C3A11AEB56ED1DAA /* AISYSAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */; };
 		1C43007E9CD651F2878094CB /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EB6CEDE58FD30A4BC467BE /* LLMService.swift */; };
 		24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE170875E59DB4941C4441FB /* NetworkService.swift */; };
+		26EE9CC3E5F97651A9BF416C /* LegalIssueDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28BED8D1443AD6C8C128FC4C /* LegalIssueDictionary.swift */; };
 		33B554E67648A09D2B3FA223 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FD11294844C01BF1B041A12 /* RootTabView.swift */; };
 		4E3AA712F44889CCA43FE258 /* AppRuntimeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */; };
+		513C47C9CDDB2B78639D796A /* NewMainScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90624E4F59B2689EC5885F6 /* NewMainScreens.swift */; };
+		5ED93C1DBCD4871901E32373 /* DemoSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9F668837C28CE9BD27A040 /* DemoSeed.swift */; };
 		69718A360E32436E7D1A3273 /* LocalLLMEngines.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */; };
-		A1B2C3D4E5F60718293A4B5C /* LocalSimilarityEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */; };
-		A1B2C3D4E5F60718293A4B5D /* LegalIssueDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1B3 /* LegalIssueDictionary.swift */; };
-		A1B2C3D4E5F60718293A4B5E /* LocalIRPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1B4 /* LocalIRPipeline.swift */; };
-		A1B2C3D4E5F60718293A4B5F /* LocalCaseSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1B5 /* LocalCaseSearchEngine.swift */; };
-		A1B2C3D4E5F60718293A4B60 /* LocalCaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1B6 /* LocalCaseStore.swift */; };
-		A1B2C3D4E5F60718293A4B80 /* DemoSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1D0 /* DemoSeed.swift */; };
-		A1B2C3D4E5F60718293A4B90 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1E0 /* SplashView.swift */; };
+		6CAF6AAB2C1264661813FB8F /* LocalCaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E0E9EAE4A447F9B2997442 /* LocalCaseStore.swift */; };
 		8996C6B976101B7FBEA8CD20 /* AISYSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB8550D7167F38BF77BC796 /* AISYSApp.swift */; };
 		A562AF02780501D1737514AE /* OCRView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188D4A67A763047523D31AE1 /* OCRView.swift */; };
+		AD63F8867BAF8A93EB92340E /* LocalSimilarityEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E502DA99506E6616DB6CF25A /* LocalSimilarityEngine.swift */; };
 		B932ED19AEA38751B581B486 /* SearchFlowViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */; };
 		BEC559B8757E110E4D9EC191 /* LlamaSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B21C82E0E8B7FE766A20E4DD /* LlamaSwift */; };
-		C4DABF681E9D0290768E3FB4 /* NewMainScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = F408ACC8D034B72FF9346C76 /* NewMainScreens.swift */; };
-		D8E9F0A1B2C3D4E5F6071829 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E9F0A1B2C3D4E5F6071830 /* DesignSystem.swift */; };
-		D8E9F0A1B2C3D4E5F6071831 /* StudyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E9F0A1B2C3D4E5F6071832 /* StudyStore.swift */; };
 		CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */ = {isa = PBXBuildFile; fileRef = 694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */; };
-		A1B2C3D4E5F60718293A4B70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F50617283940A1C0 /* Assets.xcassets */; };
+		D4D4403E5ED422BA58ED8EAD /* LocalCaseSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060C355964F524CB92852C51 /* LocalCaseSearchEngine.swift */; };
+		D9D7ED2D7268B19DFFFB5759 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 08F3689615872CAE1509250B /* Assets.xcassets */; };
+		EADAD7E510DE25A10FAE9FC9 /* LocalIRPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = C16511F162CE9D0941E67FAD /* LocalIRPipeline.swift */; };
+		F4047B2620ABEE78E04C0EB0 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5962B6EEF79210E69E003D5 /* SplashView.swift */; };
 		F4D032582C2307BE5B20F222 /* NavigationBackButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */; };
+		F635CE778EF235B10C51E091 /* StudyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB179791D8521B717057551 /* StudyStore.swift */; };
 		F712F650434C229033AFC935 /* CaseSummaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */; };
 /* End PBXBuildFile section */
 
@@ -47,31 +48,32 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		060C355964F524CB92852C51 /* LocalCaseSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCaseSearchEngine.swift; sourceTree = "<group>"; };
+		08F3689615872CAE1509250B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		188D4A67A763047523D31AE1 /* OCRView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRView.swift; sourceTree = "<group>"; };
+		2374C03FE8EFE6589FB705B7 /* LegalAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalAnalyzer.swift; sourceTree = "<group>"; };
+		28BED8D1443AD6C8C128FC4C /* LegalIssueDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalIssueDictionary.swift; sourceTree = "<group>"; };
 		353E1A434AF9C763B420648A /* AISYSAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AISYSAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E9F668837C28CE9BD27A040 /* DemoSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSeed.swift; sourceTree = "<group>"; };
 		48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplates.swift; sourceTree = "<group>"; };
 		4EB8550D7167F38BF77BC796 /* AISYSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISYSApp.swift; sourceTree = "<group>"; };
-		694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Llama-3.2-1B-Instruct-Q4_K_M.gguf"; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../Resources/Assets.xcassets; sourceTree = "<group>"; };
+		694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */ = {isa = PBXFileReference; path = "Llama-3.2-1B-Instruct-Q4_K_M.gguf"; sourceTree = "<group>"; };
 		6FD11294844C01BF1B041A12 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISYSAppTests.swift; sourceTree = "<group>"; };
 		80EB6CEDE58FD30A4BC467BE /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
-		A012500B9935794B1603D393 /* AISYSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AISYSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		836C35DF55C518ACC513E98F /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A012500B9935794B1603D393 /* AISYSApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AISYSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedCase.swift; sourceTree = "<group>"; };
+		A4E0E9EAE4A447F9B2997442 /* LocalCaseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCaseStore.swift; sourceTree = "<group>"; };
 		BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRuntimeState.swift; sourceTree = "<group>"; };
+		C16511F162CE9D0941E67FAD /* LocalIRPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalIRPipeline.swift; sourceTree = "<group>"; };
+		C90624E4F59B2689EC5885F6 /* NewMainScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMainScreens.swift; sourceTree = "<group>"; };
+		CDB179791D8521B717057551 /* StudyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyStore.swift; sourceTree = "<group>"; };
+		D5962B6EEF79210E69E003D5 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		D71F7EC6215383E28B8504D6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMEngines.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSimilarityEngine.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1B3 /* LegalIssueDictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalIssueDictionary.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1B4 /* LocalIRPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalIRPipeline.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1B5 /* LocalCaseSearchEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCaseSearchEngine.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1B6 /* LocalCaseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCaseStore.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1D0 /* DemoSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSeed.swift; sourceTree = "<group>"; };
-		B1C2D3E4F50617283940A1E0 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		E502DA99506E6616DB6CF25A /* LocalSimilarityEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSimilarityEngine.swift; sourceTree = "<group>"; };
 		EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFlowViews.swift; sourceTree = "<group>"; };
-		F408ACC8D034B72FF9346C76 /* NewMainScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMainScreens.swift; sourceTree = "<group>"; };
-		D8E9F0A1B2C3D4E5F6071830 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
-		D8E9F0A1B2C3D4E5F6071832 /* StudyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyStore.swift; sourceTree = "<group>"; };
 		FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseSummaryViewModel.swift; sourceTree = "<group>"; };
 		FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationBackButton.swift; sourceTree = "<group>"; };
 		FE170875E59DB4941C4441FB /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
@@ -89,6 +91,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		14E3C27F43EA5B61006593CE /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				08F3689615872CAE1509250B /* Assets.xcassets */,
+			);
+			name = Resources;
+			path = AISYSApp/Resources;
+			sourceTree = "<group>";
+		};
 		A5F2AD8B184F65E904735D91 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -110,6 +121,7 @@
 			isa = PBXGroup;
 			children = (
 				CED744CC7EDAB7F187997964 /* AISYSAppTests */,
+				14E3C27F43EA5B61006593CE /* Resources */,
 				D14B24A4C871F531B3F8521B /* Sources */,
 				A5F2AD8B184F65E904735D91 /* Products */,
 			);
@@ -121,28 +133,28 @@
 				4EB8550D7167F38BF77BC796 /* AISYSApp.swift */,
 				BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */,
 				FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */,
-				F408ACC8D034B72FF9346C76 /* NewMainScreens.swift */,
-				D8E9F0A1B2C3D4E5F6071830 /* DesignSystem.swift */,
-				D8E9F0A1B2C3D4E5F6071832 /* StudyStore.swift */,
+				3E9F668837C28CE9BD27A040 /* DemoSeed.swift */,
+				836C35DF55C518ACC513E98F /* DesignSystem.swift */,
+				2374C03FE8EFE6589FB705B7 /* LegalAnalyzer.swift */,
+				28BED8D1443AD6C8C128FC4C /* LegalIssueDictionary.swift */,
 				694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */,
-				B1C2D3E4F50617283940A1C0 /* Assets.xcassets */,
 				80EB6CEDE58FD30A4BC467BE /* LLMService.swift */,
+				060C355964F524CB92852C51 /* LocalCaseSearchEngine.swift */,
+				A4E0E9EAE4A447F9B2997442 /* LocalCaseStore.swift */,
+				C16511F162CE9D0941E67FAD /* LocalIRPipeline.swift */,
 				E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */,
-				B1C2D3E4F50617283940A1B2 /* LocalSimilarityEngine.swift */,
-				B1C2D3E4F50617283940A1B3 /* LegalIssueDictionary.swift */,
-				B1C2D3E4F50617283940A1B4 /* LocalIRPipeline.swift */,
-				B1C2D3E4F50617283940A1B5 /* LocalCaseSearchEngine.swift */,
-				B1C2D3E4F50617283940A1B6 /* LocalCaseStore.swift */,
-				B1C2D3E4F50617283940A1D0 /* DemoSeed.swift */,
-				B1C2D3E4F50617283940A1E0 /* SplashView.swift */,
+				E502DA99506E6616DB6CF25A /* LocalSimilarityEngine.swift */,
 				D71F7EC6215383E28B8504D6 /* Models.swift */,
 				FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */,
 				FE170875E59DB4941C4441FB /* NetworkService.swift */,
+				C90624E4F59B2689EC5885F6 /* NewMainScreens.swift */,
 				188D4A67A763047523D31AE1 /* OCRView.swift */,
 				48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */,
 				6FD11294844C01BF1B041A12 /* RootTabView.swift */,
 				A05699DBD8F87C4BD2078F69 /* ScannedCase.swift */,
 				EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */,
+				D5962B6EEF79210E69E003D5 /* SplashView.swift */,
+				CDB179791D8521B717057551 /* StudyStore.swift */,
 			);
 			name = Sources;
 			path = AISYSApp/Sources;
@@ -199,10 +211,11 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					2CE181BFE59D5C851761B664 = {
+						DevelopmentTeam = 6S5ZH3ZJ93;
 						ProvisioningStyle = Automatic;
 					};
 					EBDCA1FDA209B33F35A692C1 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 6S5ZH3ZJ93;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -235,8 +248,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D9D7ED2D7268B19DFFFB5759 /* Assets.xcassets in Resources */,
 				CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */,
-				A1B2C3D4E5F60718293A4B70 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -250,26 +263,27 @@
 				8996C6B976101B7FBEA8CD20 /* AISYSApp.swift in Sources */,
 				4E3AA712F44889CCA43FE258 /* AppRuntimeState.swift in Sources */,
 				F712F650434C229033AFC935 /* CaseSummaryViewModel.swift in Sources */,
-				C4DABF681E9D0290768E3FB4 /* NewMainScreens.swift in Sources */,
-				D8E9F0A1B2C3D4E5F6071829 /* DesignSystem.swift in Sources */,
-				D8E9F0A1B2C3D4E5F6071831 /* StudyStore.swift in Sources */,
+				5ED93C1DBCD4871901E32373 /* DemoSeed.swift in Sources */,
+				00CDBBF1CA556EF7C5E74DFF /* DesignSystem.swift in Sources */,
 				1C43007E9CD651F2878094CB /* LLMService.swift in Sources */,
+				0042D590C6D02D0F60225B52 /* LegalAnalyzer.swift in Sources */,
+				26EE9CC3E5F97651A9BF416C /* LegalIssueDictionary.swift in Sources */,
+				D4D4403E5ED422BA58ED8EAD /* LocalCaseSearchEngine.swift in Sources */,
+				6CAF6AAB2C1264661813FB8F /* LocalCaseStore.swift in Sources */,
+				EADAD7E510DE25A10FAE9FC9 /* LocalIRPipeline.swift in Sources */,
 				69718A360E32436E7D1A3273 /* LocalLLMEngines.swift in Sources */,
-				A1B2C3D4E5F60718293A4B5C /* LocalSimilarityEngine.swift in Sources */,
-				A1B2C3D4E5F60718293A4B5D /* LegalIssueDictionary.swift in Sources */,
-				A1B2C3D4E5F60718293A4B5E /* LocalIRPipeline.swift in Sources */,
-				A1B2C3D4E5F60718293A4B5F /* LocalCaseSearchEngine.swift in Sources */,
-				A1B2C3D4E5F60718293A4B60 /* LocalCaseStore.swift in Sources */,
-				A1B2C3D4E5F60718293A4B80 /* DemoSeed.swift in Sources */,
-				A1B2C3D4E5F60718293A4B90 /* SplashView.swift in Sources */,
+				AD63F8867BAF8A93EB92340E /* LocalSimilarityEngine.swift in Sources */,
 				0134EB00FCADE9C6760E94C3 /* Models.swift in Sources */,
 				F4D032582C2307BE5B20F222 /* NavigationBackButton.swift in Sources */,
 				24D17AE6F904AB34297D556D /* NetworkService.swift in Sources */,
+				513C47C9CDDB2B78639D796A /* NewMainScreens.swift in Sources */,
 				A562AF02780501D1737514AE /* OCRView.swift in Sources */,
 				0B7A2E2CC0663A1C2DB09513 /* PromptTemplates.swift in Sources */,
 				33B554E67648A09D2B3FA223 /* RootTabView.swift in Sources */,
 				0D8B09BABDDB4ECA59B0D5F9 /* ScannedCase.swift in Sources */,
 				B932ED19AEA38751B581B486 /* SearchFlowViews.swift in Sources */,
+				F4047B2620ABEE78E04C0EB0 /* SplashView.swift in Sources */,
+				F635CE778EF235B10C51E091 /* StudyStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,7 +319,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.acertainromance401.aisys.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AISYSApp.app/AISYSApp";
 			};
 			name = Release;
@@ -315,10 +329,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
 				INFOPLIST_KEY_CFBundleDisplayName = STACK112;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
-				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "판례 이미지를 선택해 OCR 분석을 수행합니다. 이미지는 기기 내에서만 처리되며 외부로 전송되지 않습니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIFileSharingEnabled = NO;
@@ -334,7 +348,7 @@
 				PRODUCT_NAME = AISYSApp;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -343,10 +357,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
 				INFOPLIST_KEY_CFBundleDisplayName = STACK112;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LLAMA_MODEL_FILE = "Llama-3.2-1B-Instruct-Q4_K_M.gguf";
-				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "판례 이미지를 선택해 OCR 분석을 수행합니다. 이미지는 기기 내에서만 처리되며 외부로 전송되지 않습니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIFileSharingEnabled = NO;
@@ -362,7 +376,7 @@
 				PRODUCT_NAME = AISYSApp;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -403,7 +417,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -442,7 +456,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.acertainromance401.aisys.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AISYSApp.app/AISYSApp";
 			};
 			name = Debug;
@@ -484,7 +498,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 6S5ZH3ZJ93;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;

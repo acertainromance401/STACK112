@@ -215,6 +215,19 @@ enum LocalIRPipeline {
             if ranked.count >= topN { return ranked }
         }
 
+        // 1.5. 법률 N-gram 사전 매칭 — NLTagger 가 놓치는 복합 법률 용어를
+        //      LegalIssueDictionary 키로 우선 채택. 시험 빈출 용어가 항상 상위에 오게 한다.
+        let dictionaryHits = LegalIssueDictionary.detect(in: text)
+        let dictionaryQuota = min(4, max(0, topN / 3))
+        // importance 내림차순으로 우선순위 부여
+        let prioritized = dictionaryHits.direct.sorted { a, b in
+            (LegalIssueDictionary.index[a]?.importance ?? 0) > (LegalIssueDictionary.index[b]?.importance ?? 0)
+        }
+        for term in prioritized.prefix(dictionaryQuota) {
+            push(term)
+            if ranked.count >= topN { return ranked }
+        }
+
         // 2. 명사 추출 + 어미 제거 + 카운트
         let nouns = nounsFromText(text).map { stripEndings($0) }
         var counts: [String: Int] = [:]
@@ -346,6 +359,7 @@ enum LocalIRPipeline {
     ]
 
     static func inferDomain(text: String, keywords: [String]) -> String {
+        // 1차: 기존 키워드 카운트 (이전 IR 동작 호환 유지)
         let corpus = (text + " " + keywords.joined(separator: " ")).lowercased()
         var best = "general_legal"
         var bestScore = 0
@@ -356,7 +370,20 @@ enum LocalIRPipeline {
                 best = name
             }
         }
-        return bestScore < 2 ? "general_legal" : best
+        if bestScore >= 2 { return best }
+
+        // 2차 (보강): 점수 부족 시 LegalAnalyzer 의 가중치 모델 사용
+        let analyzed = LegalAnalyzer.classify(text: text, keywords: keywords)
+        if analyzed.confidence >= 0.5 {
+            switch analyzed.domain {
+            case .criminalProcedure:    return "criminal_procedure_evidence"
+            case .criminalLaw:          return "criminal_law"
+            case .constitutional:       return "constitutional_law"
+            case .policeAdministrative: return "police_committees"
+            case .general:              return "general_legal"
+            }
+        }
+        return "general_legal"
     }
 
     static func buildStudyFocus(domain: String, keywords: [String], keySentences: String) -> [String] {

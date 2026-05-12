@@ -691,11 +691,35 @@ struct PracticeView: View {
                     .foregroundStyle(AppColor.textSecondary)
                     .lineSpacing(3)
                 if !isCorrect {
-                    Button("오답 메모 남기기") {
+                    Button {
                         showWrongMemoSheet = true
+                    } label: {
+                        Label(
+                            (pendingWrongRecordId.flatMap { id in store.wrongQuizRecords.first(where: { $0.id == id })?.userMemo }?.isEmpty == false) ? "메모 수정" : "메모 남기기",
+                            systemImage: "square.and.pencil"
+                        )
+                        .font(AppFont.captionEmphasis)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(AppColor.danger.opacity(0.14))
+                        .foregroundStyle(AppColor.danger)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
                     }
-                    .font(AppFont.captionEmphasis)
-                    .foregroundStyle(AppColor.accent)
+                } else {
+                    Button {
+                        showWrongMemoSheet = true
+                    } label: {
+                        Label(
+                            (pendingWrongRecordId.flatMap { id in store.wrongQuizRecords.first(where: { $0.id == id })?.userMemo }?.isEmpty == false) ? "메모 수정" : "메모 남기기",
+                            systemImage: "square.and.pencil"
+                        )
+                        .font(AppFont.captionEmphasis)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(AppColor.accent.opacity(0.12))
+                        .foregroundStyle(AppColor.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    }
                 }
                 Button(currentIndex + 1 < quiz.count ? "다음 문제" : "세션 종료") { next() }
                     .frame(maxWidth: .infinity)
@@ -744,22 +768,19 @@ struct PracticeView: View {
         sessionSolved += 1
         if correct { sessionCorrect += 1 }
         studyStore.recordAnswer(correct: correct, confidence: selectedConfidence)
-        if !correct {
-            let scanned = scannedCases.first
-            let savedId = store.saveWrongQuizRecord(
-                caseNumber: scanned?.caseName ?? "OX",
-                caseTitle: scanned?.caseName ?? "OX",
-                question: q.statement,
-                userAnswer: answer,
-                correctAnswer: q.answer,
-                explanation: q.explanation,
-                caseSummary: scanned?.keySentences ?? "",
-                subject: scanned?.keywords.prefix(2).joined(separator: " · ")
-            )
-            pendingWrongRecordId = savedId
-            wrongMemoDraft = ""
-            showWrongMemoSheet = true
-        }
+        let scanned = scannedCases.first
+        let savedId = store.saveWrongQuizRecord(
+            caseNumber: scanned?.caseName ?? "OX",
+            caseTitle: scanned?.caseName ?? "OX",
+            question: q.statement,
+            userAnswer: answer,
+            correctAnswer: q.answer,
+            explanation: q.explanation,
+            caseSummary: scanned?.keySentences ?? "",
+            subject: scanned?.keywords.prefix(2).joined(separator: " · ")
+        )
+        pendingWrongRecordId = savedId
+        wrongMemoDraft = ""
     }
 
     private func next() {
@@ -798,8 +819,11 @@ struct WrongNoteView: View {
                 if !weakSubjects.isEmpty { weakSection }
 
                 AppCard {
-                    SectionHeader(title: "최근 오답", trailing: "\(store.wrongQuizRecords.count)건")
-                    if store.wrongQuizRecords.isEmpty {
+                    let visibleAllRecords = store.wrongQuizRecords.filter {
+                        $0.userAnswer != $0.correctAnswer || ($0.userMemo?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+                    }
+                    SectionHeader(title: "최근 오답", trailing: "\(visibleAllRecords.count)건")
+                    if visibleAllRecords.isEmpty {
                         Text("아직 메모해 둔 오답이 없어요. 헷갈렸던 문제를 가볍게 남겨두세요.")
                             .font(AppFont.caption)
                             .foregroundStyle(AppColor.textSecondary)
@@ -807,12 +831,12 @@ struct WrongNoteView: View {
                     } else {
                         VStack(spacing: AppSpace.m) {
                             let visibleRecords = showAllWrongRecords
-                                ? Array(store.wrongQuizRecords)
-                                : Array(store.wrongQuizRecords.prefix(initialWrongRecordLimit))
+                                ? visibleAllRecords
+                                : Array(visibleAllRecords.prefix(initialWrongRecordLimit))
                             ForEach(visibleRecords) { rec in
                                 WrongRecordCard(record: rec)
                             }
-                            if store.wrongQuizRecords.count > initialWrongRecordLimit {
+                            if visibleAllRecords.count > initialWrongRecordLimit {
                                 Button {
                                     withAnimation(.easeInOut(duration: 0.2)) {
                                         showAllWrongRecords.toggle()
@@ -821,7 +845,7 @@ struct WrongNoteView: View {
                                     HStack(spacing: 6) {
                                         Text(showAllWrongRecords
                                              ? "접기"
-                                             : "더 보기 (+\(store.wrongQuizRecords.count - initialWrongRecordLimit)건)")
+                                             : "더 보기 (+\(visibleAllRecords.count - initialWrongRecordLimit)건)")
                                             .font(AppFont.captionEmphasis)
                                         Image(systemName: showAllWrongRecords ? "chevron.up" : "chevron.down")
                                             .font(.caption.bold())

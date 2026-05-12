@@ -36,6 +36,11 @@ struct AISYSApp: App {
             .tint(AppColor.accent)
             .task {
                 await LLMService.shared.loadModelIfNeeded()
+                // 약점 키워드 공급원 등록 — OX 퀴즈 프롬프트에 개인화 hint 주입
+                LLMService.shared.weakKeywordsProvider = { [weak store] in
+                    guard let store else { return [] }
+                    return LegalAnalyzer.weakKeywords(from: store.wrongQuizRecords, topK: 3)
+                }
             }
             .task {
                 // 너무 빠르게 사라지면 깜빡임이 생기므로 최소 노출 시간 보장

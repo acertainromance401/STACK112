@@ -61,6 +61,15 @@ final class LLMService: ObservableObject {
     private let fallbackEngine: LocalLLMEngine
     private var useFallback = true
 
+    // MARK: - Caches (똑같은 판례 재진입 시 LLM 재호출 회피)
+    // LLMService 가 @MainActor 이므로 단순 Dictionary 로 안전. 최대 32건 LRU-lite.
+    private var summaryCache: [String: LLMSummary] = [:]
+    private var oxCache: [String: [OXQuizQuestion]] = [:]
+    private var ragCache: [String: String] = [:]
+    private let cacheCapacity = 32
+    /// 약점 키워드(개인화 hint) 공급 클로저. RootTabView에서 ReviewStore 와 바인딩.
+    var weakKeywordsProvider: (() -> [String])? = nil
+
     private init(
         primaryEngine: LocalLLMEngine = LlamaCppEngine(),
         fallbackEngine: LocalLLMEngine = RuleBasedLocalEngine()
@@ -113,6 +122,12 @@ final class LLMService: ObservableObject {
     func summarize(caseItem: APICase) async throws -> LLMSummary? {
         guard case .ready = state else { throw LLMError.notReady }
 
+        // 캐시 히트 — 동일 case 재진입이면 즉시 반환
+        let cacheKey = "sum:\(caseItem.caseNumber)"
+        if let cached = summaryCache[cacheKey] {
+            return cached
+        }
+
         state = .inferring
         defer {
             if case .inferring = state { state = .ready }
@@ -136,18 +151,24 @@ final class LLMService: ObservableObject {
 
         let rawOutput: String
         do {
-            rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 220, purpose: "summarize")
+            rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 240, purpose: "summarize")
         } catch {
             let fallbackRaw = buildSummaryOutput(caseItem: caseItem)
             return LLMSummary(rawOutput: fallbackRaw)
         }
         if let summary = LLMSummary(rawOutput: rawOutput) {
-            return postprocessSummary(summary, caseItem: caseItem)
+            if let post = postprocessSummary(summary, caseItem: caseItem) {
+                cacheSummary(post, forKey: cacheKey)
+                return post
+            }
         }
 
         let normalizedOutput = normalizeSummaryOutput(rawOutput, caseItem: caseItem)
         if let summary = LLMSummary(rawOutput: normalizedOutput) {
-            return postprocessSummary(summary, caseItem: caseItem)
+            if let post = postprocessSummary(summary, caseItem: caseItem) {
+                cacheSummary(post, forKey: cacheKey)
+                return post
+            }
         }
 
         // 모델 출력 형식이 달라도 UX가 깨지지 않도록 안전 폴백
@@ -1104,6 +1125,12 @@ final class LLMService: ObservableObject {
     ) async throws -> [OXQuizQuestion] {
         guard case .ready = state else { throw LLMError.notReady }
 
+        // 캐시 히트 — 동일 case + count 면 즉시 반환
+        let oxKey = "ox:\(caseItem.caseNumber):\(count)"
+        if let cached = oxCache[oxKey], !cached.isEmpty {
+            return cached
+        }
+
         state = .inferring
         defer {
             if case .inferring = state { state = .ready }
@@ -1147,54 +1174,55 @@ final class LLMService: ObservableObject {
             decisionHints: buildDecisionHints(text: quizBody, keywords: compactKeywords)
         )
 
-        // v1.0: \uc11c\ubc84 \ubd84\uae30 \uc81c\uac70. \ub85c\uceec 1B \uc2e4\ud328 \uc2dc \ub8f0 \uae30\ubc18 \ud3f4\ubc31\ub9cc \uc0ac\uc6a9.
+        // v1.0: 서버 분기 제거. 로컬 1B 실패 시 룰 기반 폴백만 사용.
+        // 동적 토큰: 문항 수에 비례 (1문항≈70토큰), 상한 360
+        let oxMaxTokens = min(360, 100 + 70 * max(1, count))
         do {
             // OX 퀴즈는 IR 추출 결과를 먼저 압축한 뒤 프롬프트에 넣고 생성합니다.
-            let rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 260, purpose: "ox_quiz")
+            let rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: oxMaxTokens, purpose: "ox_quiz")
             let parsed = OXQuizQuestion.parseList(rawOutput: rawOutput)
             let filtered = parsed.filter { isUsefulOXItem($0) }
-            if !filtered.isEmpty {
-                return Array(filtered.prefix(max(1, count)))
+            // 부분 수용: count-1 이상이면 LLM 결과 채택, 부족분은 폴백으로 보강
+            if filtered.count >= max(1, count - 1) {
+                if filtered.count >= count {
+                    let result = Array(filtered.prefix(count))
+                    cacheOX(result, forKey: oxKey)
+                    return result
+                }
+                // 부분 결과 + 폴백 보강
+                let supplement = buildFallbackOXQuiz(
+                    caseItem: caseItem,
+                    keySentences: quizBody.isEmpty ? keySentences : quizBody,
+                    count: count - filtered.count
+                )
+                var merged = Array(filtered)
+                for item in supplement where !merged.contains(where: { $0.statement == item.statement }) {
+                    merged.append(item)
+                    if merged.count >= count { break }
+                }
+                cacheOX(merged, forKey: oxKey)
+                return merged
             }
         } catch {}
 
         // 폴백: digest 기반 quizBody를 우선 사용해 OX 문항을 직접 구성 (raw OCR 노이즈 회피)
         let baseQuiz = buildFallbackOXQuiz(caseItem: caseItem, keySentences: quizBody.isEmpty ? keySentences : quizBody, count: count)
         // 룰베이스로 만든 X 문항(부정형)을 1B 모델 변형 결과로 교체 시도 — 첫 X 문항만 한 개 변형
-        return await enhanceOXQuizWithLLM(baseQuiz: baseQuiz, caseItem: caseItem)
+        let enhanced = await enhanceOXQuizWithLLM(baseQuiz: baseQuiz, caseItem: caseItem)
+        cacheOX(enhanced, forKey: oxKey)
+        return enhanced
     }
 
-    /// 분류 트리 문서를 OX 프롬프트에 반영하기 위한 체크포인트 생성.
-    /// 텍스트/키워드에 따라 과목별 분기 기준을 최대 3개까지 반환한다.
+    /// 분류 트리 + 도메인 함정 카탈로그 + 개인화(약점 키워드)를 합쳐
+    /// LLM OX 프롬프트에 주입할 체크포인트(최대 3개)를 생성.
+    /// 실제 도메인 분류와 함정 셔플은 `LegalAnalyzer` 에 위임한다.
     private func buildDecisionHints(text: String, keywords: [String]) -> [String] {
-        let corpus = (text + " " + keywords.joined(separator: " ")).lowercased()
-        var hints: [String] = []
-
-        func add(_ hint: String) {
-            if !hints.contains(hint) { hints.append(hint) }
-        }
-
-        if ["영장", "압수", "수색", "체포", "구속", "증거", "전문", "자백", "위법수집"].contains(where: { corpus.contains($0) }) {
-            add("강제처분인지 임의수사인지 먼저 분기하고 영장 원칙을 확인")
-            add("영장 예외 사유는 긴급성·현행성·동의권자 적격으로 좁혀 검토")
-            add("증거 문제는 위법수집-전문법칙-자백법칙 순서로 점검")
-        }
-
-        if ["고의", "과실", "정당방위", "긴급피난", "미수", "불능미수", "공동정범"].contains(where: { corpus.contains($0) }) {
-            add("형법은 구성요건-위법성-책임 순서로 판단")
-            add("정당방위와 긴급피난을 공격 주체 기준으로 구별")
-        }
-
-        if ["기본권", "위헌", "합헌", "과잉금지", "평등", "표현의 자유", "직업"].contains(where: { corpus.contains($0) }) {
-            add("헌법은 제한 기본권 특정 후 과잉금지 또는 평등심사로 분기")
-        }
-
-        if hints.isEmpty {
-            add("문제 유형을 10초 안에 과목으로 먼저 분류")
-            add("예외 요건을 확인한 뒤 결론을 확정")
-        }
-
-        return Array(hints.prefix(3))
+        let weak = weakKeywordsProvider?() ?? []
+        return LegalAnalyzer.buildDecisionHints(
+            text: text,
+            keywords: keywords,
+            userWeakKeywords: weak
+        )
     }
 
     /// 룰베이스 OX 퀴즈 결과의 X 문항(answer == false) 첫 번째를 1B Llama 변형으로 교체.
@@ -1362,17 +1390,36 @@ final class LLMService: ObservableObject {
             return ""
         }
 
+        // 세션 캐시 — 같은 case 재진입 시 네트워크 호출 회피
+        if let cached = ragCache[caseItem.caseNumber] {
+            return cached
+        }
+
         guard let similar = try? await NetworkService.shared.listSimilarCases(caseNumber: caseItem.caseNumber, topK: 3),
               !similar.isEmpty else {
+            ragCache[caseItem.caseNumber] = ""
             return ""
         }
 
-        return similar.map {
+        let joined = similar.map {
             let issue = ($0.issueSummary ?? "").prefix(80)
             let holding = ($0.holdingSummary ?? "").prefix(80)
             let exam = ($0.examPoints ?? "").prefix(60)
             return "- \($0.caseNumber) \($0.caseName) [\($0.subject)]: 쟁점=\(issue) / 결론=\(holding) / 포인트=\(exam)"
         }.joined(separator: "\n")
+        ragCache[caseItem.caseNumber] = joined
+        if ragCache.count > cacheCapacity { ragCache.removeAll() }
+        return joined
+    }
+
+    /// 캐시 저장 + 단순 capacity 관리 (LRU 아닌 wipe-on-overflow)
+    private func cacheSummary(_ summary: LLMSummary, forKey key: String) {
+        if summaryCache.count >= cacheCapacity { summaryCache.removeAll() }
+        summaryCache[key] = summary
+    }
+    private func cacheOX(_ items: [OXQuizQuestion], forKey key: String) {
+        if oxCache.count >= cacheCapacity { oxCache.removeAll() }
+        oxCache[key] = items
     }
 
     private func buildFallbackOXQuiz(
