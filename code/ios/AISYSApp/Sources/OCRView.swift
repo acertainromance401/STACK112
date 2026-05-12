@@ -71,10 +71,22 @@ struct OCRView: View {
                     .tint(.indigo)
                     .disabled(isRecognizing || isExtractingIR)
 
-                    Text("판시사항·판결요지·참조조문 같은 구조가 포함되면 분석 정확도가 더 높아집니다.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("첨부 가이드", systemImage: "lightbulb")
+                            .font(.caption.bold())
+                            .foregroundStyle(.indigo)
+                        Text("• 가장 좋음 — 판시사항 + 판결요지")
+                            .font(.caption2)
+                        Text("• 도움됨 — 참조조문 · 참조판례")
+                            .font(.caption2)
+                        Text("• 보조 — 이유 본문 일부 (없어도 동작)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(Color.indigo.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("판례 이름/번호")
