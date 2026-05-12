@@ -66,7 +66,7 @@ struct OCRView: View {
                         TextField("예: 2024다311181 또는 사건명", text: $caseIdentifierInput)
                             .textFieldStyle(.roundedBorder)
                             .disabled(isRecognizing || isExtractingIR)
-                        Text("입력하면 저장 시 이 이름을 사용합니다. 비워두면 자동 번호로 저장됩니다.")
+                        Text("입력하면 메모용 식별자로 쓰입니다. 비워두면 본문 핵심어로 「〇〇 사건」 형태 이름이 자동 생성됩니다.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -238,22 +238,43 @@ struct OCRView: View {
         // 학습카드 품질을 위해 OCR 텍스트에서 사건 정보(번호·사건명·도메인·쟁점·결론)를 분리 추출
         let digest = extractCaseDigest(rawText: recognizedText, keySentences: keySentences, keywords: keywords)
 
-        // 사건번호/사건명 결정: 사용자 입력 > 자동 추출 > 타임스탬프
+        // 사건번호/사건명 결정: 사용자 입력 > [···] 박타이틀 > 자동 생성(키워드 기반) > 자동 식별자
+        // 사용자 입력은 메모용 식별자(예: "2024다311181")로만 쓰고, 실제 표시 이름은 판례 내용을 반영한 자동 이름 우선
         let now = Date()
         let formatter = ISO8601DateFormatter()
         let manualIdentifier = caseIdentifierInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let autoCaseName = deriveAutoCaseName(
+            keywords: keywords,
+            domainLabel: digest.domainLabel,
+            issueSentence: digest.issueSentence
+        )
+        let bracketSubjectName = digest.caseSubject.isEmpty
+            ? ""
+            : (digest.caseSubject.hasSuffix("사건") || digest.caseSubject.hasSuffix("판례")
+                ? digest.caseSubject
+                : digest.caseSubject + " 사건")
+
         let ocrCaseNumber: String
         let ocrCaseName: String
-        if !manualIdentifier.isEmpty {
+        if !manualIdentifier.isEmpty && looksLikeCaseNumber(manualIdentifier) {
+            // 사용자가 사건번호를 직접 입력한 경우: 식별자는 그대로, 이름은 자동 생성 우선
             ocrCaseNumber = manualIdentifier
-            ocrCaseName = digest.caseSubject.isEmpty ? manualIdentifier : digest.caseSubject
+            ocrCaseName = !bracketSubjectName.isEmpty ? bracketSubjectName
+                        : (!autoCaseName.isEmpty ? autoCaseName : manualIdentifier)
+        } else if !manualIdentifier.isEmpty {
+            // 사용자가 임의 메모명(예: "테스트2")을 입력한 경우: 식별자로는 쓰되, 사건명은 자동 이름 우선
+            ocrCaseNumber = digest.caseNumber.isEmpty ? manualIdentifier : digest.caseNumber
+            ocrCaseName = !bracketSubjectName.isEmpty ? bracketSubjectName
+                        : (!autoCaseName.isEmpty ? autoCaseName : manualIdentifier)
         } else if !digest.caseNumber.isEmpty {
             ocrCaseNumber = digest.caseNumber
-            ocrCaseName = digest.caseSubject.isEmpty ? digest.caseNumber : digest.caseSubject
+            ocrCaseName = !bracketSubjectName.isEmpty ? bracketSubjectName
+                        : (!autoCaseName.isEmpty ? autoCaseName : digest.caseNumber)
         } else {
             let auto = "OCR-\(formatter.string(from: now))"
             ocrCaseNumber = auto
-            ocrCaseName = digest.caseSubject.isEmpty ? auto : digest.caseSubject
+            ocrCaseName = !bracketSubjectName.isEmpty ? bracketSubjectName
+                        : (!autoCaseName.isEmpty ? autoCaseName : auto)
         }
 
         // examPoints — 단순 조항 나열 대신 "도메인 학습 가이드 + 핵심 본문 키워드" 합성으로 가독성 개선
@@ -561,6 +582,62 @@ struct OCRView: View {
             ?? "결론을 OCR에서 추출하지 못했다. 원문을 확인하라."
 
         return digest
+    }
+
+    /// 사용자가 입력한 문자열이 사건번호 형태인지 판별 (예: "2024다311181", "2022헌마123")
+    private func looksLikeCaseNumber(_ s: String) -> Bool {
+        return s.range(of: #"^\d{2,4}\s*[가-힣]{1,3}\s*\d+$"#, options: .regularExpression) != nil
+    }
+
+    /// OCR 키워드/쟁점 문장에서 의미 있는 "○○ 사건" 형태 사건명을 합성한다.
+    /// - 우선순위: (1) 도메인 사전의 법률 용어 키워드 상위 1~2개 → (2) 쟁점 문장의 핵심 명사 → (3) 빈 문자열
+    /// - 결과 예: "담보공탁금 사건", "위법수집증거 사건", "재량권 일탈 사건"
+    private func deriveAutoCaseName(keywords: [String], domainLabel: String, issueSentence: String) -> String {
+        // 도메인 힌트 집합 (모든 도메인의 hints를 평탄화)
+        let legalHints: Set<String> = Set(OCRView.domainKeywordMap.flatMap { $0.hints })
+
+        // 1) 키워드 중 법률 용어 우선 추출 (2~10자, 숫자/특수문자 제외)
+        let cleanedKeywords: [String] = keywords.compactMap { kw -> String? in
+            let trimmed = kw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.count >= 2, trimmed.count <= 12 else { return nil }
+            if trimmed.range(of: #"^[\d\s\-_.]+$"#, options: .regularExpression) != nil { return nil }
+            // 출처/메타 잡음 제외
+            let blacklist: Set<String> = ["판례", "사건", "공보", "미간행", "선고", "판결", "결정", "원심", "원고", "피고", "상고", "항소"]
+            if blacklist.contains(trimmed) { return nil }
+            return trimmed
+        }
+
+        let legalKeywords = cleanedKeywords.filter { kw in
+            legalHints.contains(where: { $0 == kw || $0.contains(kw) || kw.contains($0) })
+        }
+
+        let primary = legalKeywords.first ?? cleanedKeywords.first
+        let secondary: String? = {
+            let pool = !legalKeywords.isEmpty ? legalKeywords : cleanedKeywords
+            guard pool.count >= 2, let p = primary else { return nil }
+            return pool.first(where: { $0 != p && !$0.contains(p) && !p.contains($0) })
+        }()
+
+        if let kw1 = primary {
+            if let kw2 = secondary {
+                return "\(kw1) \(kw2) 사건"
+            }
+            // 도메인 라벨이 있으면 부가 정보로 활용 ("재량권 행정법 사건"은 어색하므로 도메인은 생략하고 단일 키워드 사용)
+            return "\(kw1) 사건"
+        }
+
+        // 2) 키워드가 없으면 쟁점 문장에서 첫 명사구 후보를 잘라낸다 (어절 1~2개)
+        let issue = issueSentence.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !issue.isEmpty && !issue.hasPrefix("쟁점 정보를") {
+            let tokens = issue.split(separator: " ").map(String.init)
+            if let firstNoun = tokens.first(where: { $0.count >= 2 && $0.count <= 10 }) {
+                let cleaned = firstNoun.replacingOccurrences(of: #"[,\.\(\)\[\]]"#, with: "", options: .regularExpression)
+                if !cleaned.isEmpty { return "\(cleaned) 관련 사건" }
+            }
+        }
+
+        _ = domainLabel // 현재 직접 사용하지 않지만 향후 도메인별 접미사 분기에 사용
+        return ""
     }
 
     /// 학습카드 후보 문장 수집: 줄바꿈/마침표/괄호로 분할하고 잡음을 제거한다.

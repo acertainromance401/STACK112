@@ -1498,7 +1498,7 @@ final class LLMService: ObservableObject {
                     explanation: "[\(caseNum)] 판결에서 확인된 내용입니다."
                 )
             } else {
-                let xStatement = negateStatement(base)
+                let xStatement = negateStatement(base, caseName: caseItem.caseName)
                 return OXQuizQuestion(
                     statement: ensureKoreanTerminal(xStatement),
                     answer: false,
@@ -1605,7 +1605,7 @@ final class LLMService: ObservableObject {
 
     /// 안전한 X 진술 생성 — 단순 단어 치환은 원문이 이미 부정형/긍정형일 때 잘못 라벨될 수 있으므로
     /// 명백한 단방향 패턴만 처리하고 나머지는 "단정 불가" 형태로 전환합니다.
-    private func negateStatement(_ statement: String) -> String {
+    private func negateStatement(_ statement: String, caseName: String = "") -> String {
         // 명백히 긍정 결론을 단정한 진술만 안전하게 부정으로 뒤집음
         let safeFlips: [(String, String)] = [
             ("해당한다", "해당하지 않는다"),
@@ -1624,8 +1624,16 @@ final class LLMService: ObservableObject {
         }
         // 유죄/무죄는 "원심은 무죄로 판단했으나 대법원은 유죄"같은 양방향 등장 가능성이 높아 단순 치환 금지
         // 기본은 "원문 사실과 다르다는 단정"을 덧붙여 안전하게 거짓 진술 생성
-        // (원문이 참이면 "원문은 거짓이다"는 거짓이므로 X 라벨이 일관됨)
-        return String(("위 판례의 결론은 " + statement + "와 정반대이다").prefix(88))
+        // 사건명이 있으면 "『〇〇 사건』의 결론과 다르다" 형으로 모호성 해소
+        let trimmedCaseName = caseName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let referent: String = {
+            // 메모용 식별자(예: "테스트2", "OCR-2025-...", 사건번호형)이면 "위 판례"로 처리
+            if trimmedCaseName.isEmpty { return "위 판례" }
+            if trimmedCaseName.hasPrefix("OCR-") { return "위 판례" }
+            if trimmedCaseName.range(of: #"^\d{2,4}[가-힣]{1,3}\d+$"#, options: .regularExpression) != nil { return "위 판례" }
+            return "『\(trimmedCaseName)』"
+        }()
+        return String(("\(referent)의 실제 결론은 이와 다르다: " + statement).prefix(88))
     }
 
     private var activeEngine: LocalLLMEngine {
