@@ -1451,6 +1451,8 @@ final class LLMService: ObservableObject {
             if s.contains("OCR에서 추출하지 못했") || s.contains("정보가 부족") || s.contains("정보 부족") {
                 return false
             }
+            // (신규) 쟁점 제목/사건 라벨 라인 거부 — "...된 사건", "...된 사안", "...문제된 경우" 등은 OX 단정 진술 아님
+            if isMetaTopicLine(s) { return false }
             // 종결어미 또는 "여부" 같은 의문 종결이 있어야 OX 변환 가치가 있음
             if !hasKoreanTerminal(s) && !s.contains("여부") && !s.contains("되는지") && !s.contains("해당하는지") {
                 return false
@@ -1464,11 +1466,12 @@ final class LLMService: ObservableObject {
             let issue = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let holding = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             var seeds: [String] = []
-            if !issue.isEmpty && !issue.contains("OCR에서 추출하지 못했") {
-                seeds.append(issue)
-            }
-            if !holding.isEmpty && !holding.contains("OCR에서 추출하지 못했") {
+            // holding(결론)을 우선 — 보통 단정문이므로 OX 적합도가 높음
+            if !holding.isEmpty && !holding.contains("OCR에서 추출하지 못했") && !isMetaTopicLine(holding) {
                 seeds.append(holding)
+            }
+            if !issue.isEmpty && !issue.contains("OCR에서 추출하지 못했") && !isMetaTopicLine(issue) {
+                seeds.append(issue)
             }
             if seeds.isEmpty {
                 seeds.append("\(caseItem.caseName) 사건은 핵심 쟁점이 정리된 판례이다")
@@ -1537,7 +1540,18 @@ final class LLMService: ObservableObject {
         cleaned = cleaned.replacingOccurrences(of: #"^자\s+\d{2,4}[가-힣]{1,3}\d+\s*(결정|판결)?\s*"#, with: "", options: .regularExpression)
         cleaned = cleaned.replacingOccurrences(of: #"^\[[^\]]*\]\s*"#, with: "", options: .regularExpression)
         cleaned = cleaned.replacingOccurrences(of: #"^[<〈][^>〉]*[>〉]\s*"#, with: "", options: .regularExpression)
+
+        // (신규) 꼬리 잡티 제거 — 판례공보 인용 헤더 "[공2026... 1234]", "[공 2026하, 1234]", "(공2026하, 1234)"
+        cleaned = cleaned.replacingOccurrences(of: #"\s*\[\s*공\s*\d{4}[^\]]*\]?\s*$"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"\s*\(\s*공\s*\d{4}[^)]*\)?\s*$"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"\s*\[제\s*\d{4}-\d+호?\]?\s*$"#, with: "", options: .regularExpression)
+        // 끝에 매달린 미닫힘 대괄호 "... [공2026" 잔재 제거
+        cleaned = cleaned.replacingOccurrences(of: #"\s*\[[^\]]{0,40}$"#, with: "", options: .regularExpression)
         cleaned = cleaned.replacingOccurrences(of: "[<〈>〉]", with: "", options: .regularExpression)
+        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // (신규) 쟁점 제목 꼬리 "...되는지가 문제된 사건" → "...된다" 진술형 변환
+        cleaned = convertTopicLabelToAssertion(cleaned)
 
         // 조사·접속사로 시작하면 떼어낸다
         let leading = ["는 ", "은 ", "이 ", "가 ", "을 ", "를 ", "의 ", "에 ", "도 ", "와 ", "과 ", "로 ", "으로 "]
@@ -1549,6 +1563,46 @@ final class LLMService: ObservableObject {
         return String(cleaned.prefix(88))
     }
 
+    /// 쟁점 제목/사건 라벨 라인인지 판정 — OX 단정 진술로 부적합.
+    /// 예: "...되는지가 문제된 사건", "...된 사안", "...에 관한 사건"
+    private func isMetaTopicLine(_ s: String) -> Bool {
+        let stripped = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: #"\s*\[[^\]]*\]?\s*$"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"\s*\([^)]*\)?\s*$"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let metaSuffixes = [
+            "문제된 사건", "문제 된 사건", "문제된 사안", "문제 된 사안",
+            "된 사건", "된 사안", "된 경우",
+            "관한 사건", "관련된 사건", "대한 사건",
+            "문제된 판례", "된 판례"
+        ]
+        for suf in metaSuffixes where stripped.hasSuffix(suf) {
+            return true
+        }
+        return false
+    }
+
+    /// "...되는지가 문제된 사건" 형태를 "...된다" 단정형으로 변환.
+    /// 변환 불가하면 원문 반환(상위에서 isMetaTopicLine로 이미 거른 상태가 정상).
+    private func convertTopicLabelToAssertion(_ s: String) -> String {
+        // "포함되는지가 문제된 사건" → "포함된다"
+        // "인정되는지가 문제된 사건" → "인정된다"
+        let patterns: [(String, String)] = [
+            (#"되는지가?\s*문제\s*된\s*사건$"#, "된다"),
+            (#"되는지가?\s*문제\s*된\s*사안$"#, "된다"),
+            (#"할\s*수\s*있는지가?\s*문제\s*된\s*사건$"#, "할 수 있다"),
+            (#"해당하는지가?\s*문제\s*된\s*사건$"#, "해당한다"),
+            (#"인정되는지가?\s*문제\s*된\s*사건$"#, "인정된다"),
+            (#"여부가?\s*문제\s*된\s*사건$"#, "문제가 된다")
+        ]
+        for (pat, replacement) in patterns {
+            if let _ = s.range(of: pat, options: .regularExpression) {
+                return s.replacingOccurrences(of: pat, with: replacement, options: .regularExpression)
+            }
+        }
+        return s
+    }
+
     /// 안전한 X 진술 생성 — 단순 단어 치환은 원문이 이미 부정형/긍정형일 때 잘못 라벨될 수 있으므로
     /// 명백한 단방향 패턴만 처리하고 나머지는 "단정 불가" 형태로 전환합니다.
     private func negateStatement(_ statement: String) -> String {
@@ -1558,6 +1612,8 @@ final class LLMService: ObservableObject {
             ("인정된다", "인정되지 않는다"),
             ("적용된다", "적용되지 않는다"),
             ("성립한다", "성립하지 않는다"),
+            ("포함된다", "포함되지 않는다"),
+            ("허용된다", "허용되지 않는다"),
             ("위법하다", "적법하다"),
             ("적법하다", "위법하다")
         ]
