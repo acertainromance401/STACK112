@@ -268,14 +268,23 @@ enum JudgmentParser {
         return t.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// 판시사항 한 항목 안에서 ` / ` 로 구분된 sub-쟁점을 분리.
-    /// - 양옆에 공백이 있는 슬래시만 분리 기준 (분수/URL 보호).
+    /// 판시사항 한 항목 안에서 `/` 로 구분된 sub-쟁점을 분리.
+    /// OCR로 띄어쓰기가 깨져도("여부(적극)/위증죄", "여부(적극) /위증죄") 강건하게 분리.
+    /// 보호 케이스: 분수("30/30"), URL은 normalize 단계에서 이미 제거되므로 정규식 분기로 충분.
+    /// 분리 기준: 슬래시 직전 문자가 한글 또는 `)`이고, 슬래시 직후가 한글 또는 공백+한글.
     /// - 각 절은 최소 6자 이상이어야 분할.
     private static func splitSlashClauses(_ text: String) -> [String] {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
-        // 공백을 양옆에 두는 " / " 패턴
-        let parts = trimmed.components(separatedBy: " / ")
+        // 한글/괄호 사이의 슬래시(공백 0~2개 허용)를 안전한 분리 토큰으로 치환한 뒤 split.
+        // 숫자/숫자 (분수, 페이지 번호 등)와 영어/영어 (URL 잔재)는 보호된다.
+        let marker = "\u{0001}SLASH\u{0001}"
+        let sentinel = trimmed.replacingOccurrences(
+            of: #"([가-힣\)])\s*/\s*([가-힣\(])"#,
+            with: "$1\(marker)$2",
+            options: .regularExpression
+        )
+        let parts = sentinel.components(separatedBy: marker)
         if parts.count < 2 { return [trimmed] }
         var out: [String] = []
         for raw in parts {

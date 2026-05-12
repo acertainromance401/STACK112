@@ -512,11 +512,36 @@ enum LocalIRPipeline {
 
     static func inferDomain(text: String, keywords: [String]) -> String {
         // 1차: 기존 키워드 카운트 (이전 IR 동작 호환 유지)
-        let corpus = (text + " " + keywords.joined(separator: " ")).lowercased()
+        //
+        // 주의: Swift String.contains 는 substring 매칭이므로 "형사소송법"이 "형법"을
+        // 먹으며 "헌법상 자기부죄거부특권"이 "헌법"을 먹는다. 도메인 신호가 섞이지
+        // 않도록, hint 검사 전에 코퍼스에서 이런 오염 표현을 제거한다.
+        var corpus = (text + " " + keywords.joined(separator: " ")).lowercased()
+        corpus = corpus.replacingOccurrences(of: "형사소송법", with: "@형소장@")
+        corpus = corpus.replacingOccurrences(of: "헌법재판소", with: "@헌재장@")
+        corpus = corpus.replacingOccurrences(of: "헌법상", with: " ")
+        corpus = corpus.replacingOccurrences(of: "헌법적", with: " ")
+        // domainHints 매칭을 위해 sentinel을 다시 구분 신호로 치환
+        corpus = corpus.replacingOccurrences(of: "@형소장@", with: "형사소송법")
+        corpus = corpus.replacingOccurrences(of: "@헌재장@", with: "헌법재판소")
+        // 형사소송법이 코퍼스에 존재하면 형법 substring 오염을 차단하기 위해
+        // 형법 단일 검사는 "형법제|형법상|형법총|형법각" 경계로만 허용.
+        let hasCriminalProc = corpus.contains("형사소송법")
         var best = "general_legal"
         var bestScore = 0
         for (name, hints) in domainHints {
-            let score = hints.reduce(0) { acc, h in acc + (corpus.contains(h.lowercased()) ? 1 : 0) }
+            var score = 0
+            for h in hints {
+                let hl = h.lowercased()
+                // "형법" hint가 "형사소송법" substring으로 잡히는 케이스 제외.
+                if hl == "형법" && hasCriminalProc {
+                    if corpus.range(of: #"형법(제|상|총칙|각칙)"#, options: .regularExpression) != nil {
+                        score += 1
+                    }
+                    continue
+                }
+                if corpus.contains(hl) { score += 1 }
+            }
             if score > bestScore {
                 bestScore = score
                 best = name

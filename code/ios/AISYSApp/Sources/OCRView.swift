@@ -783,7 +783,31 @@ struct OCRView: View {
     /// 참조조문 섹션 없이도 본문(판시사항/판결요지)에 법령명이 직접 등장하면 그것으로 도메인 결정.
     /// 공백/줄바꿈 깨짐을 고려해 양쪽 모두 공백 제거 후 비교.
     private func domainFromCorpusLaws(_ corpus: String) -> (String, String)? {
-        let stripped = corpus.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        var stripped = corpus.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        // 매우 중요: "형사소송법"은 substring "형법"을 포함한다.
+        //   먼저 형사소송법을 매칭한 뒤 코퍼스에서 제거하지 않으면, 형사소송법 사건이 형법으로 잘못 분류된다.
+        //   동일하게 "헌법재판소"/"헌법상"이 "헌법" 매칭을 오염시키므로 사전 정규화.
+        if stripped.contains("형사소송법") {
+            // 형사소송법 인스턴스를 제거한 뒤 나머지에서 형법 등을 검사한다.
+            let strippedNoCrimProc = stripped.replacingOccurrences(of: "형사소송법", with: "")
+            // 형사소송법만 등장하고 형법/특별형사법은 본문에 없으면 형소법으로 확정.
+            let specialCriminal = [
+                "성폭력범죄의처벌등에관한특례법", "성폭력처벌법",
+                "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",
+                "아동·청소년의성보호에관한법률", "아동청소년의성보호에관한법률", "청소년성보호법",
+                "마약류관리에관한법률", "정보통신망이용촉진및정보보호등에관한법률",
+                "스토킹범죄의처벌등에관한법률", "교통사고처리특례법", "폭력행위등처벌에관한법률",
+                "도로교통법", "공직선거법", "국가보안법"
+            ]
+            if specialCriminal.contains(where: { strippedNoCrimProc.contains($0) }) {
+                return ("criminal_law", "형법")
+            }
+            // "형법 제N조" 처럼 형법이 단독 등장하는지 확인 — 형법 뒤가 "제" 또는 "상"으로 시작하면 진짜 형법 인용.
+            if strippedNoCrimProc.range(of: #"형법(제|상|총칙|각칙)"#, options: .regularExpression) != nil {
+                return ("criminal_law", "형법")
+            }
+            return ("criminal_procedure_evidence", "형소법")
+        }
         let criminalNeedles = [
             "성폭력범죄의처벌등에관한특례법", "성폭력처벌법",
             "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",
@@ -795,7 +819,9 @@ struct OCRView: View {
         for needle in criminalNeedles where stripped.contains(needle) {
             return ("criminal_law", "형법")
         }
-        if stripped.contains("형사소송법") { return ("criminal_procedure_evidence", "형소법") }
+        // 헌법재판소/헌법상은 헌법 도메인 신호가 아니므로 사전 제거.
+        stripped = stripped.replacingOccurrences(of: "헌법재판소", with: "")
+            .replacingOccurrences(of: "헌법상", with: "")
         if stripped.contains("행정소송법") || stripped.contains("행정심판법")
             || stripped.contains("행정절차법") || stripped.contains("국가공무원법")
             || stripped.contains("지방공무원법") || stripped.contains("개인정보보호법") {

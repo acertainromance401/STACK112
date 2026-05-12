@@ -67,11 +67,26 @@ enum LegalAnalyzer {
     /// 텍스트 + 키워드 입력 → 도메인/신뢰도 산출.
     /// 신뢰도 = bestScore / (bestScore + secondScore + 0.1), 0~1 클램프.
     static func classify(text: String, keywords: [String] = []) -> DomainResult {
-        let corpus = text + " " + keywords.joined(separator: " ")
+        // "형사소송법"이 "형법" substring을 먹고, "헌법상"/"헌법재판소"가 "헌법"을 먹는 문제를 차단.
+        var corpus = text + " " + keywords.joined(separator: " ")
+        let hasCriminalProc = corpus.contains("형사소송법")
+        // 제거: 헌법상/헌법적은 헌법 도메인 신호가 아니다.
+        corpus = corpus.replacingOccurrences(of: "헌법재판소", with: " @헌재장@ ")
+        corpus = corpus.replacingOccurrences(of: "헌법상", with: " ")
+        corpus = corpus.replacingOccurrences(of: "헌법적", with: " ")
+        corpus = corpus.replacingOccurrences(of: " @헌재장@ ", with: "헌법재판소")
+
         var scores: [Domain: Double] = [:]
         for (domain, signals) in domainSignals {
             var s = 0.0
             for sig in signals where corpus.contains(sig.token) {
+                // "형법"은 형사소송법 코퍼스에서는 경계 이후(형법제|형법상)에서만 수용.
+                if sig.token == "형법" && hasCriminalProc {
+                    if corpus.range(of: #"형법(제|상|총칙|각칙)"#, options: .regularExpression) != nil {
+                        s += sig.weight
+                    }
+                    continue
+                }
                 s += sig.weight
             }
             scores[domain] = s
