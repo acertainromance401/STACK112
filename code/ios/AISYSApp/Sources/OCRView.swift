@@ -318,12 +318,16 @@ struct OCRView: View {
         }
 
         // 학습카드 품질을 위해 OCR 텍스트에서 사건 정보(번호·사건명·도메인·쟁점·결론)를 분리 추출
-        let digest = extractCaseDigest(
+        var digest = extractCaseDigest(
             rawText: recognizedText,
             keySentences: keySentences,
             keywords: keywords,
             parsed: parsed
         )
+        if let overridden = preferredDigestDomain(from: domain) {
+            digest.domain = overridden.domain
+            digest.domainLabel = overridden.label
+        }
 
         // 사건번호/사건명 결정: 사용자 입력 > [···] 박타이틀 > 자동 생성(키워드 기반) > 자동 식별자
         // 사용자 입력은 메모용 식별자(예: "2024다311181")로만 쓰고, 실제 표시 이름은 판례 내용을 반영한 자동 이름 우선
@@ -677,12 +681,10 @@ struct OCRView: View {
         // 6) 쟁점/결론 — 파싱 결과가 있으면 의문형(...여부(적극))을 평서문으로 변환해서 사용.
         //    그래야 카드 표시와 OX 퀴즈 모두 의미가 명확해진다.
         //    같은 [N] 안에 `/`로 묶인 sub-쟁점들 중 polarity(적극/소극) 표시가 있는 절을 우선 선택.
-        if !parsed.issues.isEmpty {
-            let primaryIdx = parsed.polarities.firstIndex(where: { $0 != .unknown }) ?? 0
-            let primaryIssue = parsed.issues[primaryIdx]
-            let polarity = primaryIdx < parsed.polarities.count ? parsed.polarities[primaryIdx] : .unknown
-            let declarative = JudgmentParser.declarativeStatement(issue: primaryIssue, polarity: polarity)
-            digest.issueSentence = declarative.isEmpty ? trimToOneSentence(primaryIssue) : declarative
+        if let pickedIssue = preferredIssueForDisplay(parsed: parsed) {
+            let declarative = JudgmentParser.declarativeStatement(issue: pickedIssue.issue, polarity: pickedIssue.polarity)
+            let fallback = sanitizeIssueFragmentForDisplay(pickedIssue.issue)
+            digest.issueSentence = declarative.isEmpty ? trimToOneSentence(fallback) : declarative
         }
         let majority = parsed.holdings.first(where: { $0.opinion == .majority })
                     ?? parsed.holdings.first(where: { $0.opinion == .unspecified })
@@ -701,6 +703,14 @@ struct OCRView: View {
                   let conclusionIssue = parsed.issues.reversed().first(where: { isConclusionStyleIssue($0) }) {
             // 2차 폴백 — 판시사항 항목 중 결론 서술형이 있으면 그것을 사용
             digest.holdingSentence = JudgmentParser.firstSentence(conclusionIssue, limit: 220)
+        }
+
+        // 다수의견 본문에서 "위의 진술..." 같은 중간 문장을 잡은 경우,
+        // 판시사항 [2]의 결론형 "...한 사례."를 더 선명한 결론 카드로 우선 사용한다.
+        if let issue2 = parsed.issues.last,
+           let issueConclusion = JudgmentParser.extractConclusionFromIssue2(issue2),
+           (digest.holdingSentence.hasPrefix("위의 진술") || digest.holdingSentence.hasPrefix("이와 같은 진술")) {
+            digest.holdingSentence = issueConclusion
         }
 
         // 7) 폴백: 파싱이 없거나 비었으면 기존 휴리스틱
@@ -849,6 +859,67 @@ struct OCRView: View {
     /// 사용자가 입력한 문자열이 사건번호 형태인지 판별 (예: "2024다311181", "2022헌마123")
     private func looksLikeCaseNumber(_ s: String) -> Bool {
         return s.range(of: #"^\d{2,4}\s*[가-힣]{1,3}\s*\d+$"#, options: .regularExpression) != nil
+    }
+
+    private func preferredDigestDomain(from irDomain: String) -> (domain: String, label: String)? {
+        switch irDomain {
+        case "criminal_procedure_evidence", "criminal_procedure_investigation":
+            return ("criminal_procedure_evidence", "형소법")
+        case "criminal_law":
+            return ("criminal_law", "형법")
+        case "constitutional_law":
+            return ("constitutional_law", "헌법")
+        case "administrative_law":
+            return ("administrative_law", "행정법")
+        case "police_committees":
+            return ("police_committees", "경찰")
+        case "civil_procedure", "civil_law":
+            return ("civil_procedure", "민사")
+        default:
+            return nil
+        }
+    }
+
+    private func preferredIssueForDisplay(parsed: ParsedJudgment) -> (issue: String, polarity: ParsedJudgment.Polarity)? {
+        guard !parsed.issues.isEmpty else { return nil }
+        var bestIndex = 0
+        var bestScore = Int.min
+
+        for (index, rawIssue) in parsed.issues.enumerated() {
+            let issue = sanitizeIssueFragmentForDisplay(rawIssue)
+            var score = 0
+            if index < parsed.polarities.count, parsed.polarities[index] != .unknown { score += 5 }
+            if issue.contains("공범인 공동피고인") { score += 6 }
+            if issue.contains("증인이 될 수") { score += 5 }
+            if issue.contains("증인적격") { score += 4 }
+            if issue.contains("소송절차의 분리") { score += 3 }
+            if issue.contains("위증죄의 주체") { score += 1 }
+            if issue.hasPrefix("여부") { score -= 8 }
+            if issue.contains(" / ") || issue.contains("/") { score -= 6 }
+            if issue.count < 18 { score -= 3 }
+            if score > bestScore {
+                bestScore = score
+                bestIndex = index
+            }
+        }
+
+        let polarity = bestIndex < parsed.polarities.count ? parsed.polarities[bestIndex] : .unknown
+        return (sanitizeIssueFragmentForDisplay(parsed.issues[bestIndex]), polarity)
+    }
+
+    private func sanitizeIssueFragmentForDisplay(_ raw: String) -> String {
+        var cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let slashRange = cleaned.range(of: #"\s*/\s*"#, options: .regularExpression) {
+            let left = String(cleaned[..<slashRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            let right = String(cleaned[slashRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            // OCR로 앞 절이 탈락하고 "여부(적극) / 위증죄의 주체..." 만 남은 경우는 오른쪽 절을 취한다.
+            if left.isEmpty || left == "여부" || left.hasPrefix("여부(") {
+                cleaned = right
+            }
+        }
+        cleaned = cleaned.replacingOccurrences(of: #"^여부\s*\((적극|소극)\)\s*"#, with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: #"^위증죄의 주체와 관련하여,\s*"#, with: "", options: .regularExpression)
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// 제목 페이지/메타 블록에서 사건명을 우선 추출한다.
