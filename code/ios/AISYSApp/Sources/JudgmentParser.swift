@@ -46,6 +46,38 @@ struct ParsedJudgment {
     }
 }
 
+struct JudgmentSentenceRoleStore {
+    var summaryCandidates: [String] = []
+    var issueCandidates: [String] = []
+    var holdingCandidates: [String] = []
+    var principleCandidates: [String] = []
+    var examCandidates: [String] = []
+
+    var preferredSummary: String? { summaryCandidates.first }
+    var preferredIssue: String? { issueCandidates.first }
+    var preferredHolding: String? { holdingCandidates.first }
+    var preferredPrinciple: String? { principleCandidates.first }
+    var preferredExam: String? { examCandidates.first ?? principleCandidates.first }
+
+    var keySentences: [String] {
+        JudgmentSentenceRoleStore.orderedUnique(
+            [preferredIssue, preferredPrinciple, preferredHolding].compactMap { $0 }
+        )
+    }
+
+    static func orderedUnique(_ values: [String]) -> [String] {
+        var seen: Set<String> = []
+        var result: [String] = []
+        for value in values {
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, !seen.contains(trimmed) else { continue }
+            seen.insert(trimmed)
+            result.append(trimmed)
+        }
+        return result
+    }
+}
+
 enum JudgmentParser {
 
     /// 입력 텍스트를 파싱. 어떤 섹션도 못 찾으면 빈 `ParsedJudgment` 반환 (throw 하지 않음).
@@ -96,6 +128,74 @@ enum JudgmentParser {
         }
 
         return result
+    }
+
+    static func classifySentenceRoles(rawText: String, parsed: ParsedJudgment) -> JudgmentSentenceRoleStore {
+        var store = JudgmentSentenceRoleStore()
+        var scoredIssues: [(text: String, score: Int)] = []
+        let normalizedRaw = cleanWhitespace(rawText)
+        let issueTerms = extractQuotedTerms(from: parsed.issues.joined(separator: " "))
+
+        for (index, issue) in parsed.issues.enumerated() {
+            let polarity = index < parsed.polarities.count ? parsed.polarities[index] : .unknown
+            let question = normalizedIssueSentence(issue)
+            if !question.isEmpty {
+                var score = 0
+                if question.contains("여부") || question.contains("는지") { score += 6 }
+                if !extractQuotedTerms(from: question).isEmpty { score += 4 }
+                if polarity != .unknown { score += 2 }
+                if question.count >= 18 { score += 1 }
+                if question.contains("보호법익") { score -= 2 }
+                scoredIssues.append((question, score))
+            }
+
+            if let summary = summaryCandidate(fromIssue: issue) {
+                appendUnique(summary, to: &store.summaryCandidates)
+            }
+            if let conclusion = extractConclusionFromIssue2(issue) {
+                appendUnique(clampSentence(conclusion, limit: 220), to: &store.holdingCandidates)
+            }
+        }
+
+        scoredIssues.sort { lhs, rhs in
+            if lhs.score == rhs.score { return lhs.text.count > rhs.text.count }
+            return lhs.score > rhs.score
+        }
+        store.issueCandidates = JudgmentSentenceRoleStore.orderedUnique(scoredIssues.map { $0.text })
+
+        let majorityHoldings = parsed.holdings.filter { $0.opinion == .majority || $0.opinion == .unspecified }
+        for holding in majorityHoldings {
+            let principle = firstSentence(holding.text, limit: 220)
+            if principleScore(principle, issueTerms: issueTerms) >= 3 {
+                appendUnique(principle, to: &store.principleCandidates)
+                appendUnique(principle, to: &store.examCandidates)
+            }
+
+            let conclusion = pickConclusionSentence(from: holding.text, limit: 220)
+            if holdingScore(conclusion, issueTerms: issueTerms, issueNo: holding.issueNo ?? 0) >= 3 {
+                appendUnique(conclusion, to: &store.holdingCandidates)
+            }
+
+            for sentence in splitIntoSentences(holding.text) where looksLikeScenarioSentence(sentence) {
+                appendUnique(clampSentence(sentence, limit: 180), to: &store.summaryCandidates)
+            }
+        }
+
+        if store.holdingCandidates.isEmpty,
+           let preferred = preferredHoldingSentence(from: majorityHoldings, issueSentence: store.preferredIssue ?? "", limit: 220) {
+            appendUnique(preferred, to: &store.holdingCandidates)
+        }
+
+        if store.summaryCandidates.isEmpty,
+           let summary = fallbackSummaryCandidate(from: normalizedRaw) {
+            appendUnique(summary, to: &store.summaryCandidates)
+        }
+
+        if store.examCandidates.isEmpty {
+            store.examCandidates = JudgmentSentenceRoleStore.orderedUnique(store.principleCandidates + store.holdingCandidates)
+        }
+
+        return store
     }
 
     // MARK: - Section splitting
@@ -473,6 +573,43 @@ enum JudgmentParser {
         return firstSentence(t, limit: limit)
     }
 
+    /// 여러 판결요지 항목 중에서 쟁점과 덜 겹치고, 사안 적용에 가까운 결론 문장을 우선 선택한다.
+    /// portal.scourt.go.kr 패턴에서 [1]은 일반 법리, [2]는 구체적 사안 적용인 경우가 많아
+    /// 첫 holding만 고르면 `핵심 쟁점`과 `판결 결론`이 같은 문장이 되는 문제를 막기 위한 선택기다.
+    static func preferredHoldingSentence(from holdings: [ParsedJudgment.Holding], issueSentence: String, limit: Int = 220) -> String? {
+        guard !holdings.isEmpty else { return nil }
+        let normalizedIssue = normalizeComparisonText(issueSentence)
+        var bestSentence = ""
+        var bestScore = Int.min
+
+        for holding in holdings {
+            let candidate = pickConclusionSentence(from: holding.text, limit: limit)
+            guard !candidate.isEmpty else { continue }
+            let normalizedCandidate = normalizeComparisonText(candidate)
+            var score = 0
+
+            if let issueNo = holding.issueNo, issueNo > 1 { score += 6 }
+            if candidate.contains("구성요건") || candidate.contains("충족") { score += 4 }
+            if candidate.contains("법리오해") || candidate.contains("잘못이 있다") { score += 4 }
+            if candidate.contains("사안에서") || candidate.contains("사건에서") { score += 3 }
+            if candidate.contains("피고인") || candidate.contains("원고") || candidate.contains("갑") || candidate.contains("을") {
+                score += 2
+            }
+            if candidate.count >= 40 { score += 2 }
+            if normalizedCandidate == normalizedIssue { score -= 10 }
+            if !normalizedIssue.isEmpty && (normalizedCandidate.contains(normalizedIssue) || normalizedIssue.contains(normalizedCandidate)) {
+                score -= 7
+            }
+
+            if score > bestScore {
+                bestScore = score
+                bestSentence = candidate
+            }
+        }
+
+        return bestSentence.isEmpty ? nil : bestSentence
+    }
+
     /// 한국어 본문을 문장 단위로 split. 인용부호/괄호 안의 마침표는 건드리지 않는다.
     /// 문장은 마침표(`.`) 다음 공백/줄바꿈 또는 본문 끝으로 구분.
     static func splitIntoSentences(_ text: String) -> [String] {
@@ -505,6 +642,107 @@ enum JudgmentParser {
         let resolved = resolveAnaphora(t)
         if resolved.count <= limit { return resolved.hasSuffix(".") ? resolved : resolved + "." }
         return String(resolved.prefix(limit)) + "…"
+    }
+
+    private static func appendUnique(_ value: String, to array: inout [String]) {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !array.contains(trimmed) else { return }
+        array.append(trimmed)
+    }
+
+    private static func extractQuotedTerms(from text: String) -> [String] {
+        guard let regex = try? NSRegularExpression(pattern: #"['‘’"“”]([가-힣A-Za-z0-9·\s]{2,24})['‘’"“”]"#) else {
+            return []
+        }
+        let ns = text as NSString
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: ns.length))
+        var out: [String] = []
+        for match in matches where match.numberOfRanges >= 2 {
+            let token = ns.substring(with: match.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard token.count >= 2, token.count <= 24, !out.contains(token) else { continue }
+            out.append(token)
+        }
+        return out
+    }
+
+    private static func normalizedIssueSentence(_ text: String) -> String {
+        var sentence = cleanWhitespace(text)
+        guard !sentence.isEmpty else { return "" }
+        if sentence.contains("사안에서") || sentence.contains("사건에서") || sentence.hasSuffix("사례") || sentence.hasSuffix("사례.") {
+            return ""
+        }
+        sentence = sentence.replacingOccurrences(of: #"\s*\(\s*한정\s*적극\s*\)\s*"#, with: "", options: .regularExpression)
+        sentence = sentence.replacingOccurrences(of: #"\s*\(\s*한정\s*소극\s*\)\s*"#, with: "", options: .regularExpression)
+        sentence = sentence.replacingOccurrences(of: #"\s*\(\s*적극\s*\)\s*"#, with: "", options: .regularExpression)
+        sentence = sentence.replacingOccurrences(of: #"\s*\(\s*소극\s*\)\s*"#, with: "", options: .regularExpression)
+        if sentence.hasPrefix("위 ") { sentence = String(sentence.dropFirst(2)) }
+        if sentence.hasPrefix("및 ") { sentence = String(sentence.dropFirst(2)) }
+        sentence = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+        if sentence.hasSuffix(".") { sentence.removeLast() }
+        return resolveAnaphora(sentence)
+    }
+
+    private static func summaryCandidate(fromIssue text: String) -> String? {
+        let sentence = cleanWhitespace(text)
+        guard !sentence.isEmpty else { return nil }
+        let markers = ["사안에서", "사건에서", "기소된 사안", "한 사례"]
+        guard markers.contains(where: { sentence.contains($0) }) else { return nil }
+        return clampSentence(sentence, limit: 170)
+    }
+
+    private static func fallbackSummaryCandidate(from rawText: String) -> String? {
+        for sentence in splitIntoSentences(rawText) where looksLikeScenarioSentence(sentence) {
+            return clampSentence(sentence, limit: 170)
+        }
+        return nil
+    }
+
+    private static func looksLikeScenarioSentence(_ text: String) -> Bool {
+        let sentence = cleanWhitespace(text)
+        guard !sentence.isEmpty else { return false }
+        let markers = [
+            "사안에서", "사건에서", "피고인", "원고", "갑", "을", "기소된", "송금메모",
+            "전송", "입금", "메시지", "이 사건", "구체적", "당해"
+        ]
+        let markerScore = markers.reduce(0) { partial, marker in
+            partial + (sentence.contains(marker) ? 1 : 0)
+        }
+        return markerScore >= 2
+    }
+
+    private static func principleScore(_ text: String, issueTerms: [String]) -> Int {
+        let sentence = cleanWhitespace(text)
+        guard !sentence.isEmpty else { return 0 }
+        let markers = ["의미", "보호법익", "요건", "취지", "해당한다", "성립한다", "적용된다", "권리", "법익"]
+        var score = markers.reduce(0) { partial, marker in
+            partial + (sentence.contains(marker) ? 1 : 0)
+        }
+        if looksLikeScenarioSentence(sentence) { score -= 2 }
+        if issueTerms.contains(where: { !$0.isEmpty && sentence.contains($0) }) { score += 1 }
+        return score
+    }
+
+    private static func holdingScore(_ text: String, issueTerms: [String], issueNo: Int) -> Int {
+        let sentence = cleanWhitespace(text)
+        guard !sentence.isEmpty else { return 0 }
+        let markers = [
+            "구성요건", "법리오해", "잘못이 있다", "해당하여", "해당한다", "인정된다",
+            "위법하다", "정당하다", "기각한다", "파기", "환송", "사안에서", "사건에서"
+        ]
+        var score = markers.reduce(0) { partial, marker in
+            partial + (sentence.contains(marker) ? 1 : 0)
+        }
+        if issueNo > 1 { score += 2 }
+        if looksLikeScenarioSentence(sentence) { score += 2 }
+        if issueTerms.contains(where: { !$0.isEmpty && sentence.contains($0) }) { score += 1 }
+        if sentence.contains("보호법익") || sentence.contains("의미") { score -= 1 }
+        return score
+    }
+
+    private static func normalizeComparisonText(_ text: String) -> String {
+        text
+            .lowercased()
+            .replacingOccurrences(of: #"[^0-9a-zA-Z가-힣]"#, with: "", options: .regularExpression)
     }
 
     /// 판시사항 [2]가 "...사안에서, ... 한 사례." 패턴이면 "사례" 절만 도출.

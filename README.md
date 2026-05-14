@@ -2,7 +2,7 @@
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
 
-## 현재 구현 상태 (2026-05-12)
+## 현재 구현 상태 (2026-05-14)
 - iOS 앱(탭 5개: Home/OCR/Search/Review/My Page)이 **완전 온디바이스(Backend-free)** 모드로 동작합니다.
 - 모든 검색·IR 추출·유사 판례·요약·OX 퀴즈는 단말 내부에서 실행되며, 서버/네트워크 없이도 풀 기능 사용 가능합니다.
 - 핵심 모듈: `LegalAnalyzer` (도메인 분류 + 함정 카탈로그 + 개인화), `LegalIssueDictionary`, `LocalIRPipeline`, `LocalCaseSearchEngine`, `LocalCaseStore`, `LocalSimilarityEngine`(`NLEmbedding`).
@@ -11,11 +11,11 @@
 - 도메인 전용 프롬프트 + 함정 카탈로그(5도메인×8~14패턴, 매 호출 셔플) + 약점 키워드 주입(`weakKeywordsProvider`)으로 개인화 학습.
 - 복습 노트 "자주 틀리는 영역" 카드 → `WeakOXListView` (오답 OX 모음).
 - 운영: HTTP 백엔드 의존 0, EC2/RDS 비용 0, App Privacy "Data Not Collected" 신고 가능.
-- App Store 출시 준비 완료: ITSAppUsesNonExemptEncryption=NO, LSSupportsOpeningDocumentsInPlace=NO, DEBUG-gated 서버 UI, 1024×1024 AppIcon (RGB no-alpha), Privacy Policy URL 게시 (https://acertainromance401.github.io/stack112-privacy/).
-- 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인.
+- App Store 제출 반영: ITSAppUsesNonExemptEncryption=NO, LSSupportsOpeningDocumentsInPlace=NO, DEBUG-gated 서버 UI, 1024×1024 AppIcon (RGB no-alpha), Privacy Policy URL 게시 (https://acertainromance401.github.io/stack112-privacy/), App Review 제출 완료.
+- 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인, Release 설치/Archive/ASC 업로드 검증 완료.
 
 ## 관련 문서
-- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md) — **최신**
+- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
 - [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md)
 - [Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md)
 - [Project_Descriptions/Project_Description.md](Project_Descriptions/Project_Description.md)
@@ -118,6 +118,7 @@
 
 ## 8. git주소
 - 개인 저장소: `https://github.com/acertainromance401/AI_SYS_Personal`
+- 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
 - 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
 
 

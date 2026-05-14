@@ -1,15 +1,12 @@
 # AI_SYS iOS (SwiftUI)
 
-최종 업데이트: 2026-05-11
-현재 상태: 완전 온디바이스(Backend-free) 동작. iPhone 12 mini(A14, 4GB) 실기기 검증 통과.
+최종 업데이트: 2026-05-14
+현재 상태: 완전 온디바이스(Backend-free) 동작. iPhone 12 mini(A14, 4GB) 실기기 검증, Release archive/export, App Store Connect 심사 제출 완료.
 
-> **2026-05-11 변경 사항**
-> - HTTP 백엔드 의존을 제거하고 모든 검색·IR·유사 판례를 단말 내부에서 처리합니다.
-> - 신규 모듈: `LegalIssueDictionary`, `LocalIRPipeline`, `LocalCaseSearchEngine`, `LocalCaseStore`.
-> - 복습 노트의 "자주 틀리는 영역" → 영역별 오답 OX 모음(`WeakOXListView`) 화면 신설.
-> - Review 탭 진입 시 lag 해소(NLEmbedding 비동기 캐시).
-> - 탭 root view 의 비활성 뒤로가기 버튼 제거.
-> - **주의**: `xcodegen generate` 를 실행하면 수동으로 추가한 4개 신규 Swift 파일의 `pbxproj` 등록과 `DEVELOPMENT_TEAM` 설정이 사라질 수 있습니다. 신규 파일은 직접 `pbxproj` 에 등록되어 있으니 *필요할 때만* `xcodegen` 을 사용하세요.
+> **2026-05-14 요약**
+> - OX placeholder/시험 포인트 텍스트 오염 방지, 판시사항 평서문 정제, 카드 halo 디자인 적용.
+> - Release 빌드/실기기 설치/Archive/ASC 업로드까지 검증했고 심사 제출을 완료했습니다.
+> - App Store 메타데이터와 Privacy/App Review 입력값은 `APPSTORE_METADATA.md`, `APPSTORE_PRIVACY_NUTRITION.md` 기준으로 정리했습니다.
 
 이 폴더는 `xcodegen`으로 생성되는 iOS SwiftUI 프로젝트입니다.
 
@@ -27,8 +24,8 @@ Xcode에서 `AISYSApp` 스킴을 선택한 뒤 iPhone Simulator로 실행하면 
 
 ## 로컬 LLM 모델 파일 안내
 
-- GGUF 모델 파일은 저장소에 커밋하지 않습니다.
-- 앱은 우선 `Documents/models/` 경로에서 모델(`*.gguf`)을 탐색합니다.
+- 저장소는 `*.gguf`를 커밋하지 않도록 유지합니다.
+- 배포 빌드는 번들 리소스 또는 `Documents/models/` 경로에서 사용 가능한 GGUF 모델을 탐색합니다.
 - 필요 시 `Info.plist`의 `LLAMA_MODEL_FILE` 값을 원하는 파일명으로 지정할 수 있습니다.
 - 모델이 없으면 LlamaCpp 엔진 로드가 실패하고, 앱은 Rule-based fallback 엔진으로 동작합니다.
 
@@ -93,8 +90,14 @@ xcodebuild test \
 xcrun simctl list devices
 ```
 
-## 현재 알려진 테스트 이슈 (2026-05-07)
+## 최근 검증 상태 (2026-05-14)
 
-- `AISYSAppTests.testSaveWrongAnswerAddsItemToTop` 실패
-- `AISYSAppTests.testRecommendedCasesExist` 실패
-- 내부 시연/개발 실행은 가능하나 운영 배포 전 테스트 기대값 정비 권장
+- `AISYSAppTests.testSaveWrongAnswerAddsItemToTop` 통과
+- `AISYSAppTests.testSaveWrongQuizRecordReturnsId` 통과
+- Release build / 실기기 설치 / Archive / App Store Connect 업로드 성공
+- App Store 제출용 스크린샷 선별본은 `code/ios/appstore_screenshots/` 에 정리
+
+## App Store 참고 문서
+
+- `APPSTORE_METADATA.md` — 메타데이터, 리뷰 메모, ASC 입력값
+- `APPSTORE_PRIVACY_NUTRITION.md` — App Privacy / Export Compliance / Content Rights 답변지

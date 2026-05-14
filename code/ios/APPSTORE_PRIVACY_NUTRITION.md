@@ -3,6 +3,12 @@
 > ASC 웹의 **App Privacy** 섹션에서 그대로 따라 체크하면 됩니다.
 > 본 앱은 어떤 데이터도 수집·전송하지 않으므로 거의 모든 항목이 "No" 입니다.
 
+2026-05-14 제출 기준
+- App Privacy: **Data Not Collected**
+- Privacy Policy URL: **https://acertainromance401.github.io/stack112-privacy/**
+- Content Rights: **Yes**
+- Age Rating: **4+**
+
 ---
 
 ## 1. Data Collection 첫 질문
@@ -60,7 +66,7 @@ ASC 가 "이 앱이 IDFA 를 사용하는 것 같습니다" 등의 경고를 자
 ITSAppUsesNonExemptEncryption 키를 Info.plist 에 `NO` 로 박아두면 매 빌드마다
 ASC 가 묻지 않습니다.
 
-→ `project.yml` 에 추가 권장 (현재 아직 미적용):
+→ 현재 `project.yml` / Xcode 프로젝트에 이미 적용됨:
 
 ```yaml
 INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO

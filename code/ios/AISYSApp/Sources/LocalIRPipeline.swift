@@ -88,6 +88,7 @@ enum LocalIRPipeline {
             case "형법":                                  return "criminal_law"
             case "형사소송법":                            return "criminal_procedure_evidence"
             case "민법", "민사소송법", "상법":           return "civil_law"
+            case "부가가치세법", "법인세법", "국세기본법": return "administrative_law"
             case "행정소송법", "행정심판법", "행정절차법": return "administrative_law"
             case "경찰관 직무집행법", "경찰법":           return "police_committees"
             default: break
@@ -102,6 +103,7 @@ enum LocalIRPipeline {
             }
             // 행정 영역 특별법
             if act.contains("국가공무원법") || act.contains("지방공무원법") || act.contains("개인정보 보호법")
+                || act.contains("부가가치세법") || act.contains("법인세법") || act.contains("국세기본법")
                 || act.contains("정보공개") {
                 return "administrative_law"
             }
@@ -136,6 +138,9 @@ enum LocalIRPipeline {
             return "criminal_law"
         }
         if stripped.contains("형사소송법") { return "criminal_procedure_evidence" }
+        if stripped.contains("부가가치세법") || stripped.contains("법인세법") || stripped.contains("국세기본법") {
+            return "administrative_law"
+        }
         if stripped.contains("행정소송법") || stripped.contains("행정심판법")
             || stripped.contains("행정절차법") || stripped.contains("국가공무원법")
             || stripped.contains("지방공무원법") || stripped.contains("개인정보보호법") {

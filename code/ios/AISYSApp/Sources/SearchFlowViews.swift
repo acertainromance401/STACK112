@@ -168,7 +168,14 @@ struct SearchView: View {
         let vm = CaseSummaryViewModel()
         vm.injectIRResult(
             keywords: scanned.keywords,
-            keySentences: scanned.keySentences
+            keySentences: scanned.keySentences,
+            sourceText: scanned.ocrRawText
+        )
+        vm.injectPreparedSummary(
+            oneLineSummary: scanned.oneLineSummary,
+            keyIssue: scanned.keyIssue,
+            rulingPoint: scanned.rulingPoint,
+            examTakeaway: scanned.examTakeaway
         )
         return CaseSummaryView(
             apiCase: scanned.toAPICase(),
@@ -541,8 +548,9 @@ struct CaseSummaryView: View {
     }
 
     private func displaySummaryText(resolved: CaseDetail) -> String {
-        let issue = displayIssueText(resolved: resolved)
-        let ruling = displayRulingText(resolved: resolved)
+        if let oneLine = normalizedOneLineSummary(viewModel.summary?.oneLineSummary ?? "") {
+            return oneLine
+        }
         let domainLabel = apiCase?.subject.components(separatedBy: "·").first?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         var parts: [String] = []
@@ -550,13 +558,16 @@ struct CaseSummaryView: View {
             parts.append("[\(domainLabel)]")
         }
         parts.append(resolved.title.hasSuffix("사건") ? "\(resolved.title)." : "\(resolved.title) 사건.")
-        if !issue.isEmpty && !issue.contains("복원하지 못했습니다") {
-            parts.append("쟁점: \(issue)")
-        }
-        if !ruling.isEmpty && !ruling.contains("복원하지 못했습니다") {
-            parts.append("결론: \(ruling)")
-        }
+        parts.append("핵심 쟁점이 정리된 판례이다.")
         return parts.joined(separator: " ")
+    }
+
+    private func normalizedOneLineSummary(_ raw: String) -> String? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.contains("쟁점:") || trimmed.contains("결론:") { return nil }
+        if trimmed.count < 10 || trimmed.count > 120 { return nil }
+        return trimmed
     }
 
     private func displayIssueText(resolved: CaseDetail) -> String {
@@ -603,8 +614,7 @@ struct CaseSummaryView: View {
                 let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .negative)
                 if !decl.isEmpty { text = decl }
             } else if text.hasSuffix("여부") || text.hasSuffix("여부.") || text.hasSuffix("는지") || text.hasSuffix("는지.") {
-                let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .positive)
-                if !decl.isEmpty { text = decl }
+                text = text.replacingOccurrences(of: #"\s*\(\s*(적극|소극|한정 적극|한정 소극)\s*\)\s*$"#, with: "", options: .regularExpression)
             }
         }
 
@@ -1269,7 +1279,14 @@ struct ReviewView: View {
                                     let vm = CaseSummaryViewModel()
                                     vm.injectIRResult(
                                         keywords: scanned.keywords,
-                                        keySentences: scanned.keySentences
+                                        keySentences: scanned.keySentences,
+                                        sourceText: scanned.ocrRawText
+                                    )
+                                    vm.injectPreparedSummary(
+                                        oneLineSummary: scanned.oneLineSummary,
+                                        keyIssue: scanned.keyIssue,
+                                        rulingPoint: scanned.rulingPoint,
+                                        examTakeaway: scanned.examTakeaway
                                     )
                                     return vm
                                 }()

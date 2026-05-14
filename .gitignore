@@ -17,6 +17,7 @@ __pycache__/
 
 # Generated evaluation artifacts
 code/backend/tmp/
+test_image/
 
 # AI_SYS data workspace (keep structure only)
 code/data/raw/*

@@ -177,7 +177,13 @@ final class LLMService: ObservableObject {
     }
 
     /// 판례 데이터를 받아 객관식 퀴즈를 생성합니다.
-    func generateQuiz(caseItem: APICase, summary: LLMSummary?) async throws -> QuizQuestion {
+    func generateQuiz(
+        caseItem: APICase,
+        summary: LLMSummary?,
+        keySentences: String = "",
+        keywords: [String] = [],
+        rawText: String? = nil
+    ) async throws -> QuizQuestion {
         guard case .ready = state else { throw LLMError.notReady }
 
         state = .inferring
@@ -185,14 +191,20 @@ final class LLMService: ObservableObject {
             if case .inferring = state { state = .ready }
         }
 
-        let issue = summary?.keyIssue ?? caseItem.issueSummary ?? ""
-        let holding = summary?.rulingPoint ?? caseItem.holdingSummary ?? ""
-        let examTakeaway = summary?.examTakeaway ?? caseItem.examPoints ?? ""
+        let evidence = buildCanonicalQuizEvidence(
+            caseItem: caseItem,
+            summary: summary,
+            keySentences: keySentences,
+            keywords: keywords,
+            rawText: rawText
+        )
         let evidenceBlock = """
         [1] \(caseItem.caseNumber) \(caseItem.caseName)
-        쟁점: \(issue)
-        결론: \(holding)
-        시험포인트: \(examTakeaway)
+        쟁점: \(evidence.issue)
+        결론: \(evidence.holding)
+        시험포인트: \(evidence.exam)
+        핵심키워드: \(evidence.keywords.prefix(8).joined(separator: ", "))
+        핵심문장: \(evidence.body)
         """
         let prompt = LLMPromptTemplate.quiz(
             question: "해당 판례의 핵심 쟁점과 시험 포인트를 점검하는 객관식 문제를 만들어라.",
@@ -205,15 +217,17 @@ final class LLMService: ObservableObject {
             if let question = QuizQuestion(
                 rawOutput: rawOutput,
                 title: caseItem.caseName,
-                fallbackKeywords: [caseItem.caseNumber, caseItem.subject].filter { !$0.isEmpty }
+                fallbackKeywords: evidence.keywords.isEmpty
+                    ? [caseItem.caseNumber, caseItem.subject].filter { !$0.isEmpty }
+                    : evidence.keywords
             ) {
                 return question
             }
         } catch {
-            return buildFallbackQuiz(caseItem: caseItem, summary: summary)
+            return buildFallbackQuiz(caseItem: caseItem, evidence: evidence)
         }
 
-        return buildFallbackQuiz(caseItem: caseItem, summary: summary)
+        return buildFallbackQuiz(caseItem: caseItem, evidence: evidence)
     }
 
     /// 두 판례를 비교 분석합니다.
@@ -570,6 +584,11 @@ final class LLMService: ObservableObject {
     /// 형식: "[도메인] {사건명} 사건. {핵심 쟁점 짧게}에 관해 {결론 방향} 판단한 사례."
     /// 결론 방향이 없으면 마지막 절을 생략한다.
     private func composeStudyCardOneLine(caseItem: APICase, issueShort: String, holdingShort: String) -> String {
+        let genericCaseNames: Set<String> = [
+            "피고인", "원고", "피고", "상고인", "피상고인", "항고인", "피항고인",
+            "채무자", "채권자", "신청인", "청구인", "상대방"
+        ]
+
         // 1) 도메인 라벨 — caseItem.subject 앞부분에 "민사 ·", "형법 ·" 등 라벨이 들어와 있으면 그것을 사용
         let domainLabel: String = {
             let subject = caseItem.subject.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -587,6 +606,15 @@ final class LLMService: ObservableObject {
         var name = caseItem.caseName.trimmingCharacters(in: .whitespacesAndNewlines)
         if name.hasPrefix("OCR-") || name.isEmpty {
             name = caseItem.caseNumber
+        }
+        let bareName = name.replacingOccurrences(of: "사건", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if genericCaseNames.contains(bareName) {
+            let topic = compactTopicFromDeclarative(issueShort)
+            if let last = topic.components(separatedBy: "/").last?.trimmingCharacters(in: .whitespacesAndNewlines), !last.isEmpty {
+                name = last
+            } else if !topic.isEmpty {
+                name = topic
+            }
         }
         if name.count > 40 {
             name = String(name.prefix(40))
@@ -761,6 +789,8 @@ final class LLMService: ObservableObject {
         let candidates: [(String, String)] = [
             ("(적극)", "적극적으로"),
             ("(소극)", "소극적으로"),
+            ("충족한다", "구성요건을 충족한다고"),
+            ("충족하지 않는다", "구성요건을 충족하지 않는다고"),
             ("포함되지 않는다", "포함되지 않는다고"),
             ("포함된다", "포함된다고"),
             ("해당하지 않는다", "해당하지 않는다고"),
@@ -1201,13 +1231,208 @@ final class LLMService: ObservableObject {
         let issue = canonicalIssueText(caseItem.issueSummary ?? "")
         let ruling = canonicalRulingText(caseItem.holdingSummary ?? "")
         let exam = canonicalExamText(caseItem.examPoints ?? "")
-        if !issue.contains("복원하지 못했습니다") { seeds.append(issue) }
-        if !ruling.contains("복원하지 못했습니다") && !seeds.contains(ruling) { seeds.append(ruling) }
-        if !exam.contains("복원하지 못했습니다") && !seeds.contains(exam) { seeds.append(exam) }
+        if !isWeakQuizEvidence(issue) { seeds.append(issue) }
+        if !isWeakQuizEvidence(ruling) && !seeds.contains(ruling) { seeds.append(ruling) }
+        if !isWeakQuizEvidence(exam) && !seeds.contains(exam) { seeds.append(exam) }
         if seeds.isEmpty {
             seeds.append("\(caseItem.caseName) 사건의 핵심 쟁점을 확인한 판례이다.")
         }
         return seeds
+    }
+
+    private struct CanonicalQuizEvidence {
+        let issue: String
+        let holding: String
+        let exam: String
+        let body: String
+        let keywords: [String]
+    }
+
+    private func buildCanonicalQuizEvidence(
+        caseItem: APICase,
+        summary: LLMSummary?,
+        keySentences: String,
+        keywords: [String],
+        rawText: String?
+    ) -> CanonicalQuizEvidence {
+        var issue = canonicalIssueText(summary?.keyIssue ?? caseItem.issueSummary ?? "")
+        var holding = canonicalRulingText(summary?.rulingPoint ?? caseItem.holdingSummary ?? "")
+        var exam = canonicalExamText(summary?.examTakeaway ?? caseItem.examPoints ?? "")
+
+        var mergedKeywords: [String] = []
+        func appendKeyword(_ raw: String) {
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, !mergedKeywords.contains(trimmed) else { return }
+            mergedKeywords.append(trimmed)
+        }
+        func appendKeywordGroup(_ raw: String) {
+            let pieces = raw
+                .components(separatedBy: CharacterSet(charactersIn: ",·/|\n"))
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            for piece in pieces where piece.count <= 24 {
+                appendKeyword(piece)
+            }
+        }
+
+        keywords.forEach(appendKeyword)
+        appendKeywordGroup(caseItem.subject)
+
+        var statements: [String] = []
+        func appendStatement(_ raw: String) {
+            let cleaned = sanitizeQuizStatement(raw)
+            guard !cleaned.isEmpty else { return }
+            let terminal = ensureKoreanTerminal(cleaned)
+            guard !isWeakQuizEvidence(terminal), !statements.contains(terminal) else { return }
+            statements.append(terminal)
+        }
+
+        appendStatement(issue)
+        appendStatement(holding)
+        for sentence in splitQuizEvidenceSentences(keySentences) {
+            appendStatement(sentence)
+        }
+
+        if let rawText, !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let normalized = LocalIRPipeline.normalize(rawText)
+            let parsed = JudgmentParser.parse(normalized)
+            let sentenceRoles = JudgmentParser.classifySentenceRoles(rawText: normalized, parsed: parsed)
+            for act in parsed.statuteActs.reversed() where !mergedKeywords.contains(act) {
+                mergedKeywords.insert(act, at: 0)
+            }
+
+            if isWeakQuizEvidence(issue), let parsedIssue = sentenceRoles.preferredIssue ?? bestParsedIssueSentence(parsed) {
+                issue = parsedIssue
+                appendStatement(parsedIssue)
+            }
+            if isWeakQuizEvidence(holding), let parsedHolding = sentenceRoles.preferredHolding ?? bestParsedHoldingSentence(parsed: parsed, rawText: normalized) {
+                holding = parsedHolding
+                appendStatement(parsedHolding)
+            }
+            if isWeakQuizEvidence(exam), let parsedExam = sentenceRoles.preferredExam {
+                exam = canonicalExamText(parsedExam)
+            }
+
+            for sentence in sentenceRoles.keySentences {
+                appendStatement(sentence)
+            }
+            if let summary = sentenceRoles.preferredSummary {
+                appendStatement(summary)
+            }
+
+            if statements.count < 4 {
+                for sentence in parsed.issues.prefix(3) {
+                    appendStatement(sentence)
+                }
+                for entry in parsed.holdings.prefix(2) {
+                    appendStatement(entry.text)
+                }
+            }
+        }
+
+        if isWeakQuizEvidence(issue) {
+            issue = statements.first ?? "핵심 쟁점 정보가 부족합니다."
+        }
+        if isWeakQuizEvidence(holding) {
+            holding = statements.dropFirst().first ?? statements.first ?? "판결 결론 정보가 부족합니다."
+        }
+        if isWeakQuizEvidence(exam) {
+            if !mergedKeywords.isEmpty {
+                exam = "핵심 키워드: \(mergedKeywords.prefix(4).joined(separator: ", "))"
+            } else {
+                exam = "쟁점과 결론을 함께 확인해야 합니다."
+            }
+        }
+
+        if mergedKeywords.isEmpty {
+            appendKeyword(caseItem.caseNumber)
+            appendKeywordGroup(caseItem.caseName)
+        }
+
+        let bodyParts = statements.prefix(4)
+        let body = bodyParts.isEmpty
+            ? [issue, holding].filter { !$0.isEmpty }.joined(separator: " ")
+            : bodyParts.joined(separator: " ")
+
+        return CanonicalQuizEvidence(
+            issue: issue,
+            holding: holding,
+            exam: exam,
+            body: body,
+            keywords: mergedKeywords
+        )
+    }
+
+    private func isWeakQuizEvidence(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        if trimmed.contains("복원하지 못했습니다") || trimmed.contains("정보가 부족") || trimmed.contains("정보 부족") {
+            return true
+        }
+        // OCR/파서가 채워 넣는 안내 문구는 절대 OX/요약 시드로 사용하지 않는다.
+        let noticeMarkers = [
+            "자동 추출하지 못했습니다",
+            "본문이 입력에 포함되지 않아",
+            "단락을 함께 붙여넣으면",
+            "카드가 채워집니다",
+            "다시 촬영하거나 붙여넣으면",
+            "OCR에서 추출하지 못했다",
+            "원문을 확인하라",
+            "원문을 확인하세요",
+        ]
+        for marker in noticeMarkers where trimmed.contains(marker) {
+            return true
+        }
+        if isStudyGuidanceLine(trimmed) { return true }
+        return looksLikeBrokenDisplayText(trimmed)
+    }
+
+    private func splitQuizEvidenceSentences(_ text: String) -> [String] {
+        text
+            .components(separatedBy: CharacterSet(charactersIn: "\n。.!?"))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func bestParsedIssueSentence(_ parsed: ParsedJudgment) -> String? {
+        for (index, issue) in parsed.issues.enumerated() {
+            let polarity = index < parsed.polarities.count ? parsed.polarities[index] : .unknown
+            let declarative = JudgmentParser.declarativeStatement(issue: issue, polarity: polarity)
+            let candidate = ensureKoreanTerminal(sanitizeQuizStatement(declarative.isEmpty ? issue : declarative))
+            if !isWeakQuizEvidence(candidate) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    private func bestParsedHoldingSentence(parsed: ParsedJudgment, rawText: String) -> String? {
+        let majorityHoldings = parsed.holdings.filter { $0.opinion == .majority || $0.opinion == .unspecified }
+        if let preferred = JudgmentParser.preferredHoldingSentence(from: majorityHoldings, issueSentence: "", limit: rulingLimit) {
+            return canonicalRulingText(preferred)
+        }
+        if let disposition = extractDispositionFromRawText(rawText) {
+            return canonicalRulingText(disposition)
+        }
+        return nil
+    }
+
+    private func extractDispositionFromRawText(_ rawText: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: #"주\s*문\s*\n+([\s\S]{0,240}?)(?:\n\s*이\s*유|\n\s*이유|\n\s*1\.)"#, options: []) else {
+            return nil
+        }
+        let ns = rawText as NSString
+        guard let match = regex.firstMatch(in: rawText, options: [], range: NSRange(location: 0, length: ns.length)),
+              match.numberOfRanges >= 2,
+              match.range(at: 1).location != NSNotFound else {
+            return nil
+        }
+        let body = ns.substring(with: match.range(at: 1))
+        let lines = body.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !lines.isEmpty else { return nil }
+        return lines.prefix(2).joined(separator: " ")
     }
 
     private func buildComparisonOutput(question: String, cases: [APICase]) -> String {
@@ -1230,19 +1455,18 @@ final class LLMService: ObservableObject {
         """
     }
 
-    private func buildFallbackQuiz(caseItem: APICase, summary: LLMSummary?) -> QuizQuestion {
-        let issue = summary?.keyIssue ?? caseItem.issueSummary ?? "쟁점 정보 없음"
-        let holding = summary?.rulingPoint ?? caseItem.holdingSummary ?? "결론 정보 없음"
-        let examTakeaway = summary?.examTakeaway ?? caseItem.examPoints ?? "시험 포인트 정보 없음"
+    private func buildFallbackQuiz(caseItem: APICase, evidence: CanonicalQuizEvidence) -> QuizQuestion {
         let wrongOption = "쟁점과 무관하게 결론만 외워도 동일한 판단이 가능하다"
 
         return QuizQuestion(
             title: caseItem.caseName,
             prompt: "다음 중 \(caseItem.caseName) 판례 학습 포인트로 가장 부적절한 것을 고르시오.",
-            options: [issue, holding, examTakeaway, wrongOption],
+            options: [evidence.issue, evidence.holding, evidence.exam, wrongOption],
             correctIndex: 3,
             explanation: "해당 판례 학습은 쟁점, 결론, 시험 포인트를 함께 이해해야 하며 결론만 암기하는 접근은 부적절합니다.",
-            keywords: [caseItem.caseNumber, caseItem.subject].filter { !$0.isEmpty }
+            keywords: evidence.keywords.isEmpty
+                ? [caseItem.caseNumber, caseItem.subject].filter { !$0.isEmpty }
+                : evidence.keywords
         )
     }
 
@@ -1258,6 +1482,7 @@ final class LLMService: ObservableObject {
         caseItem: APICase,
         keySentences: String,
         keywords: [String],
+        rawText: String? = nil,
         count: Int = 3
     ) async throws -> [OXQuizQuestion] {
         guard case .ready = state else { throw LLMError.notReady }
@@ -1273,39 +1498,22 @@ final class LLMService: ObservableObject {
             if case .inferring = state { state = .ready }
         }
 
-        let compactSentences = keySentences
-            .components(separatedBy: .newlines)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .prefix(4)
-            .joined(separator: " ")
-
-        let compactKeywords = Array(NSOrderedSet(array: keywords.map {
-            $0.trimmingCharacters(in: .whitespacesAndNewlines)
-        }))
-            .compactMap { $0 as? String }
-            .filter { !$0.isEmpty }
-
-        // 퀴즈에 들어갈 본문은 OCR raw가 아닌 digest 결과(issueSummary/holdingSummary)를 우선 사용.
-        // 이렇게 해야 "[공YYYY..." 같은 출처 잡음과 두 문장 합쳐진 raw가 노출되지 않는다.
-        let digestIssue = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        let digestHolding = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        let quizBody: String = {
-            var parts: [String] = []
-            if !digestIssue.isEmpty { parts.append(digestIssue) }
-            if !digestHolding.isEmpty { parts.append(digestHolding) }
-            if parts.isEmpty {
-                return compactSentences.isEmpty ? (caseItem.issueSummary ?? "") : compactSentences
-            }
-            return parts.joined(separator: " ")
-        }()
+        let evidence = buildCanonicalQuizEvidence(
+            caseItem: caseItem,
+            summary: nil,
+            keySentences: keySentences,
+            keywords: keywords,
+            rawText: rawText
+        )
+        let compactKeywords = evidence.keywords
+        let quizBody = evidence.body
 
         let prompt = LLMPromptTemplate.oxQuiz(
             caseNumber: caseItem.caseNumber,
             caseName: caseItem.caseName,
             keySentences: quizBody,
             keywords: compactKeywords.isEmpty
-                ? [caseItem.subject, caseItem.issueSummary ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
+                ? [caseItem.subject, evidence.issue].filter { !$0.isEmpty }.joined(separator: ", ")
                 : compactKeywords.prefix(8).joined(separator: ", "),
             count: count,
             decisionHints: buildDecisionHints(text: quizBody, keywords: compactKeywords)
@@ -1584,6 +1792,8 @@ final class LLMService: ObservableObject {
             if s.contains("OCR에서 추출하지 못했") || s.contains("정보가 부족") || s.contains("정보 부족") {
                 return false
             }
+            // (신규) 시험 포인트/학습 가이드 텍스트("10초 분기", "본문 키워드:" 등)는 OX 진술이 아니다.
+            if isStudyGuidanceLine(s) { return false }
             // (신규) 쟁점 제목/사건 라벨 라인 거부 — "...된 사건", "...된 사안", "...문제된 경우" 등은 OX 단정 진술 아님
             if isMetaTopicLine(s) { return false }
             if looksLikeRawIssueFragment(s) || looksLikeBrokenDisplayText(s) { return false }
@@ -1604,7 +1814,18 @@ final class LLMService: ObservableObject {
         let caseNum = caseItem.caseNumber
 
         // 요청 개수만큼 생성한다. 후보가 부족하면 순환 사용하되 O/X를 섞어 학습가치를 유지한다.
-        let workingSentences = fallbackSentences.isEmpty ? canonicalQuizSeeds(from: caseItem) : fallbackSentences
+        let workingSentences: [String] = {
+            let merged = (fallbackSentences + canonicalQuizSeeds(from: caseItem)).map { sanitizeQuizStatement($0) }
+            var seen: Set<String> = []
+            var deduped: [String] = []
+            for sentence in merged {
+                let cleaned = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !cleaned.isEmpty, !seen.contains(cleaned) else { continue }
+                seen.insert(cleaned)
+                deduped.append(cleaned)
+            }
+            return deduped.isEmpty ? canonicalQuizSeeds(from: caseItem) : deduped
+        }()
         let actualCount = max(1, count)
 
         return (0..<actualCount).map { idx in
@@ -1765,6 +1986,29 @@ final class LLMService: ObservableObject {
             "문제된 판례", "된 판례"
         ]
         for suf in metaSuffixes where stripped.hasSuffix(suf) {
+            return true
+        }
+        return false
+    }
+
+    /// 시험 포인트/학습 가이드 텍스트는 법적 진술이 아니라 학습 메타정보다.
+    /// "10초 분기", "본문 키워드:", "분리 암기" 같은 가이드 어구가 들어가면 OX 시드에서 제외.
+    /// 카드 표시에서는 유용하지만 O/X 정오 판정 대상이 될 수 없다.
+    private func isStudyGuidanceLine(_ s: String) -> Bool {
+        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return true }
+        let guidanceMarkers = [
+            "10초 분기", "본문 키워드", "쟁점 키워드", "분리 암기",
+            "암기 포인트", "암기 팁", "암기하라", "학습 가이드",
+            "구성요건-위법성-책임", "구성요건·위법성·책임",
+            "정당방위/긴급피난", "미수/불능미수",
+        ]
+        for marker in guidanceMarkers where t.contains(marker) {
+            return true
+        }
+        // 키워드 나열형(콤마 4개 이상) — 진술이 아닌 단어 목록
+        let commaCount = t.filter { $0 == "," }.count
+        if commaCount >= 4 && !t.contains("이다") && !t.contains("한다") && !t.contains("된다") && !t.contains("해당") {
             return true
         }
         return false

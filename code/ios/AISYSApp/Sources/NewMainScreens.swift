@@ -789,6 +789,7 @@ struct PracticeView: View {
                 caseItem: apiCase,
                 keySentences: scanned.keySentences,
                 keywords: scanned.keywords,
+                rawText: scanned.ocrRawText,
                 count: 4
             )
             quiz = items

@@ -1,8 +1,18 @@
 # AI_SYS 프로젝트 진행 현황 및 향후 실행 로드맵
 
 작성일: 2026-05-12
+추가 반영: 2026-05-14 App Store 제출 상태 업데이트
 기준 브랜치: `임재현` (HEAD `4fe8ed3` + LegalAnalyzer/캐시/App Store 패치)
 문서 목적: 2026-05-11 스냅샷 이후 진행된 **LLM 지능화(LegalAnalyzer + 도메인 프롬프트 + 함정 카탈로그)**, **응답 캐시·동적 토큰**, **개인화 약점 OX 주입**, 그리고 **App Store 출시 준비(컴플라이언스·아이콘·온디바이스 LLM 번들 검증)** 까지의 변경을 정리.
+
+---
+
+## 0. 2026-05-14 추가 업데이트
+
+- App Store Connect 메타데이터/스크린샷/App Privacy/App Review 입력 완료
+- 개인정보 처리방침 URL은 `https://acertainromance401.github.io/stack112-privacy/` 사용
+- 심사용 빌드 `1.0.0 (2)` 선택 후 **App Review 제출 완료**
+- 제출용 스크린샷 선별본은 `code/ios/appstore_screenshots/` 에 정리
 
 ---
 
@@ -94,6 +104,7 @@ enum LegalAnalyzer {
 | 암호화 신고 | ITSAppUsesNonExemptEncryption = NO (HTTPS 표준 외 사용 없음) |
 | 카테고리 | Primary: Education / Secondary: Productivity |
 | 연령 등급 | 4+ |
+| App Review 상태 | 2026-05-14 제출 완료 (build 1.0.0 (2)) |
 | AppIcon | 1024×1024 (RGB, no-alpha) 단일 사이즈 — Xcode가 나머지 사이즈 자동 생성 |
 | 온디바이스 LLM 번들 | `Llama-3.2-1B-Instruct-Q4_K_M.gguf` 807MB → `.app` 내부 확인 (최종 앱 크기 783MB) |
 | Backend 의존 | 없음 — 외부 네트워크 호출 0건 (디버그 서버 설정만 DEBUG-gated) |
@@ -157,8 +168,8 @@ enum LegalAnalyzer {
 ## 7. 다음 마일스톤
 
 1. 시드 판례 JSON 50건 (P1) — 사용자 큐레이션 후 번들
-2. TestFlight 1차 빌드 → 내부 5명 dogfooding (3~5일)
-3. App Store Connect 메타데이터 입력 → 심사 제출
+2. App Review 결과 대기 → 필요 시 리뷰어 코멘트 대응
+3. 승인 후 수동 출시 여부 결정 및 스토어 페이지 최종 점검
 4. (선택) Llama 3.2 3B Q4 빌드 변형 — 고사양 사용자 대상 옵션
 
 ---

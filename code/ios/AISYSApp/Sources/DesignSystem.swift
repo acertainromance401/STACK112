@@ -104,6 +104,9 @@ struct AppCard<Content: View>: View {
             .background(background ?? AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous))
             // 윤곽선 제거, 부드러운 그림자로만 입체감 (iOS 17 모던 스타일)
+            // 스플래시 로고와 동일한 골드 halo 톤(accent 12%)을 카드 뒤에 옅게 깔아
+            // 모든 탭의 컨테이너가 같은 디자인 언어를 공유하도록 한다.
+            .shadow(color: AppColor.accent.opacity(0.25), radius: 24, x: 0, y: 0)
             .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 6)
             .shadow(color: Color.black.opacity(0.18), radius: 2, x: 0, y: 1)
     }

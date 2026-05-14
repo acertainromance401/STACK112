@@ -19,6 +19,7 @@ final class ScannedCase {
     var examTakeaway: String?
 
     // MARK: - 메타
+    var caseNumber: String?         // 원문에서 추출한 사건번호 (구버전 레코드는 nil 가능)
     var caseName: String            // OCR 텍스트 앞 40자 기반 제목
     var scannedAt: Date
 
@@ -27,6 +28,7 @@ final class ScannedCase {
         ocrRawText: String,
         keywords: [String],
         keySentences: String,
+        caseNumber: String? = nil,
         caseName: String,
         oneLineSummary: String? = nil,
         keyIssue: String? = nil,
@@ -37,6 +39,7 @@ final class ScannedCase {
         self.ocrRawText = ocrRawText
         self.keywords = keywords
         self.keySentences = keySentences
+        self.caseNumber = caseNumber
         self.caseName = caseName
         self.oneLineSummary = oneLineSummary
         self.keyIssue = keyIssue
@@ -45,12 +48,65 @@ final class ScannedCase {
         self.scannedAt = Date()
     }
 
+    private var resolvedCaseNumber: String {
+        let stored = caseNumber?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !stored.isEmpty { return stored }
+        if let range = ocrRawText.range(of: #"\d{2,4}\s*[가-힣]{1,3}\s*\d+"#, options: .regularExpression) {
+            return String(ocrRawText[range]).replacingOccurrences(of: " ", with: "")
+        }
+        return caseName
+    }
+
+    private var resolvedCaseName: String {
+        let stored = caseName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let genericPartyLabels: Set<String> = [
+            "피고인", "원고", "피고", "상고인", "피상고인", "항고인", "피항고인",
+            "채무자", "채권자", "신청인", "청구인", "상대방"
+        ]
+
+        func isGenericStoredName(_ value: String) -> Bool {
+            let cleaned = value.replacingOccurrences(of: "사건", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return genericPartyLabels.contains(cleaned)
+        }
+
+        if !stored.isEmpty,
+           !isGenericStoredName(stored),
+           stored.range(of: #"^\d{2,4}\s*[가-힣]{1,3}\s*\d+$"#, options: .regularExpression) == nil {
+            return stored
+        }
+
+        if let range = ocrRawText.range(of: #"사\s*건\s*\n\s*\d{2,4}\s*[가-힣]{1,3}\s*\d+\s+([^\n]{2,80})"#, options: .regularExpression) {
+            let line = String(ocrRawText[range])
+            let extracted = line.replacingOccurrences(of: #"^사\s*건\s*\n\s*\d{2,4}\s*[가-힣]{1,3}\s*\d+\s+"#, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !extracted.isEmpty && !isGenericStoredName(extracted) { return extracted }
+        }
+
+        if let range = ocrRawText.range(of: #"([가-힣A-Za-z0-9·]+?)(?:가|이|은|는)[^\n]{0,80}?문제\s*된\s*사건"#, options: .regularExpression) {
+            let matched = String(ocrRawText[range])
+            let extracted = matched.replacingOccurrences(of: #"(?:가|이|은|는).*$"#, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !extracted.isEmpty && !isGenericStoredName(extracted) { return extracted }
+        }
+
+        let normalized = LocalIRPipeline.normalize(ocrRawText)
+        let parsed = JudgmentParser.parse(normalized)
+        if let issue = parsed.issues.first {
+            let trimmed = issue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                return String(trimmed.prefix(32))
+            }
+        }
+        return stored.isEmpty ? resolvedCaseNumber : stored
+    }
+
     /// SwiftData 레코드 → APICase 변환 (ViewModel 재사용)
     func toAPICase() -> APICase {
         APICase(
             id: id,
-            caseNumber: caseName,
-            caseName: caseName,
+            caseNumber: resolvedCaseNumber,
+            caseName: resolvedCaseName,
             courtName: "스캔 문서",
             subject: keywords.prefix(3).joined(separator: " · "),
             issueSummary: keyIssue ?? keySentences,
@@ -72,8 +128,8 @@ final class ScannedCase {
             .joined(separator: " ")
         return APICase(
             id: id,
-            caseNumber: caseName,
-            caseName: caseName,
+            caseNumber: resolvedCaseNumber,
+            caseName: resolvedCaseName,
             courtName: "스캔 문서",
             subject: keywords.prefix(8).joined(separator: " · "),
             issueSummary: combined,
