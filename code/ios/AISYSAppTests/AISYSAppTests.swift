@@ -4,7 +4,7 @@ import XCTest
 final class AISYSAppTests: XCTestCase {
     func testSaveWrongAnswerAddsItemToTop() {
         let store = ReviewStore()
-        let originalFirst = store.wrongAnswers.first
+        let originalCount = store.wrongAnswers.count
 
         store.saveWrongAnswer(
             note: WrongAnswerNote(
@@ -14,13 +14,23 @@ final class AISYSAppTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(store.wrongAnswers.count, 4)
+        XCTAssertEqual(store.wrongAnswers.count, originalCount + 1)
         XCTAssertEqual(store.wrongAnswers.first?.title, "테스트 판례")
-        XCTAssertNotEqual(store.wrongAnswers.first, originalFirst)
     }
 
-    func testRecommendedCasesExist() {
+    func testSaveWrongQuizRecordReturnsId() {
         let store = ReviewStore()
-        XCTAssertFalse(store.recommendedCases.isEmpty)
+        let id = store.saveWrongQuizRecord(
+            caseNumber: "2024도1",
+            caseTitle: "테스트",
+            question: "긴급체포 적법?",
+            userAnswer: true,
+            correctAnswer: false,
+            explanation: "도주우려 부재",
+            caseSummary: "요약",
+            subject: "형소법"
+        )
+        XCTAssertFalse(id.isEmpty)
+        XCTAssertEqual(store.wrongQuizRecords.first?.id, id)
     }
 }

@@ -2,19 +2,21 @@
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
 
-## 현재 구현 상태 (2026-05-11)
+## 현재 구현 상태 (2026-05-14)
 - iOS 앱(탭 5개: Home/OCR/Search/Review/My Page)이 **완전 온디바이스(Backend-free)** 모드로 동작합니다.
 - 모든 검색·IR 추출·유사 판례·요약·OX 퀴즈는 단말 내부에서 실행되며, 서버/네트워크 없이도 풀 기능 사용 가능합니다.
-- 핵심 모듈: `LegalIssueDictionary`, `LocalIRPipeline`(ir_pipeline.py 의 Swift 포팅), `LocalCaseSearchEngine`, `LocalCaseStore`, `LocalSimilarityEngine`(`NLEmbedding`).
-- 온디바이스 LLM은 LlamaSwift(llama.cpp) 기반이며, GGUF 모델은 Git에 포함하지 않고 번들/`Documents/models` 경로에서 로드합니다.
-- 복습 노트의 "자주 틀리는 영역" 카드를 누르면 해당 영역의 오답 OX 모음(`WeakOXListView`)이 열립니다.
-- Review 탭 진입 시 lag 가 발생하던 동기 임베딩 호출을 비동기 캐시(`Task.detached`) 로 분리했습니다.
-- 탭 root view 의 비활성 뒤로가기 버튼을 제거하고, 푸시된 sub view 에서만 동작하도록 정리했습니다.
-- 운영: HTTP 백엔드 의존이 사라져 EC2/RDS 인스턴스 비용·인증·CORS 이슈가 0이 되었습니다.
-- 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인.
+- 핵심 모듈: `LegalAnalyzer` (도메인 분류 + 함정 카탈로그 + 개인화), `LegalIssueDictionary`, `LocalIRPipeline`, `LocalCaseSearchEngine`, `LocalCaseStore`, `LocalSimilarityEngine`(`NLEmbedding`).
+- 온디바이스 LLM은 LlamaSwift(llama.cpp) + Llama-3.2-1B-Instruct-Q4_K_M.gguf (807MB) 를 `.app` 번들에 포함합니다. 최종 앱 크기 783MB.
+- LLM 호출에 응답 캐시(summary/OX/RAG dict, 32 capacity), OX 동적 토큰(`min(360, 100+70*count)`), 부분 수락+폴백 보충 적용.
+- 도메인 전용 프롬프트 + 함정 카탈로그(5도메인×8~14패턴, 매 호출 셔플) + 약점 키워드 주입(`weakKeywordsProvider`)으로 개인화 학습.
+- 복습 노트 "자주 틀리는 영역" 카드 → `WeakOXListView` (오답 OX 모음).
+- 운영: HTTP 백엔드 의존 0, EC2/RDS 비용 0, App Privacy "Data Not Collected" 신고 가능.
+- App Store 제출 반영: ITSAppUsesNonExemptEncryption=NO, LSSupportsOpeningDocumentsInPlace=NO, DEBUG-gated 서버 UI, 1024×1024 AppIcon (RGB no-alpha), Privacy Policy URL 게시 (https://acertainromance401.github.io/stack112-privacy/), App Review 제출 완료.
+- 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인, Release 설치/Archive/ASC 업로드 검증 완료.
 
 ## 관련 문서
-- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md) — **최신**
+- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
+- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md)
 - [Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md)
 - [Project_Descriptions/Project_Description.md](Project_Descriptions/Project_Description.md)
 - [Project_Descriptions/User_Journey_Scenario_AI_SYS.md](Project_Descriptions/User_Journey_Scenario_AI_SYS.md)
@@ -116,6 +118,7 @@
 
 ## 8. git주소
 - 개인 저장소: `https://github.com/acertainromance401/AI_SYS_Personal`
+- 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
 - 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
 
 

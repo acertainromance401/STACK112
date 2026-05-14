@@ -25,8 +25,9 @@ struct RootTabView: View {
             tab(4, label: "AI분석", icon: "brain.head.profile") { AIAnalysisView() }
         }
         .tint(AppColor.accent)
-        .toolbarBackground(AppColor.surface, for: .tabBar)
+        .toolbarBackground(AppColor.background, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(.dark, for: .tabBar)
     }
 
     @ViewBuilder
@@ -34,6 +35,8 @@ struct RootTabView: View {
         NavigationStack {
             content()
                 .withAppBackground()
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .tabItem { Label(label, systemImage: icon) }
         .tag(tag)

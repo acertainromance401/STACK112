@@ -43,6 +43,7 @@ final class CaseSummaryViewModel: ObservableObject {
     // IR 파이프라인 결과 (백엔드 /ir/extract 응답 캐시)
     private(set) var irKeywords: [String] = []
     private(set) var irKeySentences: String = ""
+    private(set) var irSourceText: String = ""
     @Published private(set) var irDomain: String = "general_legal"
     @Published private(set) var irStudyFocus: [String] = []
 
@@ -136,12 +137,35 @@ final class CaseSummaryViewModel: ObservableObject {
         keywords: [String],
         keySentences: String,
         domain: String? = nil,
-        studyFocus: [String] = []
+        studyFocus: [String] = [],
+        sourceText: String? = nil
     ) {
         irKeywords = keywords
         irKeySentences = keySentences
+        irSourceText = sourceText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         irDomain = (domain?.isEmpty == false) ? domain! : "general_legal"
         irStudyFocus = studyFocus
+    }
+
+    func injectPreparedSummary(
+        oneLineSummary: String?,
+        keyIssue: String?,
+        rulingPoint: String?,
+        examTakeaway: String?
+    ) {
+        let oneLine = oneLineSummary?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let issue = keyIssue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let ruling = rulingPoint?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let exam = examTakeaway?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !oneLine.isEmpty || !issue.isEmpty || !ruling.isEmpty || !exam.isEmpty else { return }
+
+        let rawOutput = """
+        - one_line_summary: \(oneLine)
+        - key_issue: \(issue)
+        - ruling_point: \(ruling)
+        - exam_takeaway: \(exam)
+        """
+        summary = LLMSummary(rawOutput: rawOutput)
     }
 
     func setIgnoreDocumentsModel(_ ignore: Bool) async {
@@ -177,19 +201,36 @@ final class CaseSummaryViewModel: ObservableObject {
     /// 검색 결과에서 판례를 선택하고 LLM 요약 시작
     func select(caseItem: APICase) async {
         selectedCase = caseItem
-        summary = nil
         quizQuestion = nil
         oxQuizItems = []
         similarCases = []
 
+        let hasInjectedSummary = summary != nil
+        let shouldPreserveInjectedSummary = hasInjectedSummary && (caseItem.caseNumber.hasPrefix("OCR-") || caseItem.courtName == "스캔 문서")
+        if !shouldPreserveInjectedSummary {
+            summary = nil
+        }
+
         // OCR 경로에서 미리 주입된 IR 결과가 있다면 화면 진입 시 초기화하지 않습니다.
-        let hasInjectedIR = !irKeywords.isEmpty || !irKeySentences.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !irStudyFocus.isEmpty
-        let shouldPreserveInjectedIR = caseItem.caseNumber.hasPrefix("OCR-") && hasInjectedIR
+        let hasInjectedIR = !irKeywords.isEmpty
+            || !irKeySentences.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !irStudyFocus.isEmpty
+            || !irSourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let shouldPreserveInjectedIR = hasInjectedIR && (caseItem.caseNumber.hasPrefix("OCR-") || caseItem.courtName == "스캔 문서")
         if !shouldPreserveInjectedIR {
             irKeywords = []
             irKeySentences = ""
+            irSourceText = ""
             irDomain = "general_legal"
             irStudyFocus = []
+        }
+
+        if shouldPreserveInjectedSummary {
+            async let irTask: Void = fetchIRExtract(caseItem: caseItem)
+            async let similarTask: Void = fetchSimilarCases(caseItem: caseItem)
+            _ = await irTask
+            _ = await similarTask
+            return
         }
 
         // IR 추출과 LLM 요약을 병렬로 시작
@@ -227,7 +268,8 @@ final class CaseSummaryViewModel: ObservableObject {
             oxQuizItems = try await llm.generateOXQuiz(
                 caseItem: caseItem,
                 keySentences: irKeySentences,
-                keywords: irKeywords
+                keywords: irKeywords,
+                rawText: irSourceText
             )
         } catch {
             errorMessage = error.localizedDescription
@@ -286,7 +328,13 @@ final class CaseSummaryViewModel: ObservableObject {
         isGeneratingQuiz = true
         defer { isGeneratingQuiz = false }
         do {
-            quizQuestion = try await llm.generateQuiz(caseItem: caseItem, summary: summary)
+            quizQuestion = try await llm.generateQuiz(
+                caseItem: caseItem,
+                summary: summary,
+                keySentences: irKeySentences,
+                keywords: irKeywords,
+                rawText: irSourceText
+            )
         } catch {
             errorMessage = error.localizedDescription
         }

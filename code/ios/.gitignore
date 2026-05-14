@@ -1,0 +1,3 @@
+build/
+ExportOptions.plist
+scripts/release_appstore.sh

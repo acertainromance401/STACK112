@@ -125,8 +125,22 @@ enum LLMPromptTemplate {
 
     /// OX 퀴즈 생성 프롬프트
     /// 출력 형식: 문항마다 "---" 구분자 사용
-    static func oxQuiz(caseNumber: String, caseName: String, keySentences: String, keywords: String, count: Int) -> String {
-        """
+    static func oxQuiz(
+        caseNumber: String,
+        caseName: String,
+        keySentences: String,
+        keywords: String,
+        count: Int,
+        decisionHints: [String] = []
+    ) -> String {
+        let hintBlock: String
+        if decisionHints.isEmpty {
+            hintBlock = ""
+        } else {
+            let list = decisionHints.prefix(3).map { "- \($0)" }.joined(separator: "\n")
+            hintBlock = "\n[분류 체크포인트]\n\(list)\n"
+        }
+        return """
         다음 한국 판례에서 OX 퀴즈 \(count)개를 만들어라.
 
         [근거]
@@ -134,16 +148,18 @@ enum LLMPromptTemplate {
         사건명: \(caseName)
         핵심문장: \(keySentences.prefix(300))
         핵심키워드: \(keywords)
+                \(hintBlock)
 
         [규칙]
         1) 정답은 O와 X를 섞어라. 모두 O이면 안 된다.
         2) 진술은 핵심문장/핵심키워드 안의 표현만 사용해라. 새로운 사실을 만들지 마라.
         3) 한 글자/숫자/요건 차이로 헷갈리는 함정 문항을 \(count)개 중 1개 이상 포함해라.
           예: 기한 14일↔10일, 위원장↔부위원장, 유죄↔무죄, 인정↔불인정, 한정↔무제한.
-        4) 진술은 100자 이내, 한 줄로 작성해라.
-        5) 강의식 해설/이론 확장 금지. 채점용 짧은 해설만 작성해라.
-        6) 아래 출력 예시의 단어("진술 1", "진술 2")를 그대로 복사하지 마라. 실제 판례 내용으로 채워라.
-        7) 구분자는 정확히 --- 한 줄이다.
+                4) [분류 체크포인트]가 있으면 최소 1문항은 해당 분기 기준(예: 임의수사/강제처분, 영장/예외, 위법수집/전문/자백)을 반영해라.
+                5) 진술은 100자 이내, 한 줄로 작성해라.
+                6) 강의식 해설/이론 확장 금지. 채점용 짧은 해설만 작성해라.
+                7) 아래 출력 예시의 단어("진술 1", "진술 2")를 그대로 복사하지 마라. 실제 판례 내용으로 채워라.
+                8) 구분자는 정확히 --- 한 줄이다.
 
         [출력]
         - statement: <문항 1 진술>

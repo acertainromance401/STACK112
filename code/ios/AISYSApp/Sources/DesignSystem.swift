@@ -76,9 +76,10 @@ enum AppSpace {
 }
 
 enum AppRadius {
-    static let s: CGFloat = 8
-    static let m: CGFloat = 12
-    static let l: CGFloat = 16
+    static let s: CGFloat = 10
+    static let m: CGFloat = 14
+    static let l: CGFloat = 22
+    static let xl: CGFloat = 28
     static let pill: CGFloat = 999
 }
 
@@ -103,6 +104,9 @@ struct AppCard<Content: View>: View {
             .background(background ?? AppColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.l, style: .continuous))
             // 윤곽선 제거, 부드러운 그림자로만 입체감 (iOS 17 모던 스타일)
+            // 스플래시 로고와 동일한 골드 halo 톤(accent 12%)을 카드 뒤에 옅게 깔아
+            // 모든 탭의 컨테이너가 같은 디자인 언어를 공유하도록 한다.
+            .shadow(color: AppColor.accent.opacity(0.25), radius: 24, x: 0, y: 0)
             .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 6)
             .shadow(color: Color.black.opacity(0.18), radius: 2, x: 0, y: 1)
     }
@@ -173,35 +177,75 @@ struct SectionHeader: View {
 
 /// 화면 배경에 전역 적용하는 modifier.
 ///
-/// 리테마 v1.1: 배경에 AppIcon 톤의 글래스 블루 대각 그라데이션을 깐다.
-/// 카드는 단색이라 배경의 깊이감이 그대로 드러나 고급스러운 인상을 만든다.
+/// 리테마 v2.0: 순흑 배경 + 좌상단 옅은 앰버 그라데이션 글로우 + 하단 골드 글로우.
+/// 첨부 이미지 톤처럼 어두운 베이스에 따뜻한 포인트만 은은하게 깐다.
 struct AppBackground: ViewModifier {
     func body(content: Content) -> some View {
         ZStack {
-            // 1) 가장 짙은 베이스
+            // 1) 순흑 베이스
             AppColor.background.ignoresSafeArea()
-            // 2) 글래스 블루 대각 그라데이션 (위→아래로 살짝 밝아짐)
-            LinearGradient(
+            // 2) 좌상단 앰버 라이트 — 첨부 이미지의 따뜻한 하이라이트 재현
+            RadialGradient(
                 colors: [
                     AppColor.glassFillTop.opacity(0.55),
-                    AppColor.glassFillBot.opacity(0.35),
-                    AppColor.background
+                    AppColor.background.opacity(0)
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                center: UnitPoint(x: 0.05, y: -0.05),
+                startRadius: 0,
+                endRadius: 420
             )
             .ignoresSafeArea()
-            // 3) 상단 옅은 광택
-            LinearGradient(
-                colors: [AppColor.glassHighlight, .clear],
-                startPoint: .top,
-                endPoint: .center
+            .allowsHitTesting(false)
+            // 3) 하단 미세한 골드 글로우 — CTA 영역 시선 유도
+            RadialGradient(
+                colors: [
+                    AppColor.accent.opacity(0.10),
+                    AppColor.background.opacity(0)
+                ],
+                center: UnitPoint(x: 0.5, y: 1.05),
+                startRadius: 0,
+                endRadius: 320
             )
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
             content
         }
+    }
+}
+
+// MARK: - Primary CTA Button
+//
+// 첨부 이미지 하단의 큰 알약형 골드 CTA를 재사용 가능한 컴포넌트로 추출.
+// "오늘의 문제 시작 →" 같은 1화면 1개의 핵심 액션에 사용.
+struct AppPrimaryButton: View {
+    let title: String
+    var systemImage: String = "arrow.right"
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Spacer()
+                Text(title)
+                    .font(.system(size: 18, weight: .bold))
+                Spacer()
+                ZStack {
+                    Circle()
+                        .fill(Color.black.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: systemImage)
+                        .font(.system(size: 16, weight: .bold))
+                }
+            }
+            .foregroundStyle(Color.black)
+            .padding(.vertical, 18)
+            .padding(.horizontal, 22)
+            .background(AppColor.accent)
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl, style: .continuous))
+            .shadow(color: AppColor.accent.opacity(0.35), radius: 18, x: 0, y: 8)
+        }
+        .buttonStyle(.plain)
     }
 }
 

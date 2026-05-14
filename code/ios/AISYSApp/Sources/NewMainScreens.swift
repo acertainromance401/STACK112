@@ -51,6 +51,7 @@ struct HomeView: View {
                 dDayCard
                 stackGaugeCard
                 todayProgressCard
+                startTodayButton
                 quickActionsRow
                 if !weakSubjects.isEmpty { weakAreasCard }
                 aiRoutineCard
@@ -80,22 +81,24 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("STACK112")
-                    .font(AppFont.tag)
-                    .foregroundStyle(AppColor.accent)
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.4)
+                    .foregroundStyle(AppColor.textSecondary)
                 Text("공부는 당신이,\n기록은 우리가.")
-                    .font(AppFont.displayTitle)
+                    .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(AppColor.textPrimary)
+                    .lineSpacing(2)
             }
             Spacer()
             Button {
                 showSettings = true
             } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.title3)
+                Image(systemName: "person.fill")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(AppColor.textSecondary)
-                    .padding(10)
+                    .frame(width: 44, height: 44)
                     .background(AppColor.surface)
                     .clipShape(Circle())
             }
@@ -104,53 +107,56 @@ struct HomeView: View {
     }
 
     private var dDayCard: some View {
-        AppCard {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(studyStore.dDayName)
-                        .font(AppFont.caption)
+        AppCard(padding: AppSpace.xl) {
+            VStack(alignment: .leading, spacing: 14) {
+                // 상단: 섬션 라벨 + streak 칩 우정렬
+                HStack(alignment: .center) {
+                    Text("시험일까지")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(1.2)
                         .foregroundStyle(AppColor.textSecondary)
-
-                    // 일·시·분·초 실시간 카운트다운
-                    let parts = countdownParts(now: nowTick, target: studyStore.dDayDate)
-                    if parts.isPast {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text("D-DAY")
-                                .font(AppFont.metricNumber)
-                                .foregroundStyle(AppColor.danger)
-                            Text("시험일이 지났습니다")
-                                .font(AppFont.caption)
-                                .foregroundStyle(AppColor.textSecondary)
-                        }
-                    } else {
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text("D-\(parts.days)")
-                                .font(AppFont.metricNumber)
-                                .foregroundStyle(AppColor.accent)
-                            Text("일 남음")
-                                .font(AppFont.caption)
-                                .foregroundStyle(AppColor.textSecondary)
-                        }
-                        // 시·분·초 라인 — monospacedDigit 으로 글자 떨림 방지
-                        HStack(spacing: 4) {
-                            timeChip(value: parts.hours, unit: "시")
-                            timeChip(value: parts.minutes, unit: "분")
-                            timeChip(value: parts.seconds, unit: "초")
-                        }
-                        .padding(.top, 2)
-                    }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 6) {
-                    Text("연속 학습")
-                        .font(AppFont.caption)
-                        .foregroundStyle(AppColor.textSecondary)
-                    HStack(spacing: 4) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(AppColor.accent)
-                        Text("\(studyStore.streakDays)일")
-                            .font(AppFont.bodyEmphasis)
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(AppColor.accent)
+                            .frame(width: 6, height: 6)
+                        Text("\(studyStore.streakDays)일 연속")
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(AppColor.textPrimary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(AppColor.surfaceElevated)
+                    .clipShape(Capsule())
+                }
+
+                let parts = countdownParts(now: nowTick, target: studyStore.dDayDate)
+                if parts.isPast {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text("D-DAY")
+                            .font(.system(size: 56, weight: .heavy, design: .rounded))
+                            .foregroundStyle(AppColor.danger)
+                        Text("시험일이 지났습니다")
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
+                    }
+                } else {
+                    // D-N 한 줄 + 우측에 시험명
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text("D-\(parts.days)")
+                            .font(.system(size: 56, weight: .heavy, design: .rounded).monospacedDigit())
+                            .foregroundStyle(AppColor.textPrimary)
+                            .contentTransition(.numericText(value: Double(parts.days)))
+                            .animation(.easeOut(duration: 0.3), value: parts.days)
+                        Text(studyStore.dDayName)
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textSecondary)
+                    }
+                    // 실시간 시·분·초 칩 (1초마다 갱신)
+                    HStack(spacing: 6) {
+                        timeChip(value: parts.hours, unit: "시")
+                        timeChip(value: parts.minutes, unit: "분")
+                        timeChip(value: parts.seconds, unit: "초")
                     }
                 }
             }
@@ -299,41 +305,66 @@ struct HomeView: View {
     }
 
     private var todayProgressCard: some View {
-        AppCard {
-            VStack(alignment: .leading, spacing: AppSpace.m) {
-                SectionHeader(title: "오늘의 학습", trailing: "목표 \(studyStore.dailyGoalQuestions)문항")
-                HStack(spacing: AppSpace.l) {
-                    MetricBlock(value: "\(studyStore.todaySolved)", label: "푼 문제")
-                    MetricBlock(value: "\(studyStore.todayWrong)", label: "오답", tint: AppColor.danger)
-                    MetricBlock(
-                        value: studyStore.todaySolved > 0 ? "\(Int((Double(studyStore.todayCorrect)/Double(studyStore.todaySolved)) * 100))" : "—",
-                        label: "정답률",
-                        tint: AppColor.success,
-                        trailingSymbol: studyStore.todaySolved > 0 ? "%" : nil
-                    )
-                }
-                ProgressView(value: studyStore.todayProgress)
-                    .progressViewStyle(.linear)
-                    .tint(AppColor.accent)
-                    .background(AppColor.surfaceElevated)
-                    .clipShape(Capsule())
-                Button {
-                    runtime.selectedTab = 2
-                } label: {
-                    HStack {
-                        Image(systemName: "play.fill")
-                        Text("오늘의 문제 시작")
-                            .font(AppFont.bodyEmphasis)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                    }
-                    .padding(.vertical, AppSpace.m)
-                    .padding(.horizontal, AppSpace.l)
-                    .background(AppColor.accent)
-                    .foregroundStyle(AppColor.background)
-                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.m, style: .continuous))
+        AppCard(padding: AppSpace.xl) {
+            VStack(alignment: .leading, spacing: AppSpace.l) {
+                Text("오늘의 학습")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(AppColor.textSecondary)
+
+                metricRow(icon: "tray.full.fill",
+                          label: "풀이 문항",
+                          value: "\(studyStore.todaySolved)",
+                          unit: "문항",
+                          valueColor: AppColor.textPrimary)
+                Divider().background(AppColor.separator)
+                metricRow(icon: "exclamationmark.circle.fill",
+                          label: "오답",
+                          value: "\(studyStore.todayWrong)",
+                          unit: "문항",
+                          valueColor: AppColor.textPrimary)
+                Divider().background(AppColor.separator)
+                metricRow(icon: "circle.hexagongrid.fill",
+                          label: "정답률",
+                          value: studyStore.todaySolved > 0
+                                ? "\(Int((Double(studyStore.todayCorrect)/Double(studyStore.todaySolved)) * 100))"
+                                : "—",
+                          unit: studyStore.todaySolved > 0 ? "%" : nil,
+                          valueColor: AppColor.accent)
+            }
+        }
+    }
+
+    private func metricRow(icon: String, label: String, value: String, unit: String?, valueColor: Color) -> some View {
+        HStack(spacing: AppSpace.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(AppColor.surfaceElevated)
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AppColor.textSecondary)
+            }
+            Text(label)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AppColor.textPrimary)
+            Spacer()
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 28, weight: .heavy, design: .rounded).monospacedDigit())
+                    .foregroundStyle(valueColor)
+                if let unit {
+                    Text(unit)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
                 }
             }
+        }
+    }
+
+    private var startTodayButton: some View {
+        AppPrimaryButton(title: "오늘의 문제 시작") {
+            runtime.selectedTab = 2
         }
     }
 
@@ -487,10 +518,18 @@ struct PracticeView: View {
     @State private var statusText: String = ""
     @State private var sessionCorrect = 0
     @State private var sessionSolved = 0
+    @State private var showWrongMemoSheet = false
+    @State private var wrongMemoDraft = ""
+    @State private var pendingWrongRecordId: String?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpace.l) {
+                Text("문제풀이")
+                    .font(AppFont.displayTitle)
+                Text("스캔한 판례에서 즉석 OX 문제를 풀어 약점을 보강하세요.")
+                    .font(AppFont.caption)
+                    .foregroundStyle(AppColor.textSecondary)
                 header
                 if quiz.isEmpty {
                     emptyCard
@@ -505,11 +544,46 @@ struct PracticeView: View {
             }
             .padding(AppSpace.l)
         }
-        .navigationTitle("문제풀이")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(AppColor.surface, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarHidden(true)
         .task { if quiz.isEmpty { await loadQuizFromMostRecentScan() } }
+        .sheet(isPresented: $showWrongMemoSheet) {
+            NavigationStack {
+                VStack(alignment: .leading, spacing: AppSpace.m) {
+                    Text("오답 메모")
+                        .font(AppFont.sectionHeader)
+                    Text("방금 틀린 문항의 헷갈린 포인트를 짧게 남겨두세요.")
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
+                    TextEditor(text: $wrongMemoDraft)
+                        .frame(minHeight: 180)
+                        .padding(8)
+                        .background(AppColor.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppRadius.m)
+                                .stroke(AppColor.separator, lineWidth: 0.6)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    Spacer()
+                }
+                .padding(AppSpace.l)
+                .withAppBackground()
+                .navigationTitle("오답 메모")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("건너뛰기") { showWrongMemoSheet = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("저장") {
+                            if let id = pendingWrongRecordId {
+                                store.updateWrongQuizMemo(recordId: id, memo: wrongMemoDraft)
+                            }
+                            showWrongMemoSheet = false
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private var header: some View {
@@ -517,7 +591,7 @@ struct PracticeView: View {
             HStack(spacing: AppSpace.l) {
                 MetricBlock(value: "\(sessionSolved)", label: "푼 문제")
                 MetricBlock(value: "\(sessionCorrect)", label: "정답", tint: AppColor.success)
-                MetricBlock(value: quiz.isEmpty ? "—" : "\(currentIndex + 1)/\(quiz.count)", label: "진행률", tint: AppColor.accent)
+                MetricBlock(value: quiz.isEmpty ? "—" : "\(min(currentIndex + 1, quiz.count))/\(quiz.count)", label: "진행률", tint: AppColor.accent)
             }
         }
     }
@@ -552,9 +626,17 @@ struct PracticeView: View {
                     .foregroundStyle(AppColor.textSecondary)
                 HStack(spacing: AppSpace.m) {
                     Button("다시 풀기") { restart() }
-                        .buttonStyle(.bordered).tint(AppColor.accent)
+                        .font(AppFont.bodyEmphasis)
+                        .foregroundStyle(AppColor.textPrimary)
+                        .padding(.horizontal, 18).padding(.vertical, 12)
+                        .background(AppColor.surfaceElevated)
+                        .clipShape(Capsule())
                     Button("새 문제 생성") { Task { restart(); await loadQuizFromMostRecentScan() } }
-                        .buttonStyle(.borderedProminent).tint(AppColor.accent)
+                        .font(AppFont.bodyEmphasis)
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 18).padding(.vertical, 12)
+                        .background(AppColor.accent)
+                        .clipShape(Capsule())
                 }
             }
         }
@@ -649,6 +731,37 @@ struct PracticeView: View {
                     .font(AppFont.caption)
                     .foregroundStyle(AppColor.textSecondary)
                     .lineSpacing(3)
+                if !isCorrect {
+                    Button {
+                        showWrongMemoSheet = true
+                    } label: {
+                        Label(
+                            (pendingWrongRecordId.flatMap { id in store.wrongQuizRecords.first(where: { $0.id == id })?.userMemo }?.isEmpty == false) ? "메모 수정" : "메모 남기기",
+                            systemImage: "square.and.pencil"
+                        )
+                        .font(AppFont.captionEmphasis)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(AppColor.danger.opacity(0.14))
+                        .foregroundStyle(AppColor.danger)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    }
+                } else {
+                    Button {
+                        showWrongMemoSheet = true
+                    } label: {
+                        Label(
+                            (pendingWrongRecordId.flatMap { id in store.wrongQuizRecords.first(where: { $0.id == id })?.userMemo }?.isEmpty == false) ? "메모 수정" : "메모 남기기",
+                            systemImage: "square.and.pencil"
+                        )
+                        .font(AppFont.captionEmphasis)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(AppColor.accent.opacity(0.12))
+                        .foregroundStyle(AppColor.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    }
+                }
                 Button(currentIndex + 1 < quiz.count ? "다음 문제" : "세션 종료") { next() }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -676,6 +789,7 @@ struct PracticeView: View {
                 caseItem: apiCase,
                 keySentences: scanned.keySentences,
                 keywords: scanned.keywords,
+                rawText: scanned.ocrRawText,
                 count: 4
             )
             quiz = items
@@ -696,19 +810,19 @@ struct PracticeView: View {
         sessionSolved += 1
         if correct { sessionCorrect += 1 }
         studyStore.recordAnswer(correct: correct, confidence: selectedConfidence)
-        if !correct {
-            let scanned = scannedCases.first
-            store.saveWrongQuizRecord(
-                caseNumber: scanned?.caseName ?? "OX",
-                caseTitle: scanned?.caseName ?? "OX",
-                question: q.statement,
-                userAnswer: answer,
-                correctAnswer: q.answer,
-                explanation: q.explanation,
-                caseSummary: scanned?.keySentences ?? "",
-                subject: scanned?.keywords.prefix(2).joined(separator: " · ")
-            )
-        }
+        let scanned = scannedCases.first
+        let savedId = store.saveWrongQuizRecord(
+            caseNumber: scanned?.caseName ?? "OX",
+            caseTitle: scanned?.caseName ?? "OX",
+            question: q.statement,
+            userAnswer: answer,
+            correctAnswer: q.answer,
+            explanation: q.explanation,
+            caseSummary: scanned?.keySentences ?? "",
+            subject: scanned?.keywords.prefix(2).joined(separator: " · ")
+        )
+        pendingWrongRecordId = savedId
+        wrongMemoDraft = ""
     }
 
     private func next() {
@@ -747,8 +861,11 @@ struct WrongNoteView: View {
                 if !weakSubjects.isEmpty { weakSection }
 
                 AppCard {
-                    SectionHeader(title: "최근 오답", trailing: "\(store.wrongQuizRecords.count)건")
-                    if store.wrongQuizRecords.isEmpty {
+                    let visibleAllRecords = store.wrongQuizRecords.filter {
+                        $0.userAnswer != $0.correctAnswer || ($0.userMemo?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+                    }
+                    SectionHeader(title: "최근 오답", trailing: "\(visibleAllRecords.count)건")
+                    if visibleAllRecords.isEmpty {
                         Text("아직 메모해 둔 오답이 없어요. 헷갈렸던 문제를 가볍게 남겨두세요.")
                             .font(AppFont.caption)
                             .foregroundStyle(AppColor.textSecondary)
@@ -756,12 +873,12 @@ struct WrongNoteView: View {
                     } else {
                         VStack(spacing: AppSpace.m) {
                             let visibleRecords = showAllWrongRecords
-                                ? Array(store.wrongQuizRecords)
-                                : Array(store.wrongQuizRecords.prefix(initialWrongRecordLimit))
+                                ? visibleAllRecords
+                                : Array(visibleAllRecords.prefix(initialWrongRecordLimit))
                             ForEach(visibleRecords) { rec in
                                 WrongRecordCard(record: rec)
                             }
-                            if store.wrongQuizRecords.count > initialWrongRecordLimit {
+                            if visibleAllRecords.count > initialWrongRecordLimit {
                                 Button {
                                     withAnimation(.easeInOut(duration: 0.2)) {
                                         showAllWrongRecords.toggle()
@@ -770,7 +887,7 @@ struct WrongNoteView: View {
                                     HStack(spacing: 6) {
                                         Text(showAllWrongRecords
                                              ? "접기"
-                                             : "더 보기 (+\(store.wrongQuizRecords.count - initialWrongRecordLimit)건)")
+                                             : "더 보기 (+\(visibleAllRecords.count - initialWrongRecordLimit)건)")
                                             .font(AppFont.captionEmphasis)
                                         Image(systemName: showAllWrongRecords ? "chevron.up" : "chevron.down")
                                             .font(.caption.bold())
@@ -830,7 +947,10 @@ struct WrongNoteView: View {
 }
 
 private struct WrongRecordCard: View {
+    @EnvironmentObject private var store: ReviewStore
     let record: WrongQuizRecord
+    @State private var showMemoEditor = false
+    @State private var draftMemo: String = ""
 
     var body: some View {
         AppCard(padding: AppSpace.m, background: AppColor.surfaceElevated) {
@@ -856,6 +976,66 @@ private struct WrongRecordCard: View {
                         .font(AppFont.caption)
                         .foregroundStyle(AppColor.textSecondary)
                         .lineSpacing(2)
+                }
+
+                if let memo = record.userMemo, !memo.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("내 메모")
+                            .font(AppFont.tag)
+                            .foregroundStyle(AppColor.accent)
+                        Text(memo)
+                            .font(AppFont.caption)
+                            .foregroundStyle(AppColor.textPrimary)
+                            .lineSpacing(2)
+                    }
+                    .padding(.top, 2)
+                }
+
+                Button(record.userMemo?.isEmpty == false ? "메모 수정" : "메모 추가") {
+                    draftMemo = record.userMemo ?? ""
+                    showMemoEditor = true
+                }
+                .font(AppFont.captionEmphasis)
+                .foregroundStyle(AppColor.accent)
+            }
+        }
+        .sheet(isPresented: $showMemoEditor) {
+            NavigationStack {
+                VStack(alignment: .leading, spacing: AppSpace.m) {
+                    Text("오답 메모")
+                        .font(AppFont.sectionHeader)
+                    Text(record.question)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
+                        .lineLimit(3)
+                    TextEditor(text: $draftMemo)
+                        .frame(minHeight: 180)
+                        .padding(8)
+                        .background(AppColor.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppRadius.m)
+                                .stroke(AppColor.separator, lineWidth: 0.6)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    Text("헷갈린 이유, 다음에 확인할 포인트를 자유롭게 적어두세요.")
+                        .font(AppFont.tag)
+                        .foregroundStyle(AppColor.textTertiary)
+                    Spacer()
+                }
+                .padding(AppSpace.l)
+                .withAppBackground()
+                .navigationTitle("오답 메모")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("닫기") { showMemoEditor = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("저장") {
+                            store.updateWrongQuizMemo(recordId: record.id, memo: draftMemo)
+                            showMemoEditor = false
+                        }
+                    }
                 }
             }
         }
@@ -1647,22 +1827,28 @@ private struct StackBlocksView: View {
         }
     }
 
-    /// 단일 블록 — 빈 블록은 어두운 외곽선만, 채워진 블록은 골드 hairline + 짙은 단색 (배경의 글래스가 비치게).
+    /// 단일 블록 — 빈 슬롯은 흐릿한 외곽선, 채워진 블록은 골드 색으로 명확히 구분.
     @ViewBuilder
     private func block(isFilled: Bool, partialFill: Double, wobble: Double) -> some View {
         ZStack(alignment: .bottom) {
             // 빈 슬롯
             RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .strokeBorder(AppColor.border.opacity(0.35), lineWidth: 1)
+                .strokeBorder(AppColor.border.opacity(0.30), lineWidth: 1)
                 .background(
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(AppColor.surfaceElevated.opacity(0.4))
+                        .fill(AppColor.background.opacity(0.35))
                 )
 
             if isFilled || partialFill > 0 {
                 GeometryReader { geo in
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(AppColor.surfaceElevated)
+                        .fill(
+                            LinearGradient(
+                                colors: [AppColor.accent, AppColor.accent.opacity(0.78)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
                         .frame(height: max(2, geo.size.height * CGFloat(partialFill)))
                         .frame(maxHeight: .infinity, alignment: .bottom)
                 }
@@ -1670,7 +1856,7 @@ private struct StackBlocksView: View {
         }
         .frame(maxWidth: .infinity)
         .rotationEffect(.degrees(wobble))
-        .shadow(color: isFilled ? Color.black.opacity(0.25) : .clear, radius: 1.5, x: 0, y: 0.5)
+        .shadow(color: isFilled ? AppColor.accent.opacity(0.35) : .clear, radius: 3, x: 0, y: 1)
     }
 
     /// 결정적(deterministic) 살짝 어긋남. 동일 인덱스는 항상 같은 각도 → 떨림 없음.

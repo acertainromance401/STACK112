@@ -23,6 +23,14 @@ enum LocalIRPipeline {
             return APIIRExtractResponse(keywords: [], keySentences: "", domain: "general_legal", studyFocus: [])
         }
 
+        // 1) 판결문 구조 파싱 — 【판시사항】【판결요지】【참조조문】을 인식하면 분석을 그 위에 올린다.
+        //    이 경로가 잡히면 이유(理由) 본문의 잡음(헌법 부수언급, 기본권 등) 영향이 사라진다.
+        let parsed = JudgmentParser.parse(normalized)
+        if parsed.hasStructure {
+            return extractFromParsed(parsed: parsed, fallbackText: normalized, topKeywords: topKeywords, topSentences: topSentences)
+        }
+
+        // 2) 폴백 — 구조가 없으면 기존 본문 휴리스틱.
         let keywords = extractKeyphrases(from: normalized, topN: topKeywords)
         let sentences = extractKeySentences(from: normalized, topN: topSentences)
         let domain = inferDomain(text: normalized, keywords: keywords)
@@ -31,11 +39,139 @@ enum LocalIRPipeline {
         return APIIRExtractResponse(keywords: keywords, keySentences: sentences, domain: domain, studyFocus: focus)
     }
 
+    /// 구조 인식 판결문 전용 추출 경로 — 분석 대상 텍스트를 판시사항+판결요지[다수의견]로 한정한다.
+    private static func extractFromParsed(parsed: ParsedJudgment, fallbackText: String, topKeywords: Int, topSentences: Int) -> APIIRExtractResponse {
+        // 분석 대상 = 판시사항 + 판결요지[다수의견|단일]
+        var pieces: [String] = parsed.issues
+        let majority = parsed.holdings.filter { $0.opinion == .majority || $0.opinion == .unspecified }
+        pieces.append(contentsOf: majority.map { $0.text })
+        let analysisCorpus = pieces.joined(separator: "\n")
+
+        // 도메인 — 참조조문 법령명이 가장 결정적인 신호
+        let domain = inferDomainFromParsed(parsed: parsed, analysisCorpus: analysisCorpus)
+
+        // 키워드 — 분석 대상에서만 추출 (이유 본문 잡음 차단)
+        var keywords = extractKeyphrases(from: analysisCorpus.isEmpty ? fallbackText : analysisCorpus, topN: topKeywords)
+
+        // 참조조문 법령명은 상위로 끌어올린다 (시험적 관점에서 가장 중요)
+        for act in parsed.statuteActs.reversed() {
+            keywords.removeAll { $0 == act }
+            keywords.insert(act, at: 0)
+        }
+
+        // 도메인과 무관한 다른 도메인 신호 키워드는 제거 — 형법인데 기본권/과잉금지가 남는 현상 방지
+        keywords = filterOffDomainKeywords(keywords, domain: domain)
+        if keywords.count > topKeywords { keywords = Array(keywords.prefix(topKeywords)) }
+
+        // 핵심 문장 — 판시사항(쟁점)은 평서문으로 변환, 다수의견은 첫 문장만.
+        var keySentencesParts: [String] = []
+        for (idx, issue) in parsed.issues.enumerated() {
+            let polarity = (idx < parsed.polarities.count) ? parsed.polarities[idx] : .unknown
+            let decl = JudgmentParser.declarativeStatement(issue: issue, polarity: polarity)
+            if !decl.isEmpty { keySentencesParts.append(decl) }
+        }
+        for h in majority {
+            keySentencesParts.append(JudgmentParser.firstSentence(h.text, limit: 200))
+        }
+        let keySentences = keySentencesParts.prefix(max(topSentences, 4)).joined(separator: "\n")
+
+        // 학습 포인트 — 도메인에 맞춰 만들되, 첫 줄은 판시사항으로 대체해 본문 문장 노출
+        let focus = buildStudyFocus(domain: domain, keywords: keywords, keySentences: keySentences)
+
+        return APIIRExtractResponse(keywords: keywords, keySentences: keySentences, domain: domain, studyFocus: focus)
+    }
+
+    /// 참조조문(법령명) → 도메인 매핑. 없으면 분석 대상 텍스트로 폴백.
+    private static func inferDomainFromParsed(parsed: ParsedJudgment, analysisCorpus: String) -> String {
+        for act in parsed.statuteActs {
+            switch act {
+            case "형법":                                  return "criminal_law"
+            case "형사소송법":                            return "criminal_procedure_evidence"
+            case "민법", "민사소송법", "상법":           return "civil_law"
+            case "부가가치세법", "법인세법", "국세기본법": return "administrative_law"
+            case "행정소송법", "행정심판법", "행정절차법": return "administrative_law"
+            case "경찰관 직무집행법", "경찰법":           return "police_committees"
+            default: break
+            }
+            // 특별 형사법 — 모두 형법 영역
+            if act.contains("성폭력") || act.contains("특정범죄가중") || act.contains("특정경제범죄")
+                || act.contains("정보통신망") || act.contains("아동·청소년") || act.contains("아동청소년")
+                || act.contains("청소년성보호") || act.contains("마약류") || act.contains("도로교통")
+                || act.contains("교통사고처리") || act.contains("폭력행위 등 처벌") || act.contains("스토킹")
+                || act.contains("공직선거법") || act.contains("국가보안법") {
+                return "criminal_law"
+            }
+            // 행정 영역 특별법
+            if act.contains("국가공무원법") || act.contains("지방공무원법") || act.contains("개인정보 보호법")
+                || act.contains("부가가치세법") || act.contains("법인세법") || act.contains("국세기본법")
+                || act.contains("정보공개") {
+                return "administrative_law"
+            }
+        }
+        // 헌법만 단독으로 있을 때만 헌법 도메인
+        if parsed.statuteActs == ["헌법"] { return "constitutional_law" }
+        // 참조조문이 비었더라도 판시사항/판결요지 본문에 법령명이 직접 등장하면 그것으로 결정.
+        // paste 텍스트에 [참조조문] 섹션이 누락되어도 도메인이 헌법으로 잘못 빠지지 않게 하는 가드.
+        if let inferred = inferDomainFromCorpusLaws(analysisCorpus) {
+            return inferred
+        }
+        // 그 외에는 분석 대상 텍스트로 inferDomain
+        let kws = extractKeyphrases(from: analysisCorpus, topN: 10)
+        return inferDomain(text: analysisCorpus, keywords: kws)
+    }
+
+    /// 본문(판시사항+판결요지)에 직접 등장하는 법령명을 스캔해 도메인을 결정한다.
+    /// 공백/줄바꿈 깨짐을 고려해 양쪽을 모두 공백 제거 후 비교.
+    private static func inferDomainFromCorpusLaws(_ text: String) -> String? {
+        let stripped = text.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)
+        // 형법 영역 특별법 (긴 이름부터)
+        let criminalNeedles = [
+            "성폭력범죄의처벌등에관한특례법", "성폭력처벌법",
+            "특정범죄가중처벌등에관한법률", "특정경제범죄가중처벌등에관한법률",
+            "아동·청소년의성보호에관한법률", "아동청소년의성보호에관한법률", "청소년성보호법",
+            "마약류관리에관한법률", "정보통신망이용촉진및정보보호등에관한법률",
+            "스토킹범죄의처벌등에관한법률", "교통사고처리특례법", "폭력행위등처벌에관한법률",
+            "도로교통법", "공직선거법", "국가보안법",
+            "형법"
+        ]
+        for needle in criminalNeedles where stripped.contains(needle.replacingOccurrences(of: " ", with: "")) {
+            return "criminal_law"
+        }
+        if stripped.contains("형사소송법") { return "criminal_procedure_evidence" }
+        if stripped.contains("부가가치세법") || stripped.contains("법인세법") || stripped.contains("국세기본법") {
+            return "administrative_law"
+        }
+        if stripped.contains("행정소송법") || stripped.contains("행정심판법")
+            || stripped.contains("행정절차법") || stripped.contains("국가공무원법")
+            || stripped.contains("지방공무원법") || stripped.contains("개인정보보호법") {
+            return "administrative_law"
+        }
+        if stripped.contains("민사소송법") || stripped.contains("민법") || stripped.contains("상법") {
+            return "civil_law"
+        }
+        if stripped.contains("경찰관직무집행법") || stripped.contains("경찰법") {
+            return "police_committees"
+        }
+        return nil
+    }
+
+    /// 도메인 외 키워드 제거 — 형법 사건의 키워드에 헌법 전용 용어가 남지 않도록.
+    private static func filterOffDomainKeywords(_ keywords: [String], domain: String) -> [String] {
+        let constitutionalOnly: Set<String> = ["기본권", "과잉금지", "최소침해", "법익균형", "목적의 정당성", "수단적합성", "위헌", "합헌", "한정위헌", "헌법불합치"]
+        if domain == "constitutional_law" { return keywords }
+        return keywords.filter { !constitutionalOnly.contains($0) }
+    }
+
+
     // MARK: - Normalize
 
     static func normalize(_ text: String) -> String {
         guard !text.isEmpty else { return "" }
-        var s = text
+        // 0) 라인 단위 잡음 제거 + 중복 라인 dedupe.
+        //    OCR/paste 모든 진입로에 일관되게 적용되어 IR 키워드 추출이 페이지 헤더 같은 잡음을 학습하지 않게 한다.
+        //    OCR 멀티 사진 경로는 OCRView가 이미 OCRTextCleaner.mergePages 로 더 강한 처리(stitch 포함)를 수행했으므로
+        //    여기서는 paste 흐름을 주 대상으로 한 cleanSinglePass(라인 dedup + 잡음 제거)만 다시 적용.
+        var s = OCRTextCleaner.cleanSinglePass(text)
         s = s.replacingOccurrences(of: #"https?://\S+"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"www\.\S+"#, with: " ", options: .regularExpression)
         s = s.replacingOccurrences(of: #"portal\.scourt\.go\.kr\S*"#, with: " ", options: .regularExpression)
@@ -53,9 +189,30 @@ enum LocalIRPipeline {
     /// OCR 결과에서 단일 음절 어미가 공백으로 떨어져 나오는 인공물을 보정한다.
     /// 예) "담보하 는" → "담보하는", "문제 된" → "문제된", "대 한" → "대한"
     private static func fixOCRSpacing(_ text: String) -> String {
+        // 0) 알려진 법률 합성어 — paste 시 줄바꿈/양끝맞춤 공백으로 깨진 형태를 복원.
+        //    portal.scourt.go.kr 같은 사이트는 단어 중간에서 줄바꿈이 발생해 한 음절이 따로 떨어진다.
+        var s = text
+        let knownCompounds: [String] = [
+            "송금메모", "통신매체", "통신매체이용음란", "전자금융거래",
+            "성폭력처벌법", "성폭력범죄", "성적자기결정권", "성적수치심",
+            "정보통신망", "도로교통법", "교통사고처리", "스토킹범죄",
+            "청소년성보호", "마약류관리", "보호법익", "구성요건",
+            "법리오해", "원심판결", "공소사실", "유죄판결", "무죄판결",
+            "헌법재판소", "대법원판결", "위법수집증거", "전문법칙",
+            "임의제출", "강제수사", "임의수사", "수색영장", "체포영장",
+            "공무집행방해", "주거침입", "음주운전", "특정범죄가중처벌",
+            "정당방위", "긴급피난", "과잉방위", "공동정범", "간접정범",
+        ]
+        for compound in knownCompounds {
+            let chars = Array(compound)
+            guard chars.count >= 3 else { continue }
+            // 각 인접 음절 사이에 공백/줄바꿈이 0~2개 들어간 변형까지 매칭.
+            let pattern = chars.map { String($0) }.joined(separator: "[ \\t\\n]{0,2}")
+            s = s.replacingOccurrences(of: pattern, with: compound, options: .regularExpression)
+        }
+
         // 1) 동사어간 + 공백 + 어미: "하 는/되 는/있 는/없 는/이 는" 등
         let verbStemPattern = #"([하되있없이리기쓰오가받두주]|[하되있없]였|[하되있없]었)\s+(는|던|면|어|아|니|고|자|지|며|여|였|었)"#
-        var s = text
         if let regex = try? NSRegularExpression(pattern: verbStemPattern) {
             let range = NSRange(s.startIndex..<s.endIndex, in: s)
             s = regex.stringByReplacingMatches(in: s, range: range, withTemplate: "$1$2")
@@ -215,6 +372,19 @@ enum LocalIRPipeline {
             if ranked.count >= topN { return ranked }
         }
 
+        // 1.5. 법률 N-gram 사전 매칭 — NLTagger 가 놓치는 복합 법률 용어를
+        //      LegalIssueDictionary 키로 우선 채택. 시험 빈출 용어가 항상 상위에 오게 한다.
+        let dictionaryHits = LegalIssueDictionary.detect(in: text)
+        let dictionaryQuota = min(4, max(0, topN / 3))
+        // importance 내림차순으로 우선순위 부여
+        let prioritized = dictionaryHits.direct.sorted { a, b in
+            (LegalIssueDictionary.index[a]?.importance ?? 0) > (LegalIssueDictionary.index[b]?.importance ?? 0)
+        }
+        for term in prioritized.prefix(dictionaryQuota) {
+            push(term)
+            if ranked.count >= topN { return ranked }
+        }
+
         // 2. 명사 추출 + 어미 제거 + 카운트
         let nouns = nounsFromText(text).map { stripEndings($0) }
         var counts: [String: Int] = [:]
@@ -338,6 +508,7 @@ enum LocalIRPipeline {
     // MARK: - Domain & Study Focus
 
     private static let domainHints: [(name: String, hints: Set<String>)] = [
+        ("administrative_law",                ["부가가치세","법인세","국세","국세청장","세무서장","과세처분","과세자료","경정고지","경정·고지","면세","과세대상","취소소송"]),
         ("police_committees",                ["위원회","국가경찰위원회","자치경찰위원회","정보공개위원회","징계위원회","소청심사위원회","심의위원회"]),
         ("constitutional_law",               ["헌법","위헌","합헌","과잉금지원칙","목적","수단","최소침해","법익균형","헌법재판소"]),
         ("criminal_procedure_evidence",      ["형사소송법","증거","전문법칙","자백","압수","수색","영장","증거능력","위법수집증거","유류물"]),
@@ -346,17 +517,56 @@ enum LocalIRPipeline {
     ]
 
     static func inferDomain(text: String, keywords: [String]) -> String {
-        let corpus = (text + " " + keywords.joined(separator: " ")).lowercased()
+        // 1차: 기존 키워드 카운트 (이전 IR 동작 호환 유지)
+        //
+        // 주의: Swift String.contains 는 substring 매칭이므로 "형사소송법"이 "형법"을
+        // 먹으며 "헌법상 자기부죄거부특권"이 "헌법"을 먹는다. 도메인 신호가 섞이지
+        // 않도록, hint 검사 전에 코퍼스에서 이런 오염 표현을 제거한다.
+        var corpus = (text + " " + keywords.joined(separator: " ")).lowercased()
+        corpus = corpus.replacingOccurrences(of: "형사소송법", with: "@형소장@")
+        corpus = corpus.replacingOccurrences(of: "헌법재판소", with: "@헌재장@")
+        corpus = corpus.replacingOccurrences(of: "헌법상", with: " ")
+        corpus = corpus.replacingOccurrences(of: "헌법적", with: " ")
+        // domainHints 매칭을 위해 sentinel을 다시 구분 신호로 치환
+        corpus = corpus.replacingOccurrences(of: "@형소장@", with: "형사소송법")
+        corpus = corpus.replacingOccurrences(of: "@헌재장@", with: "헌법재판소")
+        // 형사소송법이 코퍼스에 존재하면 형법 substring 오염을 차단하기 위해
+        // 형법 단일 검사는 "형법제|형법상|형법총|형법각" 경계로만 허용.
+        let hasCriminalProc = corpus.contains("형사소송법")
         var best = "general_legal"
         var bestScore = 0
         for (name, hints) in domainHints {
-            let score = hints.reduce(0) { acc, h in acc + (corpus.contains(h.lowercased()) ? 1 : 0) }
+            var score = 0
+            for h in hints {
+                let hl = h.lowercased()
+                // "형법" hint가 "형사소송법" substring으로 잡히는 케이스 제외.
+                if hl == "형법" && hasCriminalProc {
+                    if corpus.range(of: #"형법(제|상|총칙|각칙)"#, options: .regularExpression) != nil {
+                        score += 1
+                    }
+                    continue
+                }
+                if corpus.contains(hl) { score += 1 }
+            }
             if score > bestScore {
                 bestScore = score
                 best = name
             }
         }
-        return bestScore < 2 ? "general_legal" : best
+        if bestScore >= 2 { return best }
+
+        // 2차 (보강): 점수 부족 시 LegalAnalyzer 의 가중치 모델 사용
+        let analyzed = LegalAnalyzer.classify(text: text, keywords: keywords)
+        if analyzed.confidence >= 0.5 {
+            switch analyzed.domain {
+            case .criminalProcedure:    return "criminal_procedure_evidence"
+            case .criminalLaw:          return "criminal_law"
+            case .constitutional:       return "constitutional_law"
+            case .policeAdministrative: return "police_committees"
+            case .general:              return "general_legal"
+            }
+        }
+        return "general_legal"
     }
 
     static func buildStudyFocus(domain: String, keywords: [String], keySentences: String) -> [String] {
@@ -367,39 +577,52 @@ enum LocalIRPipeline {
         switch domain {
         case "constitutional_law":
             return [
+                "10초 분기: 제한 기본권 특정 후 과잉금지/평등심사로 판단",
                 "위헌/합헌 결론을 먼저 암기하고, 판례 번호와 연결해서 복습",
-                "위헌 사유를 목적·수단·최소침해·법익균형 순서로 분류",
-                trimmedFirst.isEmpty ? "핵심 문장 재확인" : "핵심 문장 체크: \(trimmedFirst)",
+                trimmedFirst.isEmpty ? "위헌 사유를 목적·수단·최소침해·법익균형 순서로 분류" : "핵심 문장 체크: \(trimmedFirst)",
             ]
         case "criminal_procedure_evidence":
             return [
-                "증거능력 인정/배제 기준을 OX로 반복 훈련",
-                "영장 필요 여부와 예외 사유를 숫자·요건으로 분리 암기",
+                "10초 분기: 임의수사/강제처분 구분 후 영장 원칙 확인",
+                "증거 문제는 위법수집-전문법칙-자백법칙 순서로 OX 반복",
                 topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
             ]
         case "criminal_procedure_investigation":
             return [
-                "체포·구속·영장 관련 기한/절차 숫자를 우선 암기",
-                "재수사 요청 가능 요건을 주체·시점·범위로 나눠 복습",
+                "10초 분기: 체포유형(현행범/긴급/영장)부터 먼저 확정",
+                "영장 예외는 긴급성·필요성·사후절차로 나눠 점검",
                 trimmedFirst.isEmpty ? "핵심 문장 재확인" : "핵심 문장 체크: \(trimmedFirst)",
             ]
         case "criminal_law":
             return [
-                "유무죄 결론을 사실관계 포인트와 함께 연결 암기",
-                "총론이면 학설별 결론 차이를 표로 정리해 반복",
+                "10초 분기: 구성요건-위법성-책임 순서로 쟁점 위치 확인",
+                "정당방위/긴급피난, 미수/불능미수처럼 자주 섞이는 쌍을 분리 암기",
+                topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
+            ]
+        case "civil_law":
+            return [
+                "10초 분기: 청구원인-항변-재항변 구조로 쟁점 위치 확인",
+                "요건사실과 입증책임 분담을 먼저 정리하고 결론으로 연결",
+                topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
+            ]
+        case "administrative_law":
+            return [
+                "10초 분기: 처분성-원고적격-협의의 소익 순서로 본안 전 점검",
+                "재량/기속 구분 후 비례·신뢰보호 위반 여부 확인",
                 topKeywords.isEmpty ? "핵심 키워드 재확인" : "쟁점 키워드: \(topKeywords)",
             ]
         case "police_committees":
             return [
+                "10초 분기: 경찰조직/작용/징계 중 어디인지 먼저 분류",
                 "위원회별 인원 범위·구성 요건·기한 숫자를 OX로 반복",
-                "한 글자/숫자 함정 지문을 중심으로 오답노트 축적",
-                topKeywords.isEmpty ? "핵심 키워드 재확인" : "핵심 키워드 묶음: \(topKeywords)",
+                topKeywords.isEmpty ? "한 글자/숫자 함정 지문을 중심으로 오답노트 축적" : "핵심 키워드 묶음: \(topKeywords)",
             ]
         default:
             return [
+                "10초 분기: 과목(형법/형소법/헌법/경찰학)을 먼저 확정",
                 "핵심 쟁점-결론-시험포인트 3단 구조로 요약 후 복습",
                 "헷갈리는 판례는 유사판례 2~3개와 비교하여 차이 암기",
-                trimmedFirst.isEmpty ? "핵심 문장 재확인" : "핵심 문장 체크: \(trimmedFirst)",
+                trimmedFirst.isEmpty ? "예외 요건 확인 후 결론 확정" : "핵심 문장 체크: \(trimmedFirst)",
             ]
         }
     }

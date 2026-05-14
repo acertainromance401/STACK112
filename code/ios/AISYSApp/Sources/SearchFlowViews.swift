@@ -168,7 +168,14 @@ struct SearchView: View {
         let vm = CaseSummaryViewModel()
         vm.injectIRResult(
             keywords: scanned.keywords,
-            keySentences: scanned.keySentences
+            keySentences: scanned.keySentences,
+            sourceText: scanned.ocrRawText
+        )
+        vm.injectPreparedSummary(
+            oneLineSummary: scanned.oneLineSummary,
+            keyIssue: scanned.keyIssue,
+            rulingPoint: scanned.rulingPoint,
+            examTakeaway: scanned.examTakeaway
         )
         return CaseSummaryView(
             apiCase: scanned.toAPICase(),
@@ -302,25 +309,25 @@ struct CaseSummaryView: View {
                     // ── 암기 수첩 카드 ──────────────────────────────
                     StudyNoteCard(
                         label: "판례 요약",
-                        content: viewModel.summary?.oneLineSummary ?? resolved.issue,
+                        content: displaySummaryText(resolved: resolved),
                         accentColor: AppColor.accent,
                         memoStorageKey: memoKey(resolved, "summary")
                     )
                     StudyNoteCard(
                         label: "핵심 쟁점",
-                        content: viewModel.summary?.keyIssue ?? resolved.issue,
+                        content: displayIssueText(resolved: resolved),
                         accentColor: AppColor.warning,
                         memoStorageKey: memoKey(resolved, "issue")
                     )
                     StudyNoteCard(
                         label: "판결 결론",
-                        content: viewModel.summary?.rulingPoint ?? resolved.conclusion,
+                        content: displayRulingText(resolved: resolved),
                         accentColor: AppColor.success,
                         memoStorageKey: memoKey(resolved, "ruling")
                     )
                     StudyNoteCard(
                         label: "시험 포인트",
-                        content: viewModel.summary?.examTakeaway ?? resolved.examPoint,
+                        content: displayExamText(resolved: resolved),
                         accentColor: AppColor.info,
                         memoStorageKey: memoKey(resolved, "exam")
                     )
@@ -417,7 +424,7 @@ struct CaseSummaryView: View {
                     if !viewModel.oxQuizItems.isEmpty {
                         NavigationLink {
                             let caseNumber = apiCase?.caseNumber ?? resolved.title
-                            let caseSummary = "쟁점: \(viewModel.summary?.keyIssue ?? resolved.issue)\n결론: \(viewModel.summary?.rulingPoint ?? resolved.conclusion)\n시험포인트: \(viewModel.summary?.examTakeaway ?? resolved.examPoint)"
+                            let caseSummary = "쟁점: \(displayIssueText(resolved: resolved))\n결론: \(displayRulingText(resolved: resolved))\n시험포인트: \(displayExamText(resolved: resolved))"
                             OXQuizView(
                                 caseNumber: caseNumber,
                                 caseTitle: resolved.title,
@@ -493,6 +500,8 @@ struct CaseSummaryView: View {
             return "형소-수사"
         case "constitutional_law":
             return "헌법"
+        case "administrative_law":
+            return "행정-조세"
         case "police_committees":
             return "경찰학-위원회"
         default:
@@ -510,6 +519,8 @@ struct CaseSummaryView: View {
             return "person.text.rectangle"
         case "constitutional_law":
             return "scale.3d"
+        case "administrative_law":
+            return "building.columns.circle"
         case "police_committees":
             return "person.3"
         default:
@@ -527,11 +538,100 @@ struct CaseSummaryView: View {
             return AppColor.info
         case "constitutional_law":
             return AppColor.danger
+        case "administrative_law":
+            return AppColor.info
         case "police_committees":
             return AppColor.accent
         default:
             return AppColor.textSecondary
         }
+    }
+
+    private func displaySummaryText(resolved: CaseDetail) -> String {
+        if let oneLine = normalizedOneLineSummary(viewModel.summary?.oneLineSummary ?? "") {
+            return oneLine
+        }
+        let domainLabel = apiCase?.subject.components(separatedBy: "·").first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var parts: [String] = []
+        if !domainLabel.isEmpty && domainLabel.count <= 8 {
+            parts.append("[\(domainLabel)]")
+        }
+        parts.append(resolved.title.hasSuffix("사건") ? "\(resolved.title)." : "\(resolved.title) 사건.")
+        parts.append("핵심 쟁점이 정리된 판례이다.")
+        return parts.joined(separator: " ")
+    }
+
+    private func normalizedOneLineSummary(_ raw: String) -> String? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.contains("쟁점:") || trimmed.contains("결론:") { return nil }
+        if trimmed.count < 10 || trimmed.count > 120 { return nil }
+        return trimmed
+    }
+
+    private func displayIssueText(resolved: CaseDetail) -> String {
+        let base = apiCase?.issueSummary ?? resolved.issue
+        let normalized = normalizeCardText(base, role: .issue)
+        return normalized.isEmpty ? "핵심 쟁점 문장을 완전하게 복원하지 못했습니다." : normalized
+    }
+
+    private func displayRulingText(resolved: CaseDetail) -> String {
+        let base = apiCase?.holdingSummary ?? resolved.conclusion
+        let normalized = normalizeCardText(base, role: .ruling)
+        return normalized.isEmpty ? "판결 결론 문장을 완전하게 복원하지 못했습니다." : normalized
+    }
+
+    private func displayExamText(resolved: CaseDetail) -> String {
+        let base = apiCase?.examPoints ?? resolved.examPoint
+        let normalized = normalizeCardText(base, role: .exam)
+        return normalized.isEmpty ? "시험 포인트 문장을 완전하게 복원하지 못했습니다." : normalized
+    }
+
+    private enum CardTextRole {
+        case issue
+        case ruling
+        case exam
+    }
+
+    private func normalizeCardText(_ raw: String, role: CardTextRole) -> String {
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return "" }
+        text = text.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+
+        if role == .issue {
+            if let slash = text.range(of: #"\s*/\s*"#, options: .regularExpression) {
+                let left = String(text[..<slash.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let right = String(text[slash.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                text = (left.isEmpty || left.hasPrefix("여부")) ? right : left
+            }
+            text = text.replacingOccurrences(of: #"^여부\s*(\((적극|소극|한정 적극|한정 소극|한정적극|한정소극)\))?\s*"#, with: "", options: .regularExpression)
+            text = text.replacingOccurrences(of: #"^위증죄의 주체와 관련하여,\s*"#, with: "", options: .regularExpression)
+            if text.contains("(적극)") || text.contains("(한정 적극)") || text.contains("(한정적극)") {
+                let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .positive)
+                if !decl.isEmpty { text = decl }
+            } else if text.contains("(소극)") || text.contains("(한정 소극)") || text.contains("(한정소극)") {
+                let decl = JudgmentParser.declarativeStatement(issue: text, polarity: .negative)
+                if !decl.isEmpty { text = decl }
+            } else if text.hasSuffix("여부") || text.hasSuffix("여부.") || text.hasSuffix("는지") || text.hasSuffix("는지.") {
+                text = text.replacingOccurrences(of: #"\s*\(\s*(적극|소극|한정 적극|한정 소극)\s*\)\s*$"#, with: "", options: .regularExpression)
+            }
+        }
+
+        if text.hasPrefix("위의 진술") && role == .ruling { return "" }
+        if text.hasPrefix("여부") { return "" }
+        if text.contains(" / ") || text.contains("/") { return "" }
+        if text.hasSuffix("…") || text.hasSuffix("...") || text.hasSuffix("(이하 생략)") { return "" }
+        if text.count < 12 { return "" }
+
+        if !(text.hasSuffix(".") || text.hasSuffix("?") || text.hasSuffix("!")) {
+            if text.hasSuffix("다") || text.hasSuffix("요") {
+                text += "."
+            } else if role == .exam {
+                text += "."
+            }
+        }
+        return text
     }
 }
 
@@ -708,6 +808,9 @@ struct OXQuizView: View {
     @State private var showResult = false
     @State private var correctCount = 0
     @State private var finished = false
+    @State private var showWrongMemoSheet = false
+    @State private var wrongMemoDraft = ""
+    @State private var pendingWrongRecordId: String?
 
     private var current: OXQuizQuestion? { items.indices.contains(currentIndex) ? items[currentIndex] : nil }
 
@@ -788,6 +891,20 @@ struct OXQuizView: View {
                             Text(q.explanation)
                                 .font(AppFont.body)
                                 .foregroundStyle(AppColor.textPrimary)
+                            Button {
+                                showWrongMemoSheet = true
+                            } label: {
+                                Label(
+                                    (pendingWrongRecordId.flatMap { id in store.wrongQuizRecords.first(where: { $0.id == id })?.userMemo }?.isEmpty == false) ? "메모 수정" : "메모 남기기",
+                                    systemImage: "square.and.pencil"
+                                )
+                                .font(AppFont.captionEmphasis)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background((isCorrect ? AppColor.accent : AppColor.danger).opacity(0.14))
+                                .foregroundStyle(isCorrect ? AppColor.accent : AppColor.danger)
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                            }
                         }
                         .padding(AppSpace.m)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -809,24 +926,62 @@ struct OXQuizView: View {
         .navigationTitle("OX 퀴즈")
         .navigationBarTitleDisplayMode(.inline)
         .withSmallBackButton()
+        .sheet(isPresented: $showWrongMemoSheet) {
+            NavigationStack {
+                VStack(alignment: .leading, spacing: AppSpace.m) {
+                    Text("오답 메모")
+                        .font(AppFont.sectionHeader)
+                    Text("틀린 이유나 다음 회독 포인트를 짧게 기록하세요.")
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
+                    TextEditor(text: $wrongMemoDraft)
+                        .frame(minHeight: 180)
+                        .padding(8)
+                        .background(AppColor.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppRadius.m)
+                                .stroke(AppColor.separator, lineWidth: 0.6)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    Spacer()
+                }
+                .padding(AppSpace.l)
+                .withAppBackground()
+                .navigationTitle("오답 메모")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("건너뛰기") { showWrongMemoSheet = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("저장") {
+                            if let id = pendingWrongRecordId {
+                                store.updateWrongQuizMemo(recordId: id, memo: wrongMemoDraft)
+                            }
+                            showWrongMemoSheet = false
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private func commitAnswer(question: OXQuizQuestion, chosenAnswer: Bool) {
         let correct = chosenAnswer == question.answer
         showResult = true
         if correct { correctCount += 1 }
-        if !correct {
-            store.saveWrongQuizRecord(
-                caseNumber: caseNumber,
-                caseTitle: caseTitle,
-                question: question.statement,
-                userAnswer: chosenAnswer,
-                correctAnswer: question.answer,
-                explanation: question.explanation,
-                caseSummary: caseSummary,
-                subject: caseSubject
-            )
-        }
+        let savedId = store.saveWrongQuizRecord(
+            caseNumber: caseNumber,
+            caseTitle: caseTitle,
+            question: question.statement,
+            userAnswer: chosenAnswer,
+            correctAnswer: question.answer,
+            explanation: question.explanation,
+            caseSummary: caseSummary,
+            subject: caseSubject
+        )
+        pendingWrongRecordId = savedId
+        wrongMemoDraft = ""
     }
 
     private func advance() {
@@ -1124,7 +1279,14 @@ struct ReviewView: View {
                                     let vm = CaseSummaryViewModel()
                                     vm.injectIRResult(
                                         keywords: scanned.keywords,
-                                        keySentences: scanned.keySentences
+                                        keySentences: scanned.keySentences,
+                                        sourceText: scanned.ocrRawText
+                                    )
+                                    vm.injectPreparedSummary(
+                                        oneLineSummary: scanned.oneLineSummary,
+                                        keyIssue: scanned.keyIssue,
+                                        rulingPoint: scanned.rulingPoint,
+                                        examTakeaway: scanned.examTakeaway
                                     )
                                     return vm
                                 }()
@@ -1182,7 +1344,11 @@ struct MyPageView: View {
                 Text("STACK112 사용자")
                 Text("경찰 공무원 시험 준비")
             }
-            Section("서버 설정") {
+            // App Store Release 빌드에서는 외부 서버 입력 UI 숨김 — 본 앱은
+            // 풀 온디바이스 모드로 전환되어 해당 옵션이 사용자에게 불필요하며,
+            // 심사관이 "외부 전송 가능성" 으로 오해하지 않도록 노출 자체를 제거.
+            #if DEBUG
+            Section("서버 설정 (개발 전용)") {
                 TextField("http://192.168.x.x:8000", text: $serverURLInput)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
@@ -1205,6 +1371,7 @@ struct MyPageView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            #endif
             Section("앱 정보") {
                 Text("버전 1.0.0")
             }
@@ -1342,6 +1509,9 @@ struct WeakOXListView: View {
     private var filteredRecords: [WrongQuizRecord] {
         let key = subjectLabel.trimmingCharacters(in: .whitespacesAndNewlines)
         return store.wrongQuizRecords.filter { rec in
+            let hasMemo = (rec.userMemo?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+            let isWrong = rec.userAnswer != rec.correctAnswer
+            guard isWrong || hasMemo else { return false }
             guard let subj = rec.subject?.trimmingCharacters(in: .whitespacesAndNewlines), !subj.isEmpty else {
                 return false
             }
@@ -1351,7 +1521,10 @@ struct WeakOXListView: View {
 }
 
 private struct WrongOXCard: View {
+    @EnvironmentObject private var store: ReviewStore
     let record: WrongQuizRecord
+    @State private var showMemoEditor = false
+    @State private var draftMemo: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1382,12 +1555,69 @@ private struct WrongOXCard: View {
                     .foregroundStyle(AppColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if let memo = record.userMemo, !memo.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("내 메모")
+                        .font(AppFont.tag)
+                        .foregroundStyle(AppColor.accent)
+                    Text(memo)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Button(record.userMemo?.isEmpty == false ? "메모 수정" : "메모 추가") {
+                draftMemo = record.userMemo ?? ""
+                showMemoEditor = true
+            }
+            .font(AppFont.captionEmphasis)
+            .foregroundStyle(AppColor.accent)
         }
         .padding(AppSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppColor.surface)
         .overlay(RoundedRectangle(cornerRadius: AppRadius.m).stroke(AppColor.separator, lineWidth: 0.5))
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+        .sheet(isPresented: $showMemoEditor) {
+            NavigationStack {
+                VStack(alignment: .leading, spacing: AppSpace.m) {
+                    Text("오답 메모")
+                        .font(AppFont.sectionHeader)
+                    Text(record.question)
+                        .font(AppFont.caption)
+                        .foregroundStyle(AppColor.textSecondary)
+                        .lineLimit(3)
+                    TextEditor(text: $draftMemo)
+                        .frame(minHeight: 180)
+                        .padding(8)
+                        .background(AppColor.surfaceElevated)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: AppRadius.m)
+                                .stroke(AppColor.separator, lineWidth: 0.6)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.m))
+                    Text("이 문항에서 왜 틀렸는지, 다음 회독에서 볼 포인트를 남겨두세요.")
+                        .font(AppFont.tag)
+                        .foregroundStyle(AppColor.textTertiary)
+                    Spacer()
+                }
+                .padding(AppSpace.l)
+                .withAppBackground()
+                .navigationTitle("오답 메모")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("닫기") { showMemoEditor = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("저장") {
+                            store.updateWrongQuizMemo(recordId: record.id, memo: draftMemo)
+                            showMemoEditor = false
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
