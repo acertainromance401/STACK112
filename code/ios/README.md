@@ -1,12 +1,22 @@
 # AI_SYS iOS (SwiftUI)
 
-최종 업데이트: 2026-05-14
+최종 업데이트: 2026-05-19
 현재 상태: 완전 온디바이스(Backend-free) 동작. iPhone 12 mini(A14, 4GB) 실기기 검증, Release archive/export, App Store Connect 심사 제출 완료.
 
 > **2026-05-14 요약**
 > - OX placeholder/시험 포인트 텍스트 오염 방지, 판시사항 평서문 정제, 카드 halo 디자인 적용.
 > - Release 빌드/실기기 설치/Archive/ASC 업로드까지 검증했고 심사 제출을 완료했습니다.
 > - App Store 메타데이터와 Privacy/App Review 입력값은 `APPSTORE_METADATA.md`, `APPSTORE_PRIVACY_NUTRITION.md` 기준으로 정리했습니다.
+
+## 앱 화면 미리보기
+
+| 홈 | 스캔 라이브러리 | AI 요약 | OX 퀴즈 |
+|---|---|---|---|
+| ![홈 화면](appstore_screenshots/01_home_d89.png) | ![스캔 라이브러리](appstore_screenshots/02_scan_library.png) | ![AI 요약](appstore_screenshots/03_ai_summary.png) | ![OX 퀴즈](appstore_screenshots/04_ox_quiz.png) |
+
+| 오답 노트 | AI 분석 | 사건 스캔 진입 | 스플래시 |
+|---|---|---|---|
+| ![오답 노트](appstore_screenshots/05_wrong_note.png) | ![AI 분석](appstore_screenshots/06_ai_analysis.png) | ![사건 스캔 진입](appstore_screenshots/07_case_scan_entry.png) | ![스플래시](appstore_screenshots/08_splash.png) |
 
 이 폴더는 `xcodegen`으로 생성되는 iOS SwiftUI 프로젝트입니다.
 

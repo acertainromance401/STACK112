@@ -2,6 +2,7 @@
 
 작성일: 2026-05-12
 추가 반영: 2026-05-14 App Store 제출 상태 업데이트
+추가 반영: 2026-05-19 README/iOS README 앱 화면 미리보기 동기화
 기준 브랜치: `임재현` (HEAD `4fe8ed3` + LegalAnalyzer/캐시/App Store 패치)
 문서 목적: 2026-05-11 스냅샷 이후 진행된 **LLM 지능화(LegalAnalyzer + 도메인 프롬프트 + 함정 카탈로그)**, **응답 캐시·동적 토큰**, **개인화 약점 OX 주입**, 그리고 **App Store 출시 준비(컴플라이언스·아이콘·온디바이스 LLM 번들 검증)** 까지의 변경을 정리.
 
@@ -13,6 +14,12 @@
 - 개인정보 처리방침 URL은 `https://acertainromance401.github.io/stack112-privacy/` 사용
 - 심사용 빌드 `1.0.0 (2)` 선택 후 **App Review 제출 완료**
 - 제출용 스크린샷 선별본은 `code/ios/appstore_screenshots/` 에 정리
+
+## 0-1. 2026-05-19 문서 동기화 업데이트
+
+- 루트 `README.md`에 앱 화면 미리보기 표(8장) 추가
+- `code/ios/README.md`에 동일 스크린샷 섹션 추가
+- 문서 인덱스와 App Store 제출 스크린샷 자산 참조 경로를 일치시킴
 
 ---
 

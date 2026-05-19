@@ -2,6 +2,8 @@
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
 
+문서 최신화: 2026-05-19 (앱 화면 미리보기 섹션 반영)
+
 ## 현재 구현 상태 (2026-05-14)
 - iOS 앱(탭 5개: Home/OCR/Search/Review/My Page)이 **완전 온디바이스(Backend-free)** 모드로 동작합니다.
 - 모든 검색·IR 추출·유사 판례·요약·OX 퀴즈는 단말 내부에서 실행되며, 서버/네트워크 없이도 풀 기능 사용 가능합니다.
@@ -13,6 +15,18 @@
 - 운영: HTTP 백엔드 의존 0, EC2/RDS 비용 0, App Privacy "Data Not Collected" 신고 가능.
 - App Store 제출 반영: ITSAppUsesNonExemptEncryption=NO, LSSupportsOpeningDocumentsInPlace=NO, DEBUG-gated 서버 UI, 1024×1024 AppIcon (RGB no-alpha), Privacy Policy URL 게시 (https://acertainromance401.github.io/stack112-privacy/), App Review 제출 완료.
 - 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인, Release 설치/Archive/ASC 업로드 검증 완료.
+
+## 앱 화면 미리보기
+
+출처: `code/ios/appstore_screenshots/` (App Store 제출 선별본)
+
+| 홈 | 스캔 라이브러리 | AI 요약 | OX 퀴즈 |
+|---|---|---|---|
+| ![홈 화면](code/ios/appstore_screenshots/01_home_d89.png) | ![스캔 라이브러리](code/ios/appstore_screenshots/02_scan_library.png) | ![AI 요약](code/ios/appstore_screenshots/03_ai_summary.png) | ![OX 퀴즈](code/ios/appstore_screenshots/04_ox_quiz.png) |
+
+| 오답 노트 | AI 분석 | 사건 스캔 진입 | 스플래시 |
+|---|---|---|---|
+| ![오답 노트](code/ios/appstore_screenshots/05_wrong_note.png) | ![AI 분석](code/ios/appstore_screenshots/06_ai_analysis.png) | ![사건 스캔 진입](code/ios/appstore_screenshots/07_case_scan_entry.png) | ![스플래시](code/ios/appstore_screenshots/08_splash.png) |
 
 ## 관련 문서
 - [Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
