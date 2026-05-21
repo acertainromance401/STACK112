@@ -28,10 +28,21 @@
 - 위치: `docs/onboarding/`
 - 목적: 신규 참여자 빠른 적응, 반복 질문 축소
 
+7. 거버넌스 운영 문서
+- 위치: `docs/governance/`
+- 목적: Discussions/Wiki/의사결정 문서 연동 규칙 관리
+
+8. RFC (변경 합의 문서)
+- 위치: `docs/rfc/`
+- 목적: 미래 변경에 대한 합의 과정 기록
+
 ## 현재 문서와 연결
 
 - 프로젝트 기획/로드맵: `docs/project/`
 - 역할별 실행 가이드: `docs/roles/`
+- 협업 운영 가이드: `docs/governance/DISCUSSIONS_AND_WIKI.md`
+- RFC 템플릿: `docs/rfc/template.md`
+- Wiki 초안: `docs/wiki/HOME.md`
 - 아키텍처 상세: `code/ARCHITECTURE_AND_DEPLOYMENT.md`
 - 운영/배포 상세: `code/PRODUCTION_DEPLOYMENT_GUIDE.md`
 - 실행 가이드: `code/Run_Guide_AI_SYS.md`

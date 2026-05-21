@@ -86,3 +86,13 @@ GitHub 저장소 설정에서 아래 항목을 활성화함.
 - Require conversation resolution before merging
 - Do not allow force pushes
 - Do not allow deletions
+
+## 10. Discussions / Wiki / RFC 운영
+- 열린 질문, 아이디어, 공지는 GitHub Discussions를 우선 사용함.
+- 확정된 지식은 Wiki 또는 `docs/` 문서로 승격해 영구 보관함.
+- 구조/정책/대규모 변경은 RFC를 작성해 합의 후 구현함.
+
+참고 문서:
+- `docs/governance/DISCUSSIONS_AND_WIKI.md`
+- `docs/rfc/README.md`
+- `docs/rfc/template.md`

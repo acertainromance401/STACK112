@@ -9,6 +9,8 @@
 - `docs/`: 기획/아키텍처/ADR/API/트러블슈팅/회의노트/온보딩 문서 허브
 - `docs/project/`: PRD, 로드맵, 발표 자료 등 프로젝트 산출물
 - `docs/roles/`: 역할별 실행 가이드
+- `docs/governance/`: Discussions/Wiki/문서 운영 정책
+- `docs/rfc/`: 변경 합의(RFC) 문서와 템플릿
 - `assets/images/`: 테스트/시뮬레이터 등 이미지 자산
 - `code/`: 실제 구현 코드(backend, ios, data, db)
 - `scripts/`: 실험/보조 스크립트
@@ -39,6 +41,8 @@
 
 ## 관련 문서
 - [docs/README.md](docs/README.md) — 비동기 협업용 문서 허브(ADR/아키텍처/API/트러블슈팅/회의노트/온보딩)
+- [docs/governance/DISCUSSIONS_AND_WIKI.md](docs/governance/DISCUSSIONS_AND_WIKI.md) — Discussions/Wiki 운영 기준
+- [docs/rfc/README.md](docs/rfc/README.md) — RFC 프로세스와 템플릿
 - [docs/project/Project_Status_and_Roadmap_2026-05-12.md](docs/project/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
 - [docs/project/Project_Status_and_Roadmap_2026-05-11.md](docs/project/Project_Status_and_Roadmap_2026-05-11.md)
 - [docs/project/Project_Status_and_Roadmap_2026-05-10.md](docs/project/Project_Status_and_Roadmap_2026-05-10.md)
