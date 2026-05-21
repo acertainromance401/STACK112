@@ -2,6 +2,10 @@
 
 RFC는 미래 변경사항에 대한 팀 합의를 문서화하는 절차입니다.
 
+## RFC 목록
+
+- `0001-discussions-wiki-rollout.md` (Reviewing)
+
 ## 언제 RFC를 작성하나?
 
 - 아키텍처 변경

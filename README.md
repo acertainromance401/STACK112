@@ -43,6 +43,7 @@
 - [docs/README.md](docs/README.md) — 비동기 협업용 문서 허브(ADR/아키텍처/API/트러블슈팅/회의노트/온보딩)
 - [docs/governance/DISCUSSIONS_AND_WIKI.md](docs/governance/DISCUSSIONS_AND_WIKI.md) — Discussions/Wiki 운영 기준
 - [docs/rfc/README.md](docs/rfc/README.md) — RFC 프로세스와 템플릿
+- [docs/wiki/README.md](docs/wiki/README.md) — GitHub Wiki 업로드 번들 가이드
 - [docs/project/Project_Status_and_Roadmap_2026-05-12.md](docs/project/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
 - [docs/project/Project_Status_and_Roadmap_2026-05-11.md](docs/project/Project_Status_and_Roadmap_2026-05-11.md)
 - [docs/project/Project_Status_and_Roadmap_2026-05-10.md](docs/project/Project_Status_and_Roadmap_2026-05-10.md)

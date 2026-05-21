@@ -2,6 +2,11 @@
 
 ADR은 기술 선택의 배경과 트레이드오프를 기록하는 문서입니다.
 
+## ADR 목록
+
+- `0001-ondevice-first.md`
+- `0002-governance-docs-baseline.md`
+
 ## 작성 규칙
 
 - 파일명: `NNNN-title.md`
