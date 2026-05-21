@@ -4,6 +4,16 @@
 
 문서 최신화: 2026-05-19 (앱 화면 미리보기 섹션 반영)
 
+## 리포지토리 구조 (Quick Map)
+
+- `docs/`: 기획/아키텍처/ADR/API/트러블슈팅/회의노트/온보딩 문서 허브
+- `docs/project/`: PRD, 로드맵, 발표 자료 등 프로젝트 산출물
+- `docs/roles/`: 역할별 실행 가이드
+- `docs/governance/`: Discussions/Wiki/문서 운영 정책
+- `docs/rfc/`: 변경 합의(RFC) 문서와 템플릿
+- `assets/images/`: 테스트/시뮬레이터 등 이미지 자산
+- `code/`: 실제 구현 코드(backend, ios, data, db)
+- `scripts/`: 실험/보조 스크립트
 ## 현재 구현 상태 (2026-05-14)
 - iOS 앱(탭 5개: Home/OCR/Search/Review/My Page)이 **완전 온디바이스(Backend-free)** 모드로 동작합니다.
 - 모든 검색·IR 추출·유사 판례·요약·OX 퀴즈는 단말 내부에서 실행되며, 서버/네트워크 없이도 풀 기능 사용 가능합니다.
@@ -29,17 +39,20 @@
 | ![오답 노트](code/ios/appstore_screenshots/05_wrong_note.png) | ![AI 분석](code/ios/appstore_screenshots/06_ai_analysis.png) | ![사건 스캔 진입](code/ios/appstore_screenshots/07_case_scan_entry.png) | ![스플래시](code/ios/appstore_screenshots/08_splash.png) |
 
 ## 관련 문서
-- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
-- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md)
-- [Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md](Project_Descriptions/Project_Status_and_Roadmap_2026-05-10.md)
-- [Project_Descriptions/Project_Description.md](Project_Descriptions/Project_Description.md)
-- [Project_Descriptions/User_Journey_Scenario_AI_SYS.md](Project_Descriptions/User_Journey_Scenario_AI_SYS.md)
-- [Project_Descriptions/PRD_AI_SYS.md](Project_Descriptions/PRD_AI_SYS.md)
-- [Project_Descriptions/WBS_AI_SYS.md](Project_Descriptions/WBS_AI_SYS.md)
-- [Project_Descriptions/Wireframe_AI_SYS.md](Project_Descriptions/Wireframe_AI_SYS.md)
-- [Project_Descriptions/Screen_Flow_AI_SYS.md](Project_Descriptions/Screen_Flow_AI_SYS.md)
-- [Project_Descriptions/Technology_Stack_AI_SYS.md](Project_Descriptions/Technology_Stack_AI_SYS.md)
-- [Project_Descriptions/Project_Description_Progress_2026-04-16.md](Project_Descriptions/Project_Description_Progress_2026-04-16.md)
+- [docs/README.md](docs/README.md) — 비동기 협업용 문서 허브(ADR/아키텍처/API/트러블슈팅/회의노트/온보딩)
+- [docs/governance/DISCUSSIONS_AND_WIKI.md](docs/governance/DISCUSSIONS_AND_WIKI.md) — Discussions/Wiki 운영 기준
+- [docs/rfc/README.md](docs/rfc/README.md) — RFC 프로세스와 템플릿
+- [docs/project/Project_Status_and_Roadmap_2026-05-12.md](docs/project/Project_Status_and_Roadmap_2026-05-12.md) — 2026-05-14 제출 상태까지 반영
+- [docs/project/Project_Status_and_Roadmap_2026-05-11.md](docs/project/Project_Status_and_Roadmap_2026-05-11.md)
+- [docs/project/Project_Status_and_Roadmap_2026-05-10.md](docs/project/Project_Status_and_Roadmap_2026-05-10.md)
+- [docs/project/Project_Description.md](docs/project/Project_Description.md)
+- [docs/project/User_Journey_Scenario_AI_SYS.md](docs/project/User_Journey_Scenario_AI_SYS.md)
+- [docs/project/PRD_AI_SYS.md](docs/project/PRD_AI_SYS.md)
+- [docs/project/WBS_AI_SYS.md](docs/project/WBS_AI_SYS.md)
+- [docs/project/Wireframe_AI_SYS.md](docs/project/Wireframe_AI_SYS.md)
+- [docs/project/Screen_Flow_AI_SYS.md](docs/project/Screen_Flow_AI_SYS.md)
+- [docs/project/Technology_Stack_AI_SYS.md](docs/project/Technology_Stack_AI_SYS.md)
+- [docs/project/Project_Description_Progress_2026-04-16.md](docs/project/Project_Description_Progress_2026-04-16.md)
 - [code/Data_Build_Guide_AI_SYS.md](code/Data_Build_Guide_AI_SYS.md)
 - [code/Run_Guide_AI_SYS.md](code/Run_Guide_AI_SYS.md)
 - [code/db/schema.sql](code/db/schema.sql)
