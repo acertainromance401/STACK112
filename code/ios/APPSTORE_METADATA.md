@@ -35,6 +35,32 @@
 - 연락처 이메일: **지원용 이메일 1개로 통일 권장**
 - 첨부 파일: 없음 (선택사항)
 
+## 거절 대응 템플릿 (Guideline 2.3.1(a), 3.2.1(viii))
+
+아래 문구를 Resolution Center 에 그대로 사용 가능.
+
+```text
+Hello App Review Team,
+
+Thank you for the review and feedback.
+
+For Guideline 2.3.1(a):
+- We removed internal/developer-only UI paths from the shipping target.
+- The app now exposes only user-facing study features described in metadata.
+- We confirmed there are no hidden switches, server override inputs, or undocumented entry points in the submitted build.
+
+For Guideline 3.2.1(viii):
+- This app does not provide financial services, banking, payments, lending, investment, or account management.
+- The app is an education tool for case-law study (OCR notes, AI summary, quiz, and review) and performs on-device processing only.
+- No financial transactions or financial institution integrations are included.
+
+If the app was classified as a financial-services app by mistake, we respectfully request re-evaluation under the Education category context.
+
+Thank you.
+```
+
+만약 Apple 이 금융 서비스 분류를 유지하면, 개인 계정으로는 해결이 불가하므로 조직(Organization) 계정으로 전환 또는 조직 계정으로 앱 이전이 필요.
+
 ### 앱 심사 메모 (Review Notes)
 ```text
 This app does not require login or account creation.
