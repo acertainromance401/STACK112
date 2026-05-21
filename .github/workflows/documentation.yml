@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'README.md'
-      - 'Project_Descriptions/**'
+      - 'docs/project/**'
       - 'code/**/*.md'
       - '.github/workflows/documentation.yml'
   push:
@@ -12,7 +12,7 @@ on:
       - main
     paths:
       - 'README.md'
-      - 'Project_Descriptions/**'
+      - 'docs/project/**'
       - 'code/**/*.md'
       - '.github/workflows/documentation.yml'
 
@@ -45,8 +45,8 @@ jobs:
         run: |
           required_docs=("PRD_AI_SYS.md" "Technology_Stack_AI_SYS.md" "WBS_AI_SYS.md")
           for doc in "${required_docs[@]}"; do
-            if [ ! -f "Project_Descriptions/$doc" ]; then
-              echo "Missing: Project_Descriptions/$doc"
+            if [ ! -f "docs/project/$doc" ]; then
+              echo "Missing: docs/project/$doc"
               exit 1
             fi
           done
