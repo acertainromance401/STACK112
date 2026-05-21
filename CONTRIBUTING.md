@@ -57,3 +57,32 @@ Conventional Commits 규칙을 사용하여 변경 의도를 일관되게 기록
 ## 7. 머지 방식
 - 기본 머지 전략은 Squash Merge를 권장함.
 - PR 제목은 릴리즈 노트 반영을 고려해 명확하게 작성함.
+
+## 8. 자동화 및 거버넌스 설정
+- PR 템플릿 파일: `.github/pull_request_template.md`
+- 코드 오너 파일: `.github/CODEOWNERS`
+- 기본 CI 워크플로우: `.github/workflows/ci.yml`
+
+현재 기본 정책은 아래와 같음.
+- CODEOWNERS: 저장소 전체 경로(`*`)를 오너 1명으로 지정
+- CI: PR/Push 시 Lint(Ruff), Test(Pytest 또는 Smoke compile) 실행
+- PR 리뷰: 최소 승인 1명 필수
+- 코드 오너 리뷰: 필수
+- 상태 체크: 필수 (Lint, Test)
+- 대화 해결(Conversation resolution): 필수
+- 강제 푸시/브랜치 삭제: 금지
+
+## 9. 브랜치 보호 규칙 적용 기준
+대상 브랜치: `main`
+
+GitHub 저장소 설정에서 아래 항목을 활성화함.
+- Require a pull request before merging
+- Require approvals (1)
+- Require review from Code Owners
+- Dismiss stale pull request approvals when new commits are pushed
+- Require status checks to pass before merging
+  - Lint (Ruff)
+  - Test (Pytest or Smoke)
+- Require conversation resolution before merging
+- Do not allow force pushes
+- Do not allow deletions
