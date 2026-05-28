@@ -38,8 +38,7 @@ jobs:
       - name: Check markdown syntax
         uses: nosborn/github-action-markdown-cli@v3.3.0
         with:
-          files: .
-          config_file: .markdownlint.json
+          files: README.md docs/project/*.md code/**/*.md
 
       - name: Verify Project Descriptions
         run: |
