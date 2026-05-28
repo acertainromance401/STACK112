@@ -57,3 +57,44 @@ Conventional Commits 규칙을 사용하여 변경 의도를 일관되게 기록
 ## 7. 머지 방식
 - 기본 머지 전략은 Squash Merge를 권장함.
 - PR 제목은 릴리즈 노트 반영을 고려해 명확하게 작성함.
+
+## 8. 자동화 및 거버넌스 설정
+- PR 템플릿 파일: `.github/pull_request_template.md`
+- 코드 오너 파일: `.github/CODEOWNERS`
+- 기본 CI 워크플로우: `.github/workflows/ci.yml`
+- iOS CI 워크플로우: `.github/workflows/ios-ci.yml` (macOS runner)
+
+현재 기본 정책은 아래와 같음.
+- CODEOWNERS: 저장소 전체 경로(`*`)를 오너 1명으로 지정
+- CI: PR/Push 시 Lint(Ruff), Test(Pytest 또는 Smoke compile) 실행
+- iOS 변경 시 macOS 기반 Xcode Build/Test 실행
+- PR 리뷰: 최소 승인 1명 필수
+- 코드 오너 리뷰: 필수
+- 상태 체크: 필수 (Lint, Test)
+- 대화 해결(Conversation resolution): 필수
+- 강제 푸시/브랜치 삭제: 금지
+
+## 9. 브랜치 보호 규칙 적용 기준
+대상 브랜치: `main`
+
+GitHub 저장소 설정에서 아래 항목을 활성화함.
+- Require a pull request before merging
+- Require approvals (1)
+- Require review from Code Owners
+- Dismiss stale pull request approvals when new commits are pushed
+- Require status checks to pass before merging
+  - Lint (Ruff)
+  - Test (Pytest or Smoke)
+- Require conversation resolution before merging
+- Do not allow force pushes
+- Do not allow deletions
+
+## 10. Discussions / Wiki / RFC 운영
+- 열린 질문, 아이디어, 공지는 GitHub Discussions를 우선 사용함.
+- 확정된 지식은 Wiki 또는 `docs/` 문서로 승격해 영구 보관함.
+- 구조/정책/대규모 변경은 RFC를 작성해 합의 후 구현함.
+
+참고 문서:
+- `docs/governance/DISCUSSIONS_AND_WIKI.md`
+- `docs/rfc/README.md`
+- `docs/rfc/template.md`

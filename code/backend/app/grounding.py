@@ -45,7 +45,7 @@ def _quote_overlaps_snippets(quote: str, snippets: list[str], min_run: int = 8) 
         if not snippet:
             continue
         for start in range(0, len(cleaned) - min_run + 1):
-            if cleaned[start:start + min_run] in snippet:
+            if cleaned[start : start + min_run] in snippet:
                 return True
     return False
 
@@ -72,10 +72,7 @@ def validate_grounded_answer(
         violations.append("uncertainty_on_missing_evidence")
 
     if cited_quotes and retrieved_snippets:
-        unmatched = [
-            q for q in cited_quotes
-            if q and not _quote_overlaps_snippets(q, retrieved_snippets)
-        ]
+        unmatched = [q for q in cited_quotes if q and not _quote_overlaps_snippets(q, retrieved_snippets)]
         if unmatched:
             violations.append("quote_must_match_snippet")
 

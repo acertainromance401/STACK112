@@ -1,0 +1,79 @@
+name: Main Release (On-device)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'code/ios/**'
+      - '.github/workflows/main-release-ondevice.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-archive:
+    name: Build/Test/Archive (iOS)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: |
+          brew update
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          cd code/ios
+          xcodegen generate
+
+      - name: Resolve simulator destination
+        id: sim
+        run: |
+          DEST_NAME=$(xcodebuild -showdestinations -project code/ios/AISYS.xcodeproj -scheme AISYSApp \
+            | grep "platform:iOS Simulator" \
+            | head -n 1 \
+            | sed -E 's/.*name:([^,}]+).*/\1/' \
+            | xargs)
+
+          if [[ -z "$DEST_NAME" ]]; then
+            echo "No available iOS Simulator destination found"
+            exit 1
+          fi
+
+          echo "name=$DEST_NAME" >> "$GITHUB_OUTPUT"
+          echo "Using simulator: $DEST_NAME"
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -project code/ios/AISYS.xcodeproj \
+            -scheme AISYSApp \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Test
+        run: |
+          xcodebuild test \
+            -project code/ios/AISYS.xcodeproj \
+            -scheme AISYSApp \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Archive (unsigned)
+        run: |
+          xcodebuild archive \
+            -project code/ios/AISYS.xcodeproj \
+            -scheme AISYSApp \
+            -destination generic/platform=iOS \
+            -archivePath code/ios/build/AISYSApp.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcarchive
+          path: code/ios/build/AISYSApp.xcarchive

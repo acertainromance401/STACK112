@@ -1,0 +1,74 @@
+name: iOS CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - main--code
+    paths:
+      - code/ios/**
+      - .github/workflows/ios-ci.yml
+  push:
+    branches:
+      - main
+      - main--code
+    paths:
+      - code/ios/**
+      - .github/workflows/ios-ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  ios-build-test:
+    name: iOS Build and Test
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: |
+          brew update
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          cd code/ios
+          xcodegen generate
+
+      - name: Resolve simulator destination
+        id: sim
+        run: |
+          DEST_ID=$(xcodebuild -showdestinations -project code/ios/AISYS.xcodeproj -scheme AISYSApp \
+            | grep "platform:iOS Simulator" \
+            | grep -v "Any iOS Simulator Device" \
+            | grep -v "placeholder" \
+            | head -n 1 \
+            | sed -E 's/.*id:([^,]+).*/\1/' \
+            | xargs)
+
+          if [[ -z "$DEST_ID" ]]; then
+            echo "No available iOS Simulator destination found"
+            exit 1
+          fi
+
+          echo "id=$DEST_ID" >> "$GITHUB_OUTPUT"
+          echo "Using simulator id: $DEST_ID"
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -project code/ios/AISYS.xcodeproj \
+            -scheme AISYSApp \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.id }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Test
+        run: |
+          xcodebuild test \
+            -project code/ios/AISYS.xcodeproj \
+            -scheme AISYSApp \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.id }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO

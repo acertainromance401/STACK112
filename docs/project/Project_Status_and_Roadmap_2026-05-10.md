@@ -40,7 +40,7 @@ AI_SYS는 경찰 공무원 시험 준비를 위한 판례 학습 iOS 앱이다. 
 | `composeStudyCardOneLineAsync` | 한 줄 요약 hint 합성 (분류기 결과 활용) | 짧음 |
 | `generateOXVariantWithLLM` | 룰베이스 OX의 첫 X 문항 1개를 자연스러운 변형으로 교체 | 80 |
 
-- `taxonomyTree` 정적 트리: 4과목 × 3-5 카테고리 × 3-7 리프 노드. `police_exam_classification_tree.md` 기반.
+- `taxonomyTree` 정적 트리: 4과목 × 3-5 카테고리 × 3-7 리프 노드. `docs/research/police_exam_classification_tree.md` 기반.
 - 각 레벨에 3초 timeout, 룰베이스 키워드 fallback 보장.
 - OCR 결과의 `subject` 필드에 분류 경로(예: `"형사소송법 > 증거능력 > 위법수집증거배제"`) 프리픽스로 주입.
 

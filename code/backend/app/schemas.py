@@ -96,8 +96,10 @@ class GroundedAnswerResponse(BaseModel):
 # IR 파이프라인 스키마
 # ---------------------------------------------------------------------------
 
+
 class IRExtractRequest(BaseModel):
     """OCR로 추출한 판례 텍스트를 정제·축약 요청"""
+
     text: str
     top_keywords: int = 10
     top_sentences: int = 5
@@ -105,6 +107,7 @@ class IRExtractRequest(BaseModel):
 
 class IRExtractResponse(BaseModel):
     """키워드 및 핵심 문장 반환"""
+
     keywords: list[str]
     key_sentences: str
     domain: str = "general_legal"
@@ -127,18 +130,20 @@ class SimilarCasesResponse(BaseModel):
 # LLM 요약 / OX 퀴즈 스키마
 # ---------------------------------------------------------------------------
 
+
 class OXQuizItem(BaseModel):
     statement: str
-    answer: bool          # True=O, False=X
+    answer: bool  # True=O, False=X
     explanation: str
 
 
 class LLMSummarizeRequest(BaseModel):
     """핵심 문장 + 메타 정보로 요약 및 OX 퀴즈 생성 요청"""
+
     case_number: str
     case_name: str
-    key_sentences: str    # ir_pipeline.extract_key_sentences() 결과
-    keywords: list[str]   # ir_pipeline.extract_keywords() 결과
+    key_sentences: str  # ir_pipeline.extract_key_sentences() 결과
+    keywords: list[str]  # ir_pipeline.extract_keywords() 결과
     generate_quiz: bool = True
     quiz_count: int = 3
 

@@ -1,12 +1,22 @@
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-import re
 from threading import Lock
 from time import time
 
 from fastapi import FastAPI, HTTPException, Query
 
 from .database import close_pool, get_conn
+from .grounding import validate_grounded_answer
+from .ir_pipeline import (
+    build_study_focus,
+    build_tfidf_matrix,
+    extract_key_sentences,
+    extract_legal_keyphrases,
+    find_similar_cases,
+    infer_study_domain,
+    normalize_legal_text,
+)
 from .schemas import (
     CaseItem,
     Citation,
@@ -18,21 +28,14 @@ from .schemas import (
     LLMSummarizeRequest,
     LLMSummarizeResponse,
     OXQuizItem,
+    RecommendedCaseItem,
     RecommendedCasesResponse,
     SearchResponse,
+    SimilarCaseItem,
     SimilarCasesResponse,
+    WrongAnswerListItem,
     WrongAnswersResponse,
 )
-from .ir_pipeline import (
-    build_study_focus,
-    build_tfidf_matrix,
-    extract_key_sentences,
-    extract_legal_keyphrases,
-    find_similar_cases,
-    infer_study_domain,
-    normalize_legal_text,
-)
-from .grounding import validate_grounded_answer
 
 
 @asynccontextmanager
@@ -89,7 +92,17 @@ def _smart_truncate_korean(text: str, limit: int) -> str:
         return cleaned
     snippet = cleaned[:limit]
     cut_idx = -1
-    for ending in ("다.", "다 ", "요.", "임.", "니다.", "였다.", "한다.", "된다.", "이다."):
+    for ending in (
+        "다.",
+        "다 ",
+        "요.",
+        "임.",
+        "니다.",
+        "였다.",
+        "한다.",
+        "된다.",
+        "이다.",
+    ):
         idx = snippet.rfind(ending)
         if idx > cut_idx:
             cut_idx = idx + len(ending)
@@ -109,7 +122,23 @@ def _ensure_korean_terminal(text: str) -> str:
     stripped = text.strip()
     if not stripped:
         return ""
-    if stripped.endswith(("다.", "요.", "다", "음.", "임.", "다고 한다.", "였다.", "다고 판시하였다.", "…", "다고 판단하였다.", "?", "!", "."))  :
+    if stripped.endswith(
+        (
+            "다.",
+            "요.",
+            "다",
+            "음.",
+            "임.",
+            "다고 한다.",
+            "였다.",
+            "다고 판시하였다.",
+            "…",
+            "다고 판단하였다.",
+            "?",
+            "!",
+            ".",
+        )
+    ):
         return stripped
     return stripped + "…"
 
@@ -381,13 +410,13 @@ def dashboard_recommended(limit: int = Query(7, ge=1, le=30)) -> RecommendedCase
             rows = cur.fetchall()
 
     items = [
-        {
-            "case_number": row[0],
-            "case_name": row[1],
-            "subject": row[2],
-            "issue": row[3],
-            "accuracy": int(row[4]),
-        }
+        RecommendedCaseItem(
+            case_number=row[0],
+            case_name=row[1],
+            subject=row[2],
+            issue=row[3],
+            accuracy=int(row[4]),
+        )
         for row in rows
     ]
     return RecommendedCasesResponse(total=len(items), items=items)
@@ -417,11 +446,11 @@ def dashboard_wrong_answers(
             rows = cur.fetchall()
 
     items = [
-        {
-            "title": row[0],
-            "memo": row[1],
-            "date": row[2],
-        }
+        WrongAnswerListItem(
+            title=row[0],
+            memo=row[1],
+            date=row[2],
+        )
         for row in rows
     ]
     return WrongAnswersResponse(total=len(items), items=items)
@@ -430,6 +459,7 @@ def dashboard_wrong_answers(
 # ---------------------------------------------------------------------------
 # IR 파이프라인 엔드포인트
 # ---------------------------------------------------------------------------
+
 
 @app.post("/ir/extract", response_model=IRExtractResponse)
 def ir_extract(body: IRExtractRequest) -> IRExtractResponse:
@@ -460,21 +490,37 @@ def similar_cases(
 ) -> SimilarCasesResponse:
     """특정 판례와 TF-IDF 코사인 유사도가 높은 판례를 반환합니다."""
 
+    def _to_float(value: object) -> float:
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value)
+            except ValueError:
+                return 0.0
+        return 0.0
+
     with _SIMILAR_INDEX_LOCK:
-        cache_age = time() - float(_SIMILAR_INDEX_CACHE["built_at"])
+        built_at_raw = _SIMILAR_INDEX_CACHE.get("built_at", 0.0)
+        built_at = _to_float(built_at_raw)
+        cache_age = time() - built_at
         cached_tfidf = _SIMILAR_INDEX_CACHE["tfidf_df"]
         cached_case_ids = _SIMILAR_INDEX_CACHE["case_ids"]
-        cache_valid = (
-            cached_tfidf is not None
-            and isinstance(cached_case_ids, set)
-            and cache_age <= _SIMILAR_INDEX_TTL_SECONDS
-        )
+        cache_valid = cached_tfidf is not None and isinstance(cached_case_ids, set) and cache_age <= _SIMILAR_INDEX_TTL_SECONDS
 
     if cache_valid:
         if case_number not in cached_case_ids:  # type: ignore[operator]
             raise HTTPException(status_code=404, detail="Case not found or not published")
 
-        results = find_similar_cases(case_number, cached_tfidf, top_k=top_k)  # type: ignore[arg-type]
+        raw_results = find_similar_cases(case_number, cached_tfidf, top_k=top_k)  # type: ignore[arg-type]
+        results = [
+            SimilarCaseItem(
+                case_id=str(item.get("case_id", "")),
+                similarity=round(_to_float(item.get("similarity", 0.0)), 4),
+                rank=int(item.get("rank", idx + 1)),
+            )
+            for idx, item in enumerate(raw_results)
+        ]
         return SimilarCasesResponse(
             case_number=case_number,
             total=len(results),
@@ -520,20 +566,21 @@ def similar_cases(
 
     rough_results = find_similar_cases(case_number, tfidf_df, top_k=min(top_k * 3, 20))
 
-    reranked = []
+    reranked: list[tuple[str, float]] = []
     for item in rough_results:
-        score = float(item["similarity"])
-        if query_subject and subject_by_case.get(item["case_id"], "") == query_subject:
+        case_id = str(item.get("case_id", ""))
+        score = _to_float(item.get("similarity", 0.0))
+        if query_subject and subject_by_case.get(case_id, "") == query_subject:
             score += 0.03
-        reranked.append({**item, "similarity": score})
+        reranked.append((case_id, score))
 
-    reranked.sort(key=lambda x: x["similarity"], reverse=True)
+    reranked.sort(key=lambda x: x[1], reverse=True)
     results = [
-        {
-            "case_id": item["case_id"],
-            "similarity": round(float(item["similarity"]), 4),
-            "rank": idx + 1,
-        }
+        SimilarCaseItem(
+            case_id=item[0],
+            similarity=round(item[1], 4),
+            rank=idx + 1,
+        )
         for idx, item in enumerate(reranked[:top_k])
     ]
 
@@ -548,6 +595,7 @@ def similar_cases(
 # LLM 요약 / OX 퀴즈 엔드포인트
 # ---------------------------------------------------------------------------
 
+
 @app.post("/llm/summarize", response_model=LLMSummarizeResponse)
 def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
     """핵심 문장 + 키워드 → Llama 요약 및 OX 퀴즈 생성.
@@ -560,21 +608,14 @@ def llm_summarize(body: LLMSummarizeRequest) -> LLMSummarizeResponse:
     )
     sentences = [s.strip() for s in body.key_sentences.split("\n") if s.strip()]
     # 매끄럽지 못한 단어 중간 잘림을 줄이기 위해 길이/종결 보정
-    sentences = [
-        _ensure_korean_terminal(_smart_truncate_korean(s, 110))
-        for s in sentences
-        if len(s) >= 14
-    ]
+    sentences = [_ensure_korean_terminal(_smart_truncate_korean(s, 110)) for s in sentences if len(s) >= 14]
     key_issue = fallback_keywords[0] if fallback_keywords else "핵심 쟁점 확인 필요"
     ruling_point = sentences[0] if sentences else "핵심 문장 정보가 부족합니다."
 
     # 현재는 규칙 기반으로 응답 구성 (Llama 연동 전 폴백)
     # 추후 LlamaCppEngine 서버 사이드 연동 시 이 블록을 교체합니다.
     if fallback_keywords:
-        summary_text = (
-            f"{body.case_name} 판례는 "
-            f"{', '.join(fallback_keywords[:3])} 등을 핵심 쟁점으로 다룬 판례이다."
-        )
+        summary_text = f"{body.case_name} 판례는 {', '.join(fallback_keywords[:3])} 등을 핵심 쟁점으로 다룬 판례이다."
     else:
         summary_text = f"{body.case_name} 판례의 핵심 쟁점은 제공된 문장에서 직접 확인이 필요하다."
 
@@ -724,15 +765,9 @@ def grounded_answer(body: GroundedAnswerRequest) -> GroundedAnswerResponse:
                 f"{_ensure_korean_terminal(holding_short)} 라고 판단한 판례이다."
             )
         elif holding_short:
-            answer = (
-                f"[{pivot['case_number']}] {pivot['case_name']} 사건은 "
-                f"{_ensure_korean_terminal(holding_short)} 라고 판단한 판례이다."
-            )
+            answer = f"[{pivot['case_number']}] {pivot['case_name']} 사건은 {_ensure_korean_terminal(holding_short)} 라고 판단한 판례이다."
         else:
-            answer = (
-                f"[{pivot['case_number']}] {pivot['case_name']} 판례 — "
-                "근거 문장이 부족하여 한 줄 요약이 어렵다."
-            )
+            answer = f"[{pivot['case_number']}] {pivot['case_name']} 판례 — 근거 문장이 부족하여 한 줄 요약이 어렵다."
     else:
         pivot = retrieved[0]
         issue_short = _smart_truncate_korean(str(pivot["issue_summary"]), 90)
@@ -746,10 +781,7 @@ def grounded_answer(body: GroundedAnswerRequest) -> GroundedAnswerResponse:
         )
 
     retrieved_case_set = {c["case_number"] for c in retrieved}
-    retrieved_snippets = [
-        _build_case_snippet(c["issue_summary"], c["holding_summary"], c["exam_points"])
-        for c in retrieved
-    ]
+    retrieved_snippets = [_build_case_snippet(c["issue_summary"], c["holding_summary"], c["exam_points"]) for c in retrieved]
     cited_case_numbers = [c.case_number for c in citations]
     cited_quotes = [c.quoted_text for c in citations]
     violations = validate_grounded_answer(
@@ -771,4 +803,3 @@ def grounded_answer(body: GroundedAnswerRequest) -> GroundedAnswerResponse:
         domain=inferred_domain,
         generated_at=datetime.now(timezone.utc),
     )
-
