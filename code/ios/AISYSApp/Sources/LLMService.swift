@@ -309,6 +309,11 @@ final class LLMService: ObservableObject {
         llamaEngine.ignoreDocumentsModel = ignoreDocumentsModel
     }
 
+    private func isLowMemoryDevice() -> Bool {
+        let memoryGB = ProcessInfo.processInfo.physicalMemory / 1_073_741_824
+        return memoryGB <= 6
+    }
+
     private func generateUsingBestAvailableEngine(prompt: String, maxTokens: Int, purpose: String) async throws -> String {
         // 모바일 환경에서 컨텍스트/토큰을 보수적으로 제한
         let maxPromptLength = isLowMemoryDevice() ? lowMemoryPromptLimit : normalPromptLimit
@@ -1609,57 +1614,6 @@ final class LLMService: ObservableObject {
             explanation: "[\(caseItem.caseNumber)] 판례의 결론 방향과 어긋나도록 LLM이 변형한 진술입니다."
         )
         return enhanced
-    }
-
-    private func isLowMemoryDevice() -> Bool {
-        let memoryGB = ProcessInfo.processInfo.physicalMemory / 1_073_741_824
-        return memoryGB <= 6
-    }
-
-    private func shouldUseServerForHighDifficulty() -> Bool {
-        useFallback || isLowMemoryDevice()
-    }
-
-    private func serverGroundedAnswer(question: String, intent: String) async throws -> String {
-        let response = try await NetworkService.shared.groundedAnswer(question: question, intent: intent, topK: 4)
-        if response.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            throw LLMError.outputParsingFailed
-        }
-        return response.answer
-    }
-
-    private func serverGroundedSummary(caseItem: APICase) async throws -> LLMSummary? {
-        let question = "다음 판례를 강의 대체 없이 복습용으로 한 줄로 요약: 사건번호=\(caseItem.caseNumber), 사건명=\(caseItem.caseName), 쟁점=\(caseItem.issueSummary ?? ""), 결론=\(caseItem.holdingSummary ?? "")"
-        let answer = try await serverGroundedAnswer(question: question, intent: "summary")
-
-        // 백엔드가 멀티라인을 줄 수도 있으므로 핵심 한 줄만 추려낸다.
-        let cleanedOneLine = extractFirstKoreanSentence(from: answer)
-        // 학습카드 스타일 한 줄을 우리가 직접 합성한 결과와 비교해, 더 의미있는 쪽을 선택
-        // 비동기 버전: 룰베이스 verdict 분류가 비면 1B 모델로 분류 시도 (5초 타임아웃)
-        let composedOneLine = await composeStudyCardOneLineAsync(
-            caseItem: caseItem,
-            issueShort: caseItem.issueSummary ?? "",
-            holdingShort: caseItem.holdingSummary ?? ""
-        )
-        _ = cleanedOneLine
-        let oneLine = composedOneLine
-
-        // 핵심 쟁점/결론은 OCR 원문 덤프가 들어가지 않도록 짧게 정제한 형태로 사용
-        let keyIssue: String = {
-            let raw = (caseItem.issueSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if raw.isEmpty { return "핵심 쟁점 정보 부족" }
-            return canonicalIssueText(raw)
-        }()
-        let ruling: String = {
-            let raw = (caseItem.holdingSummary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if raw.isEmpty { return "판결 결론 정보 부족" }
-            return canonicalRulingText(raw)
-        }()
-        let exam = canonicalExamText(caseItem.examPoints?.isEmpty == false
-                          ? caseItem.examPoints!
-                          : "시험 포인트 정보 부족")
-
-        return LLMSummary(rawOutput: canonicalSummaryRaw(oneLine: oneLine, keyIssue: keyIssue, ruling: ruling, exam: exam))
     }
 
     /// 멀티라인/리스트형 답변에서 첫 자연 한국어 문장만 골라낸다.

@@ -138,7 +138,7 @@ API:
 ### P3 — 분류 택소노미 일반화
 
 - `LocalIRPipeline.domainHints` 가 5도메인. 행정법·민사실체법 등 라벨 부재
-- 해결안: 시험별 분류 트리 확장 (`police_exam_classification_tree.md` 기반)
+- 해결안: 시험별 분류 트리 확장 (`docs/research/police_exam_classification_tree.md` 기반)
 
 ---
 

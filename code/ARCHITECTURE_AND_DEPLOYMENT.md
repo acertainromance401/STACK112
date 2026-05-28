@@ -2,7 +2,7 @@
 
 > 최종 수정: 2026년 5월 11일  
 > 현재 상태: **iOS 앱은 완전 온디바이스(Backend-free) 모드로 운영 중**. 본 문서의 FastAPI/EC2/RDS 섹션은 (a) 다중 사용자 동기화 또는 (b) 외부 시스템 연동이 필요해질 때를 위한 *선택적 참고 자료*이며, 현재 빌드는 백엔드 없이도 풀 기능 동작합니다.
-> - 단일 진실 공급원: [Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md](../Project_Descriptions/Project_Status_and_Roadmap_2026-05-11.md)
+> - 단일 진실 공급원: [docs/project/Project_Status_and_Roadmap_2026-05-11.md](../docs/project/Project_Status_and_Roadmap_2026-05-11.md)
 > - 단말 IR 파이프라인 매핑: `code/backend/app/ir_pipeline.py` ↔ `code/ios/AISYSApp/Sources/LocalIRPipeline.swift` (Swift 포팅, 동일 알고리즘)
 
 ---

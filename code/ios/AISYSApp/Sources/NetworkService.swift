@@ -48,22 +48,11 @@ enum NetworkError: LocalizedError {
 
 actor NetworkService {
     static let shared = NetworkService()
-    static let overrideKey = "API_BASE_URL_OVERRIDE"   // 호환 유지용 키
     static let userIDKey = "AISYS_USER_ID"
 
     private init() {}
 
     // MARK: - Compat (UI 잔존 호출 호환)
-
-    /// 과거 API 베이스 URL 설정. 온디바이스 모드에서는 무시됩니다.
-    func configureBaseURL(_ value: String) {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            UserDefaults.standard.removeObject(forKey: Self.overrideKey)
-        } else {
-            UserDefaults.standard.set(trimmed, forKey: Self.overrideKey)
-        }
-    }
 
     func deviceConnectionHint() -> String? { nil }
 
