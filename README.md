@@ -4,6 +4,34 @@
 
 문서 최신화: 2026-05-19 (앱 화면 미리보기 섹션 반영)
 
+## 최종 제출 체크리스트 (온디바이스 기준)
+
+- 공개 저장소 필수 문서
+	- README: `README.md`
+	- CONTRIBUTING: `CONTRIBUTING.md`
+	- CODE OF CONDUCT: `CODE_OF_CONDUCT.md`
+	- LICENSE: `LICENSE`
+- 동작 가능한 AI 기능(UI)
+	- 완전 온디바이스 동작 개요: `code/ios/README.md`
+	- 핵심 구현: `code/ios/AISYSApp/Sources/LLMService.swift`
+- PR 게이트 CI/CD
+	- 린트/테스트: `.github/workflows/ci.yml`
+	- 보안 스캔: `.github/workflows/code-check.yml`
+	- iOS 빌드/테스트: `.github/workflows/ios-ci.yml`
+- main 배포/헬스체크/롤백/관측성
+	- main 배포 파이프라인: `.github/workflows/main-release-ondevice.yml`
+	- 운영 런북: `docs/operations/ONDEVICE_RUNBOOK.md`
+	- 관측성: `docs/operations/OBSERVABILITY.md`
+- 테스트/보안/문서 요건
+	- 테스트: `code/ios/AISYSAppTests/AISYSAppTests.swift`
+	- 보안(Dependabot): `.github/dependabot.yml`
+	- 문서(ADR): `docs/adr/README.md`
+	- 추가 문서: `docs/model/MODEL_CARD.md`, `CHANGELOG.md`
+- 릴리스/회고/데모
+	- 릴리스 태그: `v1.0.0` 이상
+	- 회고: `RETROSPECTIVE.md`
+	- 영상 데모 가이드/링크: `docs/demo/DEMO_VIDEO.md`
+
 ## 리포지토리 구조 (Quick Map)
 
 - `docs/`: 기획/아키텍처/ADR/API/트러블슈팅/회의노트/온보딩 문서 허브
