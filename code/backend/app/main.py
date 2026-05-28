@@ -1,12 +1,22 @@
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-import re
 from threading import Lock
 from time import time
 
 from fastapi import FastAPI, HTTPException, Query
 
 from .database import close_pool, get_conn
+from .grounding import validate_grounded_answer
+from .ir_pipeline import (
+    build_study_focus,
+    build_tfidf_matrix,
+    extract_key_sentences,
+    extract_legal_keyphrases,
+    find_similar_cases,
+    infer_study_domain,
+    normalize_legal_text,
+)
 from .schemas import (
     CaseItem,
     Citation,
@@ -23,16 +33,6 @@ from .schemas import (
     SimilarCasesResponse,
     WrongAnswersResponse,
 )
-from .ir_pipeline import (
-    build_study_focus,
-    build_tfidf_matrix,
-    extract_key_sentences,
-    extract_legal_keyphrases,
-    find_similar_cases,
-    infer_study_domain,
-    normalize_legal_text,
-)
-from .grounding import validate_grounded_answer
 
 
 @asynccontextmanager
@@ -89,7 +89,17 @@ def _smart_truncate_korean(text: str, limit: int) -> str:
         return cleaned
     snippet = cleaned[:limit]
     cut_idx = -1
-    for ending in ("다.", "다 ", "요.", "임.", "니다.", "였다.", "한다.", "된다.", "이다."):
+    for ending in (
+        "다.",
+        "다 ",
+        "요.",
+        "임.",
+        "니다.",
+        "였다.",
+        "한다.",
+        "된다.",
+        "이다.",
+    ):
         idx = snippet.rfind(ending)
         if idx > cut_idx:
             cut_idx = idx + len(ending)
@@ -109,7 +119,23 @@ def _ensure_korean_terminal(text: str) -> str:
     stripped = text.strip()
     if not stripped:
         return ""
-    if stripped.endswith(("다.", "요.", "다", "음.", "임.", "다고 한다.", "였다.", "다고 판시하였다.", "…", "다고 판단하였다.", "?", "!", "."))  :
+    if stripped.endswith(
+        (
+            "다.",
+            "요.",
+            "다",
+            "음.",
+            "임.",
+            "다고 한다.",
+            "였다.",
+            "다고 판시하였다.",
+            "…",
+            "다고 판단하였다.",
+            "?",
+            "!",
+            ".",
+        )
+    ):
         return stripped
     return stripped + "…"
 
