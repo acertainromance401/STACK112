@@ -28,9 +28,12 @@ from .schemas import (
     LLMSummarizeRequest,
     LLMSummarizeResponse,
     OXQuizItem,
+    RecommendedCaseItem,
     RecommendedCasesResponse,
     SearchResponse,
+    SimilarCaseItem,
     SimilarCasesResponse,
+    WrongAnswerListItem,
     WrongAnswersResponse,
 )
 
@@ -407,13 +410,13 @@ def dashboard_recommended(limit: int = Query(7, ge=1, le=30)) -> RecommendedCase
             rows = cur.fetchall()
 
     items = [
-        {
-            "case_number": row[0],
-            "case_name": row[1],
-            "subject": row[2],
-            "issue": row[3],
-            "accuracy": int(row[4]),
-        }
+        RecommendedCaseItem(
+            case_number=row[0],
+            case_name=row[1],
+            subject=row[2],
+            issue=row[3],
+            accuracy=int(row[4]),
+        )
         for row in rows
     ]
     return RecommendedCasesResponse(total=len(items), items=items)
@@ -443,11 +446,11 @@ def dashboard_wrong_answers(
             rows = cur.fetchall()
 
     items = [
-        {
-            "title": row[0],
-            "memo": row[1],
-            "date": row[2],
-        }
+        WrongAnswerListItem(
+            title=row[0],
+            memo=row[1],
+            date=row[2],
+        )
         for row in rows
     ]
     return WrongAnswersResponse(total=len(items), items=items)
@@ -487,8 +490,20 @@ def similar_cases(
 ) -> SimilarCasesResponse:
     """특정 판례와 TF-IDF 코사인 유사도가 높은 판례를 반환합니다."""
 
+    def _to_float(value: object) -> float:
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value)
+            except ValueError:
+                return 0.0
+        return 0.0
+
     with _SIMILAR_INDEX_LOCK:
-        cache_age = time() - float(_SIMILAR_INDEX_CACHE["built_at"])
+        built_at_raw = _SIMILAR_INDEX_CACHE.get("built_at", 0.0)
+        built_at = _to_float(built_at_raw)
+        cache_age = time() - built_at
         cached_tfidf = _SIMILAR_INDEX_CACHE["tfidf_df"]
         cached_case_ids = _SIMILAR_INDEX_CACHE["case_ids"]
         cache_valid = cached_tfidf is not None and isinstance(cached_case_ids, set) and cache_age <= _SIMILAR_INDEX_TTL_SECONDS
@@ -497,7 +512,15 @@ def similar_cases(
         if case_number not in cached_case_ids:  # type: ignore[operator]
             raise HTTPException(status_code=404, detail="Case not found or not published")
 
-        results = find_similar_cases(case_number, cached_tfidf, top_k=top_k)  # type: ignore[arg-type]
+        raw_results = find_similar_cases(case_number, cached_tfidf, top_k=top_k)  # type: ignore[arg-type]
+        results = [
+            SimilarCaseItem(
+                case_id=str(item.get("case_id", "")),
+                similarity=round(_to_float(item.get("similarity", 0.0)), 4),
+                rank=int(item.get("rank", idx + 1)),
+            )
+            for idx, item in enumerate(raw_results)
+        ]
         return SimilarCasesResponse(
             case_number=case_number,
             total=len(results),
@@ -543,20 +566,21 @@ def similar_cases(
 
     rough_results = find_similar_cases(case_number, tfidf_df, top_k=min(top_k * 3, 20))
 
-    reranked = []
+    reranked: list[tuple[str, float]] = []
     for item in rough_results:
-        score = float(item["similarity"])
-        if query_subject and subject_by_case.get(item["case_id"], "") == query_subject:
+        case_id = str(item.get("case_id", ""))
+        score = _to_float(item.get("similarity", 0.0))
+        if query_subject and subject_by_case.get(case_id, "") == query_subject:
             score += 0.03
-        reranked.append({**item, "similarity": score})
+        reranked.append((case_id, score))
 
-    reranked.sort(key=lambda x: x["similarity"], reverse=True)
+    reranked.sort(key=lambda x: x[1], reverse=True)
     results = [
-        {
-            "case_id": item["case_id"],
-            "similarity": round(float(item["similarity"]), 4),
-            "rank": idx + 1,
-        }
+        SimilarCaseItem(
+            case_id=item[0],
+            similarity=round(item[1], 4),
+            rank=idx + 1,
+        )
         for idx, item in enumerate(reranked[:top_k])
     ]
 
