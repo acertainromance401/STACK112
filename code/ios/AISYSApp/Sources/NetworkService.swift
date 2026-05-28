@@ -49,12 +49,15 @@ enum NetworkError: LocalizedError {
 actor NetworkService {
     static let shared = NetworkService()
     static let userIDKey = "AISYS_USER_ID"
+    static let overrideKey = "AISYS_API_BASE_URL_OVERRIDE"
 
     private init() {}
 
     // MARK: - Compat (UI 잔존 호출 호환)
 
     func deviceConnectionHint() -> String? { nil }
+
+    func configureBaseURL(_ _: String) async {}
 
     static func currentUserID() -> String {
         if let existing = UserDefaults.standard.string(forKey: userIDKey), !existing.isEmpty {

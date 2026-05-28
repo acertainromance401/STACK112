@@ -30,7 +30,6 @@
 		B932ED19AEA38751B581B486 /* SearchFlowViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */; };
 		BEC559B8757E110E4D9EC191 /* LlamaSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B21C82E0E8B7FE766A20E4DD /* LlamaSwift */; };
 		C1EC3E930647A6CFE50BA8C3 /* PasteJudgmentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89D87DA9C3E581310F65BAA /* PasteJudgmentSheet.swift */; };
-		CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */ = {isa = PBXBuildFile; fileRef = 694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */; };
 		D4D4403E5ED422BA58ED8EAD /* LocalCaseSearchEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060C355964F524CB92852C51 /* LocalCaseSearchEngine.swift */; };
 		D9D7ED2D7268B19DFFFB5759 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 08F3689615872CAE1509250B /* Assets.xcassets */; };
 		EADAD7E510DE25A10FAE9FC9 /* LocalIRPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = C16511F162CE9D0941E67FAD /* LocalIRPipeline.swift */; };
@@ -61,7 +60,6 @@
 		3E9F668837C28CE9BD27A040 /* DemoSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSeed.swift; sourceTree = "<group>"; };
 		48EC9808C4C60B63E6BAC9E9 /* PromptTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTemplates.swift; sourceTree = "<group>"; };
 		4EB8550D7167F38BF77BC796 /* AISYSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISYSApp.swift; sourceTree = "<group>"; };
-		694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */ = {isa = PBXFileReference; path = "Llama-3.2-1B-Instruct-Q4_K_M.gguf"; sourceTree = "<group>"; };
 		6FD11294844C01BF1B041A12 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISYSAppTests.swift; sourceTree = "<group>"; };
 		80EB6CEDE58FD30A4BC467BE /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
@@ -144,7 +142,6 @@
 				CB44A22E03C40B5664F17E87 /* JudgmentParser.swift */,
 				2374C03FE8EFE6589FB705B7 /* LegalAnalyzer.swift */,
 				28BED8D1443AD6C8C128FC4C /* LegalIssueDictionary.swift */,
-				694F592061EBD1270DDAE9A4 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf */,
 				80EB6CEDE58FD30A4BC467BE /* LLMService.swift */,
 				060C355964F524CB92852C51 /* LocalCaseSearchEngine.swift */,
 				A4E0E9EAE4A447F9B2997442 /* LocalCaseStore.swift */,
@@ -258,7 +255,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				D9D7ED2D7268B19DFFFB5759 /* Assets.xcassets in Resources */,
-				CA37392F03C9847BAC5A5778 /* Llama-3.2-1B-Instruct-Q4_K_M.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

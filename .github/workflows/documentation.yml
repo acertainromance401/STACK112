@@ -39,6 +39,7 @@ jobs:
         uses: nosborn/github-action-markdown-cli@v3.3.0
         with:
           files: CHANGELOG.md CODE_OF_CONDUCT.md RETROSPECTIVE.md code/backend/README.md docs/operations/*.md docs/model/*.md docs/demo/*.md docs/adr/*.md docs/rfc/*.md
+          config_file: .markdownlint.json
 
       - name: Verify Project Descriptions
         run: |
