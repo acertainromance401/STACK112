@@ -62,10 +62,12 @@ Conventional Commits 규칙을 사용하여 변경 의도를 일관되게 기록
 - PR 템플릿 파일: `.github/pull_request_template.md`
 - 코드 오너 파일: `.github/CODEOWNERS`
 - 기본 CI 워크플로우: `.github/workflows/ci.yml`
+- iOS CI 워크플로우: `.github/workflows/ios-ci.yml` (macOS runner)
 
 현재 기본 정책은 아래와 같음.
 - CODEOWNERS: 저장소 전체 경로(`*`)를 오너 1명으로 지정
 - CI: PR/Push 시 Lint(Ruff), Test(Pytest 또는 Smoke compile) 실행
+- iOS 변경 시 macOS 기반 Xcode Build/Test 실행
 - PR 리뷰: 최소 승인 1명 필수
 - 코드 오너 리뷰: 필수
 - 상태 체크: 필수 (Lint, Test)
