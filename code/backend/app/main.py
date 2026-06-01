@@ -1,12 +1,22 @@
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-import re
 from threading import Lock
 from time import time
 
 from fastapi import FastAPI, HTTPException, Query
 
 from .database import close_pool, get_conn
+from .grounding import validate_grounded_answer
+from .ir_pipeline import (
+    build_study_focus,
+    build_tfidf_matrix,
+    extract_key_sentences,
+    extract_legal_keyphrases,
+    find_similar_cases,
+    infer_study_domain,
+    normalize_legal_text,
+)
 from .schemas import (
     CaseItem,
     Citation,
@@ -23,16 +33,6 @@ from .schemas import (
     SimilarCasesResponse,
     WrongAnswersResponse,
 )
-from .ir_pipeline import (
-    build_study_focus,
-    build_tfidf_matrix,
-    extract_key_sentences,
-    extract_legal_keyphrases,
-    find_similar_cases,
-    infer_study_domain,
-    normalize_legal_text,
-)
-from .grounding import validate_grounded_answer
 
 
 @asynccontextmanager
@@ -109,7 +109,22 @@ def _ensure_korean_terminal(text: str) -> str:
     stripped = text.strip()
     if not stripped:
         return ""
-    if stripped.endswith(("다.", "요.", "다", "음.", "임.", "다고 한다.", "였다.", "다고 판시하였다.", "…", "다고 판단하였다.", "?", "!", "."))  :
+    terminal_endings = (
+        "다.",
+        "요.",
+        "다",
+        "음.",
+        "임.",
+        "다고 한다.",
+        "였다.",
+        "다고 판시하였다.",
+        "…",
+        "다고 판단하였다.",
+        "?",
+        "!",
+        ".",
+    )
+    if stripped.endswith(terminal_endings):
         return stripped
     return stripped + "…"
 
@@ -686,7 +701,16 @@ def grounded_answer(body: GroundedAnswerRequest) -> GroundedAnswerResponse:
 
     merged_text = "\n".join(
         [
-            f"{c['case_number']} {c['case_name']} {c['subject']} {c['issue_summary']} {c['holding_summary']} {c['exam_points']}"
+            " ".join(
+                [
+                    c["case_number"],
+                    c["case_name"],
+                    c["subject"],
+                    c["issue_summary"],
+                    c["holding_summary"],
+                    c["exam_points"],
+                ]
+            )
             for c in retrieved[:3]
         ]
     )
