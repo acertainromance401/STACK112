@@ -2,6 +2,13 @@
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
 
+## 앱 다운로드
+
+[![STACK112 App Store 다운로드](code/ios/appstore_screenshots/01_home_d89.png)](https://apps.apple.com/kr/app/stack112/id6768943423)
+
+- App Store 링크: https://apps.apple.com/kr/app/stack112/id6768943423
+- 배포 완료 및 iPhone/iPad에서 바로 다운로드 가능합니다.
+
 문서 최신화: 2026-05-19 (앱 화면 미리보기 섹션 반영)
 
 ## 최종 제출 체크리스트 (온디바이스 기준)
