@@ -186,4 +186,4 @@ enum LegalAnalyzer {
 - **포지셔닝**: 보조 메모장 ("메인은 책, 옆자리는 STACK112")
 - **슬로건**: "공부는 당신이, 기록은 우리가."
 - **차별성**: 완전 온디바이스(요금 0·데이터 미수집) × 시험 관점 요약·함정 OX × 개인화 약점 학습
-- 자세한 컨셉/경쟁 분석은 [README.md §4](../README.md) 와 [APPSTORE_METADATA.md](../code/ios/APPSTORE_METADATA.md) 참조
+- 자세한 컨셉/경쟁 분석은 [README.md §4](../../README.md) 와 [APPSTORE_METADATA.md](../../code/ios/APPSTORE_METADATA.md) 참조

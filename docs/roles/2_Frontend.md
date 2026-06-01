@@ -311,8 +311,8 @@ RootTabView (탭 네비게이션)
 ---
 
 ## 참고 문서
-- [iOS 상세 가이드](../code/ios/README.md)
-- [실행 가이드](../code/Run_Guide_AI_SYS.md)
+- [iOS 상세 가이드](../../code/ios/README.md)
+- [실행 가이드](../../code/Run_Guide_AI_SYS.md)
 
 ---
 

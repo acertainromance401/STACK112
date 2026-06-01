@@ -4,12 +4,12 @@ AI_SYS 팀 지식 허브입니다.
 
 ## 빠른 시작
 
-- [Getting Started](Getting-Started)
-- [Architecture](Architecture)
-- [API Guide](API-Guide)
-- [Troubleshooting](Troubleshooting)
-- [ADR Index](ADR-Index)
-- [RFC Index](RFC-Index)
+- [Getting Started](Getting-Started.md)
+- [Architecture](Architecture.md)
+- [API Guide](API-Guide.md)
+- [Troubleshooting](Troubleshooting.md)
+- [ADR Index](ADR-Index.md)
+- [RFC Index](RFC-Index.md)
 
 ## 운영 원칙
 

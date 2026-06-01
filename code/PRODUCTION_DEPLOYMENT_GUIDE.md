@@ -428,7 +428,7 @@ Route 53:
 
 ### 4.1 프로덕션 API 엔드포인트 설정
 
-[NetworkService.swift](code/ios/AISYSApp/Sources/NetworkService.swift) 수정:
+[NetworkService.swift](ios/AISYSApp/Sources/NetworkService.swift) 수정:
 
 ```swift
 // BEFORE:
@@ -474,7 +474,7 @@ let baseURL = "https://api.aisys.com"  // 프로덕션
 
 ### 4.3 자동 백엔드 감지 (선택사항)
 
-[NetworkService.swift](code/ios/AISYSApp/Sources/NetworkService.swift)에 백엔드 가용성 체크 추가:
+[NetworkService.swift](ios/AISYSApp/Sources/NetworkService.swift)에 백엔드 가용성 체크 추가:
 
 ```swift
 private func isBackendAvailable() async -> Bool {\n    let url = URL(string: "\(baseURL)/health")!

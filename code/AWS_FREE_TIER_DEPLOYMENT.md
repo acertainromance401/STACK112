@@ -515,7 +515,7 @@ HTTPS를 사용하려면:
 
 ### 6.1 NetworkService.swift 수정
 
-[code/ios/AISYSApp/Sources/NetworkService.swift](code/ios/AISYSApp/Sources/NetworkService.swift) 수정:
+[code/ios/AISYSApp/Sources/NetworkService.swift](ios/AISYSApp/Sources/NetworkService.swift) 수정:
 
 **BEFORE**:
 ```swift
