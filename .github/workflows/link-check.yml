@@ -33,16 +33,7 @@ jobs:
             --accept 200,204,301,302,429
             --retry-wait-time 2
             --max-retries 3
-            README.md
-            CONTRIBUTING.md
-            CODE_OF_CONDUCT.md
-            CHANGELOG.md
-            RETROSPECTIVE.md
-            docs/operations/**/*.md
-            docs/model/**/*.md
-            docs/demo/**/*.md
-            docs/adr/**/*.md
-            docs/rfc/**/*.md
+            '**/*.md'
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

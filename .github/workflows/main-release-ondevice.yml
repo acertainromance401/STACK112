@@ -33,30 +33,26 @@ jobs:
       - name: Resolve simulator destination
         id: sim
         run: |
-          DEST_LINE=$(xcodebuild -showdestinations -project code/ios/AISYS.xcodeproj -scheme AISYSApp \
+          DEST_NAME=$(xcodebuild -showdestinations -project code/ios/AISYS.xcodeproj -scheme AISYSApp \
             | grep "platform:iOS Simulator" \
-            | grep -v "name:Any iOS Simulator Device" \
-            | grep -v "id:dvtdevice-" \
-            | head -n 1)
+            | head -n 1 \
+            | sed -E 's/.*name:([^,}]+).*/\1/' \
+            | xargs)
 
-          DEST_ID=$(echo "$DEST_LINE" | sed -E 's/.*id:([^,}]+).*/\1/' | xargs)
-          DEST_NAME=$(echo "$DEST_LINE" | sed -E 's/.*name:([^,}]+).*/\1/' | xargs)
-
-          if [[ -z "$DEST_ID" || -z "$DEST_NAME" ]]; then
+          if [[ -z "$DEST_NAME" ]]; then
             echo "No available iOS Simulator destination found"
             exit 1
           fi
 
-          echo "id=$DEST_ID" >> "$GITHUB_OUTPUT"
           echo "name=$DEST_NAME" >> "$GITHUB_OUTPUT"
-          echo "Using simulator: $DEST_NAME ($DEST_ID)"
+          echo "Using simulator: $DEST_NAME"
 
       - name: Build
         run: |
           xcodebuild build \
             -project code/ios/AISYS.xcodeproj \
             -scheme AISYSApp \
-            -destination "id=${{ steps.sim.outputs.id }}" \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
       - name: Test
@@ -64,7 +60,7 @@ jobs:
           xcodebuild test \
             -project code/ios/AISYS.xcodeproj \
             -scheme AISYSApp \
-            -destination "id=${{ steps.sim.outputs.id }}" \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
       - name: Archive (unsigned)

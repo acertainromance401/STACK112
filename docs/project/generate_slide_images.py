@@ -1,6 +1,7 @@
 from pathlib import Path
 
-out_dir = Path('/Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM/Project_Descriptions')
+root = Path(__file__).resolve().parents[2]
+out_dir = root / 'assets' / 'images' / 'project'
 out_dir.mkdir(parents=True, exist_ok=True)
 
 slides = [

@@ -1,4 +1,4 @@
-# AI_SYS 프로젝트 문서 허브
+# STACK112 프로젝트 문서 허브
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
 
@@ -52,6 +52,7 @@
 - 도메인 전용 프롬프트 + 함정 카탈로그(5도메인×8~14패턴, 매 호출 셔플) + 약점 키워드 주입(`weakKeywordsProvider`)으로 개인화 학습.
 - 복습 노트 "자주 틀리는 영역" 카드 → `WeakOXListView` (오답 OX 모음).
 - 운영: HTTP 백엔드 의존 0, EC2/RDS 비용 0, App Privacy "Data Not Collected" 신고 가능.
+- App Store 배포 완료: [STACK112 다운로드](https://apps.apple.com/kr/app/stack112/id6768943423)
 - App Store 제출 반영: ITSAppUsesNonExemptEncryption=NO, LSSupportsOpeningDocumentsInPlace=NO, DEBUG-gated 서버 UI, 1024×1024 AppIcon (RGB no-alpha), Privacy Policy URL 게시 (https://acertainromance401.github.io/stack112-privacy/), App Review 제출 완료.
 - 최신 점검: iPhone 12 mini(A14, 4GB) 실기기에서 OCR → 분류 → 요약 → OX → 검색 → 복습 전체 흐름 정상 동작 확인, Release 설치/Archive/ASC 업로드 검증 완료.
 
@@ -175,7 +176,6 @@
 
 ## 8. git주소
 - 개인 저장소: `https://github.com/acertainromance401/AI_SYS_Personal`
-- 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
-- 팀 저장소: `https://github.com/AI-02-2/AI_SYS`
+- 팀 저장소: `https://github.com/acertainromance401/STACK112`
 
 

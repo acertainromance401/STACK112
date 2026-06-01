@@ -395,12 +395,12 @@ AI 분석
 
 | 파일 | 상태 |
 |---|---|
-| [code/ios/AISYSApp/Sources/DesignSystem.swift](code/ios/AISYSApp/Sources/DesignSystem.swift) | 신규 — 디자인 토큰 + 공통 컴포넌트 |
-| [code/ios/AISYSApp/Sources/StudyStore.swift](code/ios/AISYSApp/Sources/StudyStore.swift) | 신규 — 학습량 / D-Day / streak |
-| [code/ios/AISYSApp/Sources/NewMainScreens.swift](code/ios/AISYSApp/Sources/NewMainScreens.swift) | 신규 — 6 메인 화면 통합 |
-| [code/ios/AISYSApp/Sources/RootTabView.swift](code/ios/AISYSApp/Sources/RootTabView.swift) | 전면 재작성 (6탭 구조) |
-| [code/ios/AISYSApp/Sources/HomeView.swift](code/ios/AISYSApp/Sources/HomeView.swift) | 삭제 (NewMainScreens 로 통합) |
-| [code/ios/AISYSApp/Sources/SearchFlowViews.swift](code/ios/AISYSApp/Sources/SearchFlowViews.swift) | 유지 (CaseSummaryView/WeakOXListView/OXQuizView 재사용) |
+| [code/ios/AISYSApp/Sources/DesignSystem.swift](../../code/ios/AISYSApp/Sources/DesignSystem.swift) | 신규 — 디자인 토큰 + 공통 컴포넌트 |
+| [code/ios/AISYSApp/Sources/StudyStore.swift](../../code/ios/AISYSApp/Sources/StudyStore.swift) | 신규 — 학습량 / D-Day / streak |
+| [code/ios/AISYSApp/Sources/NewMainScreens.swift](../../code/ios/AISYSApp/Sources/NewMainScreens.swift) | 신규 — 6 메인 화면 통합 |
+| [code/ios/AISYSApp/Sources/RootTabView.swift](../../code/ios/AISYSApp/Sources/RootTabView.swift) | 전면 재작성 (6탭 구조) |
+| [code/ios/AISYSApp/Sources/HomeView.swift](../../code/ios/AISYSApp/Sources/NewMainScreens.swift) | 삭제 (NewMainScreens 로 통합) |
+| [code/ios/AISYSApp/Sources/SearchFlowViews.swift](../../code/ios/AISYSApp/Sources/SearchFlowViews.swift) | 유지 (CaseSummaryView/WeakOXListView/OXQuizView 재사용) |
 
 ---
 

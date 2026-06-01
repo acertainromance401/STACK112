@@ -168,9 +168,9 @@ docker run -p 8000:8000 aisys-backend
 ---
 
 ## 참고 문서
-- [백엔드 상세 가이드](../code/backend/README.md)
-- [데이터베이스 스키마](../db/schema.sql)
-- [실행 가이드](../code/Run_Guide_AI_SYS.md)
+- [백엔드 상세 가이드](../../code/backend/README.md)
+- [데이터베이스 스키마](../../code/db/schema.sql)
+- [실행 가이드](../../code/Run_Guide_AI_SYS.md)
 
 ---
 

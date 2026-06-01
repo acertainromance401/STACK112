@@ -361,9 +361,9 @@ pg_dump -h localhost -U user aisys > backup.sql
 ---
 
 ## 참고 문서
-- [데이터베이스 스키마](../db/schema.sql)
-- [데이터 빌드 가이드](../code/Data_Build_Guide_AI_SYS.md)
-- [정책 검증 가이드](../data/policy/SCourt_Policy_Check_Guide.md)
+- [데이터베이스 스키마](../../code/db/schema.sql)
+- [데이터 빌드 가이드](../../code/Data_Build_Guide_AI_SYS.md)
+- [정책 검증 가이드](../../code/data/policy/SCourt_Policy_Check_Guide.md)
 
 ---
 

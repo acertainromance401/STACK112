@@ -327,9 +327,9 @@ Response: {
 ---
 
 ## 참고 문서
-- [프롬프트 템플릿](../code/stitch_prompts_ai_sys.txt)
-- [정책 검증 가이드](../data/policy/SCourt_Policy_Check_Guide.md)
-- [데이터 빌드 가이드](../code/Data_Build_Guide_AI_SYS.md)
+- [프롬프트 템플릿](../../code/stitch_prompts_ai_sys.txt)
+- [정책 검증 가이드](../../code/data/policy/SCourt_Policy_Check_Guide.md)
+- [데이터 빌드 가이드](../../code/Data_Build_Guide_AI_SYS.md)
 
 ---
 

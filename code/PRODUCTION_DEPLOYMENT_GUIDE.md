@@ -428,7 +428,7 @@ Route 53:
 
 ### 4.1 프로덕션 API 엔드포인트 설정
 
-[NetworkService.swift](code/ios/AISYSApp/Sources/NetworkService.swift) 수정:
+[NetworkService.swift](ios/AISYSApp/Sources/NetworkService.swift) 수정:
 
 ```swift
 // BEFORE:
@@ -474,7 +474,7 @@ let baseURL = "https://api.aisys.com"  // 프로덕션
 
 ### 4.3 자동 백엔드 감지 (선택사항)
 
-[NetworkService.swift](code/ios/AISYSApp/Sources/NetworkService.swift)에 백엔드 가용성 체크 추가:
+[NetworkService.swift](ios/AISYSApp/Sources/NetworkService.swift)에 백엔드 가용성 체크 추가:
 
 ```swift
 private func isBackendAvailable() async -> Bool {\n    let url = URL(string: "\(baseURL)/health")!
@@ -693,7 +693,7 @@ aws rds create-db-snapshot \
 
 ```bash
 # 1) 터미널에서 지속적으로 실행
-cd /Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM
+cd "$(git rev-parse --show-toplevel)"
 
 # 2) Docker Compose 시작
 docker compose up -d --build
@@ -710,12 +710,12 @@ cat > ~/Library/LaunchAgents/com.aisys.backend.plist << 'EOF'
     <array>
         <string>/usr/local/bin/docker-compose</string>
         <string>-f</string>
-        <string>/Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM/docker-compose.yml</string>
+      <string>./docker-compose.yml</string>
         <string>up</string>
         <string>-d</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM</string>
+    <string>&lt;STACK112 저장소 루트&gt;</string>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardErrorPath</key>

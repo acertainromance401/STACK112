@@ -37,7 +37,8 @@
 // if a && b && c { } → if (a && b) && c { }
 ```
 
-**배포 방법**:
+### 배포 방법
+
 ```bash
 # 1) GitHub에 커밋만 하면 됨
 git add code/ios/AISYSApp/Sources/OCRView.swift
@@ -58,7 +59,8 @@ git push origin 임재현
 # SQL JOIN 개선 등
 ```
 
-**배포 방법**:
+### 배포 방법
+
 ```bash
 # 1) AWS EC2에 새 코드 배포
 cd /home/ubuntu/ai-sys
@@ -79,7 +81,8 @@ docker compose up -d --build
 // 앱 코드는 변경 없음 (로드하는 부분만 변경)
 ```
 
-**배포 방법**:
+### 배포 방법
+
 ```bash
 # 1) 새 .gguf 파일을 번들에 포함시키고 빌드
 # 2) 코드 변경 없음 (파일만 변경)
@@ -94,7 +97,8 @@ docker compose up -d --build
 
 #### B1. 버그 수정
 
-**예시**:
+### 예시
+
 ```swift
 // 버그: OCR이 가로 사진을 세로로 인식
 // 수정: 이미지 회전 로직 추가
@@ -107,13 +111,16 @@ extension UIImage {
 }
 ```
 
-**버전 업데이트**:
-```
+### 버전 업데이트
+
+```text
 현재: 1.0.0
 변경: 1.0.1 (Patch 버전 증가)
 ```
 
-**배포 방법**:
+### 배포 방법
+
+```bash
 
 ```bash
 # 1) Xcode에서 버전 업데이트
@@ -141,7 +148,7 @@ xcodebuild archive \
 
 #### B2. 기능 추가
 
-**예시: 북마크 기능 추가**
+### 예시: 북마크 기능 추가
 
 ```swift
 // 새 파일: BookmarkView.swift
@@ -170,13 +177,16 @@ final class BookmarkedCase {
 }
 ```
 
-**버전 업데이트**:
-```
+### 버전 업데이트
+
+```text
 현재: 1.0.0
 변경: 1.1.0 (Minor 버전 증가, 기능 추가)
 ```
 
-**배포 방법**:
+### 배포 방법
+
+```bash
 
 ```bash
 # 1) Xcode에서 버전 업데이트
@@ -204,7 +214,7 @@ xcodebuild archive -project code/ios/AISYS.xcodeproj \
 
 #### B3. UI/UX 개선
 
-**예시: 다크 모드 추가**
+### 예시: 다크 모드 추가
 
 ```swift
 // 모든 View에서 @Environment(\.colorScheme) 사용
@@ -216,8 +226,9 @@ xcodebuild archive -project code/ios/AISYS.xcodeproj \
 }))
 ```
 
-**버전 업데이트**:
-```
+### 버전 업데이트
+
+```text
 현재: 1.0.0
 변경: 1.1.0 (Minor 버전 증가)
 ```
