@@ -20,14 +20,14 @@
 - 프로젝트 루트 경로로 이동해야 한다.
 
 프로젝트 루트 예시:
-- /Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM
+- <STACK112 저장소 루트>
 
 ## 3. 가장 쉬운 실행 방법 (권장)
 
 ### 3.1 실행 명령
 
 ```bash
-cd /Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM
+cd "$(git rev-parse --show-toplevel)"
 docker compose up -d --build
 ```
 

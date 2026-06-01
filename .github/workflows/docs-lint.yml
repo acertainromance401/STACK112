@@ -28,13 +28,4 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v18
         with:
           globs: |
-            README.md
-            CONTRIBUTING.md
-            CODE_OF_CONDUCT.md
-            CHANGELOG.md
-            RETROSPECTIVE.md
-            docs/operations/**/*.md
-            docs/model/**/*.md
-            docs/demo/**/*.md
-            docs/adr/**/*.md
-            docs/rfc/**/*.md
+            **/*.md

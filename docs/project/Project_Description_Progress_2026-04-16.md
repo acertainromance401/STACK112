@@ -163,7 +163,7 @@ LlamaCppEngine에서 다음이 구현됨:
 - 원인: 잘못된 compose 프로젝트(ai_sys) 인스턴스가 8000 포트를 점유
 - 조치:
   - 기존 ai_sys 스택 down
-  - AI_SYS_TEAM 기준 스택 재기동
+  - STACK112 기준 스택 재기동
   - DB init 실패("Resource deadlock avoided")는 볼륨 초기화 + 경로 재검증 후 정상화
 - 검증:
   - /health 200

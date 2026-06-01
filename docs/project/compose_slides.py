@@ -1,7 +1,8 @@
 from pathlib import Path
 from PIL import Image, ImageFont, ImageDraw
 
-base = Path('/Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM/Project_Descriptions')
+root = Path(__file__).resolve().parents[2]
+base = root / 'assets' / 'images' / 'project'
 
 W, H = 1920, 1080
 bg     = (246, 248, 252)

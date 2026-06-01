@@ -693,7 +693,7 @@ aws rds create-db-snapshot \
 
 ```bash
 # 1) 터미널에서 지속적으로 실행
-cd /Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM
+cd "$(git rev-parse --show-toplevel)"
 
 # 2) Docker Compose 시작
 docker compose up -d --build
@@ -710,12 +710,12 @@ cat > ~/Library/LaunchAgents/com.aisys.backend.plist << 'EOF'
     <array>
         <string>/usr/local/bin/docker-compose</string>
         <string>-f</string>
-        <string>/Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM/docker-compose.yml</string>
+      <string>./docker-compose.yml</string>
         <string>up</string>
         <string>-d</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/acertainromance401/Desktop/AI_SYS/AI_SYS_TEAM</string>
+    <string>&lt;STACK112 저장소 루트&gt;</string>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardErrorPath</key>
