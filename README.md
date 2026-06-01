@@ -4,7 +4,7 @@
 
 ## 앱 다운로드
 
-[![STACK112 App Store 다운로드](code/ios/appstore_screenshots/01_home_d89.png)](https://apps.apple.com/kr/app/stack112/id6768943423)
+[![STACK112 App Store 다운로드](%EC%8A%A4%ED%81%AC%EB%A6%B0%EC%83%B7%202026-06-01%20%EC%98%A4%ED%9B%84%204.01.45.png)](https://apps.apple.com/kr/app/stack112/id6768943423)
 
 - App Store 링크: https://apps.apple.com/kr/app/stack112/id6768943423
 - 배포 완료 및 iPhone/iPad에서 바로 다운로드 가능합니다.
