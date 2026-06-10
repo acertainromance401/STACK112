@@ -9,7 +9,7 @@
 ## 현재 제출 상태
 - 제출일: **2026-05-14**
 - App Review 상태: **심사 제출 완료**
-- 제출 빌드: **1.0.0 (2)**
+- 최근 제출 빌드: **1.0.0 (3) 확인됨**
 - 공개 저장소에는 App Review 전용 전화번호/사적 메모를 남기지 않음
 
 ## App Store Connect 입력값
@@ -132,7 +132,7 @@ If you need assistance during review, please contact the review contact listed i
 - 개인정보 처리방침 URL 및 지원 URL 입력 완료
 - 앱 개인정보 수집 항목 / 추적 여부 설정 확인 완료
 - 가격 및 배포 가능 지역 설정 완료
-- 심사용 빌드 선택 완료 (현재 빌드 1.0.0 (2))
+- 심사용 빌드 선택 완료 (다음 제출 권장 빌드 1.0.0 (4))
 - Export Compliance 질문 응답 완료
 - 저장 후 심사에 추가 버튼으로 제출 진행 또는 심사 중 보완
 

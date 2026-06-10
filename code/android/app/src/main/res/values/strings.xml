@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">STACK112</string>
+    <string name="android_title">STACK112 안드로이드</string>
+    <string name="android_subtitle">기능 동등성 이식 스캐폴딩</string>
+
+    <string name="tab_home">홈</string>
+    <string name="tab_ocr">OCR</string>
+    <string name="tab_search">검색</string>
+    <string name="tab_review">복습</string>
+    <string name="tab_mypage">마이페이지</string>
+
+    <string name="screen_home">홈 탭 골격 화면입니다. 다음 단계에서 오늘 학습 요약 카드를 연결합니다.</string>
+    <string name="screen_ocr">OCR 탭 골격 화면입니다. 카메라 또는 이미지 입력 흐름을 연결할 예정입니다.</string>
+    <string name="screen_search">검색 탭 골격 화면입니다. 판례 검색과 AI 요약 진입을 연결할 예정입니다.</string>
+    <string name="screen_review">복습 탭 골격 화면입니다. 오답 노트와 약점 영역 리스트를 연결할 예정입니다.</string>
+    <string name="screen_mypage">마이페이지 탭 골격 화면입니다. 설정/모델 상태/버전 정보를 연결할 예정입니다.</string>
+</resources>
