@@ -101,50 +101,70 @@
 
 ## 전체 문서 바로가기 (링크 + 설명)
 
-아래 목록은 저장소 내 Markdown 문서 전체를 바로 들어갈 수 있도록 정리한 인덱스입니다.
+아래 목록은 저장소 내 Markdown 문서를 종류별로 구분한 인덱스입니다.
 
-- [.github/ISSUE_TEMPLATE/bug_report.md](.github/ISSUE_TEMPLATE/bug_report.md) — 버그 제보 이슈 템플릿 문서
-- [.github/ISSUE_TEMPLATE/feature_request.md](.github/ISSUE_TEMPLATE/feature_request.md) — 기능 제안 이슈 템플릿 문서
-- [.github/pull_request_template.md](.github/pull_request_template.md) — PR 작성 시 체크해야 할 항목 템플릿
-- [assets/README.md](assets/README.md) — assets 디렉터리의 사용/구성 안내 문서
+### 루트/공통 문서
+- [README.md](README.md) — 프로젝트 메인 허브 문서
 - [CHANGELOG.md](CHANGELOG.md) — 버전별 변경 이력 문서
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — 프로젝트 행동 강령 문서
 - [CONTRIBUTING.md](CONTRIBUTING.md) — 협업 및 기여 가이드
 - [RETROSPECTIVE.md](RETROSPECTIVE.md) — 프로젝트 회고 문서
-- [code/APPSTORE_UPDATES_GUIDE.md](code/APPSTORE_UPDATES_GUIDE.md) — iOS 앱스토어 승인 후 업데이트 가이드
+- [assets/README.md](assets/README.md) — assets 디렉터리의 사용/구성 안내 문서
+
+### GitHub 협업 템플릿
+- [.github/ISSUE_TEMPLATE/bug_report.md](.github/ISSUE_TEMPLATE/bug_report.md) — 버그 제보 이슈 템플릿 문서
+- [.github/ISSUE_TEMPLATE/feature_request.md](.github/ISSUE_TEMPLATE/feature_request.md) — 기능 제안 이슈 템플릿 문서
+- [.github/pull_request_template.md](.github/pull_request_template.md) — PR 작성 시 체크해야 할 항목 템플릿
+
+### 운영/배포/실행 가이드
 - [code/ARCHITECTURE_AND_DEPLOYMENT.md](code/ARCHITECTURE_AND_DEPLOYMENT.md) — AI_SYS 아키텍처/파이프라인/배포 통합 가이드
 - [code/AWS_FREE_TIER_DEPLOYMENT.md](code/AWS_FREE_TIER_DEPLOYMENT.md) — AWS Free Tier 배포 가이드
-- [code/Data_Build_Guide_AI_SYS.md](code/Data_Build_Guide_AI_SYS.md) — 데이터 구축 가이드
 - [code/PRODUCTION_DEPLOYMENT_GUIDE.md](code/PRODUCTION_DEPLOYMENT_GUIDE.md) — 프로덕션 배포 가이드
 - [code/Run_Guide_AI_SYS.md](code/Run_Guide_AI_SYS.md) — 실행/구동 가이드
-- [code/android/DOC_TEMPLATE_KO.md](code/android/DOC_TEMPLATE_KO.md) — Android 문서 작성 템플릿
-- [code/android/FEATURE_PARITY_CHECKLIST.md](code/android/FEATURE_PARITY_CHECKLIST.md) — Android 기능 동등성 체크리스트
-- [code/android/README.md](code/android/README.md) — Android 앱 구조/실행 안내
-- [code/backend/README.md](code/backend/README.md) — Backend 빠른 시작 가이드
+- [docs/operations/ONDEVICE_RUNBOOK.md](docs/operations/ONDEVICE_RUNBOOK.md) — 온디바이스 운영 런북
+- [docs/operations/OBSERVABILITY.md](docs/operations/OBSERVABILITY.md) — 관측성(로그/메트릭/점검) 운영 문서
+
+### 데이터 문서
+- [code/Data_Build_Guide_AI_SYS.md](code/Data_Build_Guide_AI_SYS.md) — 데이터 구축 가이드
 - [code/data/README.md](code/data/README.md) — 데이터 폴더 표준 및 규칙 안내
 - [code/data/policy/SCourt_Policy_Check_Guide.md](code/data/policy/SCourt_Policy_Check_Guide.md) — SCourt 정책 점검 가이드
 - [code/data/templates/scourt_permission_request_email.md](code/data/templates/scourt_permission_request_email.md) — SCourt 수집 허용 문의 메일 템플릿
-- [code/ios/AISYSApp/Resources/Assets.xcassets/AppIcon.appiconset/README.md](code/ios/AISYSApp/Resources/Assets.xcassets/AppIcon.appiconset/README.md) — AppIcon 자리표시자 안내 문서
+
+### Backend/Android/iOS 문서
+- [code/backend/README.md](code/backend/README.md) — Backend 빠른 시작 가이드
+- [code/android/README.md](code/android/README.md) — Android 앱 구조/실행 안내
+- [code/android/FEATURE_PARITY_CHECKLIST.md](code/android/FEATURE_PARITY_CHECKLIST.md) — Android 기능 동등성 체크리스트
+- [code/android/DOC_TEMPLATE_KO.md](code/android/DOC_TEMPLATE_KO.md) — Android 문서 작성 템플릿
+- [code/ios/README.md](code/ios/README.md) — iOS 앱 구조/빌드/실행 안내
+- [code/ios/APPSTORE_UPDATES_GUIDE.md](code/APPSTORE_UPDATES_GUIDE.md) — iOS 앱스토어 승인 후 업데이트 가이드
 - [code/ios/APPSTORE_METADATA.md](code/ios/APPSTORE_METADATA.md) — App Store 등록 메타데이터 문서
 - [code/ios/APPSTORE_PRIVACY_NUTRITION.md](code/ios/APPSTORE_PRIVACY_NUTRITION.md) — App Privacy 응답지 문서
 - [code/ios/PRIVACY_POLICY.md](code/ios/PRIVACY_POLICY.md) — 개인정보처리방침 문서
-- [code/ios/README.md](code/ios/README.md) — iOS 앱 구조/빌드/실행 안내
 - [code/ios/SCREENSHOT_GUIDE.md](code/ios/SCREENSHOT_GUIDE.md) — App Store 스크린샷 캡처 가이드
+- [code/ios/AISYSApp/Resources/Assets.xcassets/AppIcon.appiconset/README.md](code/ios/AISYSApp/Resources/Assets.xcassets/AppIcon.appiconset/README.md) — AppIcon 자리표시자 안내 문서
+
+### Docs 허브 인덱스
 - [docs/README.md](docs/README.md) — 문서 허브 인덱스
-- [docs/adr/0001-ondevice-first.md](docs/adr/0001-ondevice-first.md) — On-device First 아키텍처 의사결정 기록
-- [docs/adr/0002-governance-docs-baseline.md](docs/adr/0002-governance-docs-baseline.md) — 거버넌스 문서 체계 표준화 의사결정 기록
-- [docs/adr/README.md](docs/adr/README.md) — ADR 운영 안내
-- [docs/adr/template.md](docs/adr/template.md) — ADR 작성 템플릿
 - [docs/api/README.md](docs/api/README.md) — API 명세 인덱스
 - [docs/architecture/README.md](docs/architecture/README.md) — 아키텍처 문서 안내
-- [docs/demo/DEMO_VIDEO.md](docs/demo/DEMO_VIDEO.md) — 데모 영상 제작/제출 가이드
-- [docs/governance/DISCUSSIONS_AND_WIKI.md](docs/governance/DISCUSSIONS_AND_WIKI.md) — Discussions/Wiki 운영 기준
-- [docs/meeting-notes/README.md](docs/meeting-notes/README.md) — 회의록 운영/보관 안내
-- [docs/model/MODEL_CARD.md](docs/model/MODEL_CARD.md) — 온디바이스 모델 카드
 - [docs/onboarding/FAQ_ONBOARDING.md](docs/onboarding/FAQ_ONBOARDING.md) — 온보딩 FAQ
-- [docs/operations/OBSERVABILITY.md](docs/operations/OBSERVABILITY.md) — 관측성(로그/메트릭/점검) 운영 문서
-- [docs/operations/ONDEVICE_RUNBOOK.md](docs/operations/ONDEVICE_RUNBOOK.md) — 온디바이스 운영 런북
-- [docs/project/LLM_Hybrid_Contract_AI_SYS.md](docs/project/LLM_Hybrid_Contract_AI_SYS.md) — LLM 하이브리드 계약(입출력/제약) 문서
+- [docs/meeting-notes/README.md](docs/meeting-notes/README.md) — 회의록 운영/보관 안내
+- [docs/troubleshooting/README.md](docs/troubleshooting/README.md) — 트러블슈팅 가이드
+- [docs/demo/DEMO_VIDEO.md](docs/demo/DEMO_VIDEO.md) — 데모 영상 제작/제출 가이드
+- [docs/model/MODEL_CARD.md](docs/model/MODEL_CARD.md) — 온디바이스 모델 카드
+
+### ADR/RFC/거버넌스 문서
+- [docs/adr/README.md](docs/adr/README.md) — ADR 운영 안내
+- [docs/adr/template.md](docs/adr/template.md) — ADR 작성 템플릿
+- [docs/adr/0001-ondevice-first.md](docs/adr/0001-ondevice-first.md) — On-device First 아키텍처 의사결정 기록
+- [docs/adr/0002-governance-docs-baseline.md](docs/adr/0002-governance-docs-baseline.md) — 거버넌스 문서 체계 표준화 의사결정 기록
+- [docs/rfc/README.md](docs/rfc/README.md) — RFC 프로세스 안내
+- [docs/rfc/template.md](docs/rfc/template.md) — RFC 작성 템플릿
+- [docs/rfc/0001-discussions-wiki-rollout.md](docs/rfc/0001-discussions-wiki-rollout.md) — Discussions/Wiki 롤아웃 RFC
+- [docs/governance/DISCUSSIONS_AND_WIKI.md](docs/governance/DISCUSSIONS_AND_WIKI.md) — Discussions/Wiki 운영 기준
+
+### 프로젝트 기획/로드맵 문서
+- [docs/project/README.md](docs/project/README.md) — 프로젝트 기획 문서 모음 인덱스
 - [docs/project/PRD_AI_SYS.md](docs/project/PRD_AI_SYS.md) — 제품 요구사항 문서(PRD)
 - [docs/project/Project_Description.md](docs/project/Project_Description.md) — 프로젝트 설명서
 - [docs/project/Project_Description_Progress_2026-04-16.md](docs/project/Project_Description_Progress_2026-04-16.md) — 프로젝트 진행상황 상세 보고서
@@ -152,38 +172,38 @@
 - [docs/project/Project_Status_and_Roadmap_2026-05-10.md](docs/project/Project_Status_and_Roadmap_2026-05-10.md) — 진행 현황 및 로드맵(2026-05-10)
 - [docs/project/Project_Status_and_Roadmap_2026-05-11.md](docs/project/Project_Status_and_Roadmap_2026-05-11.md) — 진행 현황 및 로드맵(2026-05-11)
 - [docs/project/Project_Status_and_Roadmap_2026-05-12.md](docs/project/Project_Status_and_Roadmap_2026-05-12.md) — 진행 현황 및 로드맵(2026-05-12)
-- [docs/project/README.md](docs/project/README.md) — 프로젝트 기획 문서 모음 인덱스
-- [docs/project/Screen_Flow_AI_SYS.md](docs/project/Screen_Flow_AI_SYS.md) — 화면 흐름도 문서
 - [docs/project/Technology_Stack_AI_SYS.md](docs/project/Technology_Stack_AI_SYS.md) — 기술 스택 설명 문서
 - [docs/project/User_Journey_Scenario_AI_SYS.md](docs/project/User_Journey_Scenario_AI_SYS.md) — 사용자 여정 시나리오 문서
-- [docs/project/UX_UI_Redesign_2026-05-11.md](docs/project/UX_UI_Redesign_2026-05-11.md) — UX/UI 개편 명세 문서
-- [docs/project/WBS_AI_SYS.md](docs/project/WBS_AI_SYS.md) — WBS 문서
+- [docs/project/Screen_Flow_AI_SYS.md](docs/project/Screen_Flow_AI_SYS.md) — 화면 흐름도 문서
 - [docs/project/Wireframe_AI_SYS.md](docs/project/Wireframe_AI_SYS.md) — 와이어프레임 문서
-- [docs/research/OPTIMIZATION_COMPLETE.md](docs/research/OPTIMIZATION_COMPLETE.md) — iOS 최적화 결과 문서
-- [docs/research/police_exam_classification_tree.md](docs/research/police_exam_classification_tree.md) — 경찰 시험 분류 트리 정리 문서
-- [docs/rfc/0001-discussions-wiki-rollout.md](docs/rfc/0001-discussions-wiki-rollout.md) — Discussions/Wiki 롤아웃 RFC
-- [docs/rfc/README.md](docs/rfc/README.md) — RFC 프로세스 안내
-- [docs/rfc/template.md](docs/rfc/template.md) — RFC 작성 템플릿
+- [docs/project/WBS_AI_SYS.md](docs/project/WBS_AI_SYS.md) — WBS 문서
+- [docs/project/UX_UI_Redesign_2026-05-11.md](docs/project/UX_UI_Redesign_2026-05-11.md) — UX/UI 개편 명세 문서
+- [docs/project/LLM_Hybrid_Contract_AI_SYS.md](docs/project/LLM_Hybrid_Contract_AI_SYS.md) — LLM 하이브리드 계약(입출력/제약) 문서
+
+### 역할/연구 문서
+- [docs/roles/Role_Configuration.md](docs/roles/Role_Configuration.md) — 역할 구성 표준 문서
 - [docs/roles/1_Backend.md](docs/roles/1_Backend.md) — 백엔드 역할/업무 가이드
 - [docs/roles/2_Frontend.md](docs/roles/2_Frontend.md) — 프론트엔드 역할/업무 가이드
 - [docs/roles/3_AI_Model_Design.md](docs/roles/3_AI_Model_Design.md) — AI 모델 설계 역할/업무 가이드
 - [docs/roles/4_Data_Management.md](docs/roles/4_Data_Management.md) — 데이터 관리 역할/업무 가이드
-- [docs/roles/Role_Configuration.md](docs/roles/Role_Configuration.md) — 역할 구성 표준 문서
-- [docs/troubleshooting/README.md](docs/troubleshooting/README.md) — 트러블슈팅 가이드
-- [docs/wiki/HOME.md](docs/wiki/HOME.md) — Wiki 홈 초안 문서
+- [docs/research/OPTIMIZATION_COMPLETE.md](docs/research/OPTIMIZATION_COMPLETE.md) — iOS 최적화 결과 문서
+- [docs/research/police_exam_classification_tree.md](docs/research/police_exam_classification_tree.md) — 경찰 시험 분류 트리 정리 문서
+
+### Wiki 원본/배포 번들 문서
 - [docs/wiki/README.md](docs/wiki/README.md) — Wiki 번들 구성/업로드 가이드
-- [docs/wiki/pages/ADR-Index.md](docs/wiki/pages/ADR-Index.md) — Wiki용 ADR 인덱스
-- [docs/wiki/pages/API-Guide.md](docs/wiki/pages/API-Guide.md) — Wiki용 API 가이드
-- [docs/wiki/pages/Architecture.md](docs/wiki/pages/Architecture.md) — Wiki용 아키텍처 문서
-- [docs/wiki/pages/Getting-Started.md](docs/wiki/pages/Getting-Started.md) — Wiki용 시작 가이드
+- [docs/wiki/HOME.md](docs/wiki/HOME.md) — Wiki 홈 초안 문서
 - [docs/wiki/pages/Home.md](docs/wiki/pages/Home.md) — Wiki 홈 페이지 문서
+- [docs/wiki/pages/Getting-Started.md](docs/wiki/pages/Getting-Started.md) — Wiki용 시작 가이드
+- [docs/wiki/pages/Architecture.md](docs/wiki/pages/Architecture.md) — Wiki용 아키텍처 문서
+- [docs/wiki/pages/API-Guide.md](docs/wiki/pages/API-Guide.md) — Wiki용 API 가이드
+- [docs/wiki/pages/ADR-Index.md](docs/wiki/pages/ADR-Index.md) — Wiki용 ADR 인덱스
 - [docs/wiki/pages/RFC-Index.md](docs/wiki/pages/RFC-Index.md) — Wiki용 RFC 인덱스
 - [docs/wiki/pages/Troubleshooting.md](docs/wiki/pages/Troubleshooting.md) — Wiki용 트러블슈팅 문서
-- [docs/wiki/wiki-bundle/ADR-Index.md](docs/wiki/wiki-bundle/ADR-Index.md) — 배포 번들용 ADR 인덱스
-- [docs/wiki/wiki-bundle/API-Guide.md](docs/wiki/wiki-bundle/API-Guide.md) — 배포 번들용 API 가이드
-- [docs/wiki/wiki-bundle/Architecture.md](docs/wiki/wiki-bundle/Architecture.md) — 배포 번들용 아키텍처 문서
-- [docs/wiki/wiki-bundle/Getting-Started.md](docs/wiki/wiki-bundle/Getting-Started.md) — 배포 번들용 시작 가이드
 - [docs/wiki/wiki-bundle/Home.md](docs/wiki/wiki-bundle/Home.md) — 배포 번들용 홈 문서
+- [docs/wiki/wiki-bundle/Getting-Started.md](docs/wiki/wiki-bundle/Getting-Started.md) — 배포 번들용 시작 가이드
+- [docs/wiki/wiki-bundle/Architecture.md](docs/wiki/wiki-bundle/Architecture.md) — 배포 번들용 아키텍처 문서
+- [docs/wiki/wiki-bundle/API-Guide.md](docs/wiki/wiki-bundle/API-Guide.md) — 배포 번들용 API 가이드
+- [docs/wiki/wiki-bundle/ADR-Index.md](docs/wiki/wiki-bundle/ADR-Index.md) — 배포 번들용 ADR 인덱스
 - [docs/wiki/wiki-bundle/RFC-Index.md](docs/wiki/wiki-bundle/RFC-Index.md) — 배포 번들용 RFC 인덱스
 - [docs/wiki/wiki-bundle/Troubleshooting.md](docs/wiki/wiki-bundle/Troubleshooting.md) — 배포 번들용 트러블슈팅 문서
 
