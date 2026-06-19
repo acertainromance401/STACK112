@@ -92,7 +92,6 @@
 - [docs/project/Screen_Flow_AI_SYS.md](docs/project/Screen_Flow_AI_SYS.md)
 - [docs/project/Technology_Stack_AI_SYS.md](docs/project/Technology_Stack_AI_SYS.md)
 - [docs/project/Project_Description_Progress_2026-04-16.md](docs/project/Project_Description_Progress_2026-04-16.md)
-- [docs/research/User_Evaluation_Report.md](docs/research/User_Evaluation_Report.md)
 - [code/Data_Build_Guide_AI_SYS.md](code/Data_Build_Guide_AI_SYS.md)
 - [code/Run_Guide_AI_SYS.md](code/Run_Guide_AI_SYS.md)
 - [code/db/schema.sql](code/db/schema.sql)
@@ -191,6 +190,8 @@
 - [docs/roles/4_Data_Management.md](docs/roles/4_Data_Management.md) — 데이터 관리 역할/업무 가이드
 - [docs/research/OPTIMIZATION_COMPLETE.md](docs/research/OPTIMIZATION_COMPLETE.md) — iOS 최적화 결과 문서
 - [docs/research/police_exam_classification_tree.md](docs/research/police_exam_classification_tree.md) — 경찰 시험 분류 트리 정리 문서
+- [docs/research/User_Evaluation_Report.md](docs/research/User_Evaluation_Report.md) — 사용자 평가 보고서
+- [docs/research/User_Evaluation_Report.md](docs/research/User_Evaluation_Report.md) — 사용자 평가 보고서
 
 ### Wiki 원본/배포 번들 문서
 - [docs/wiki/README.md](docs/wiki/README.md) — Wiki 번들 구성/업로드 가이드
