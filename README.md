@@ -38,6 +38,7 @@
 	- 릴리스 태그: `v1.0.0` 이상
 	- 회고: `RETROSPECTIVE.md`
 	- 영상 데모 가이드/링크: `docs/demo/DEMO_VIDEO.md`
+	- 저장소 내 데모 영상: `assets/demo/stack112-demo-2026-06-19.mov`
 
 ## 리포지토리 구조 (Quick Map)
 
@@ -151,6 +152,7 @@
 - [docs/meeting-notes/README.md](docs/meeting-notes/README.md) — 회의록 운영/보관 안내
 - [docs/troubleshooting/README.md](docs/troubleshooting/README.md) — 트러블슈팅 가이드
 - [docs/demo/DEMO_VIDEO.md](docs/demo/DEMO_VIDEO.md) — 데모 영상 제작/제출 가이드
+- [assets/demo/stack112-demo-2026-06-19.mov](assets/demo/stack112-demo-2026-06-19.mov) — 제출용 데모 영상 파일
 - [docs/model/MODEL_CARD.md](docs/model/MODEL_CARD.md) — 온디바이스 모델 카드
 
 ### ADR/RFC/거버넌스 문서

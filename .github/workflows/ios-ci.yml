@@ -43,6 +43,7 @@ jobs:
         run: |
           DEST_NAME=$(xcodebuild -showdestinations -project code/ios/AISYS.xcodeproj -scheme AISYSApp \
             | grep "platform:iOS Simulator" \
+            | grep -v "name:Any iOS Simulator Device" \
             | head -n 1 \
             | sed -E 's/.*name:([^,}]+).*/\1/' \
             | xargs)
