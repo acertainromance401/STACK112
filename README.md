@@ -92,6 +92,7 @@
 - [docs/project/Screen_Flow_AI_SYS.md](docs/project/Screen_Flow_AI_SYS.md)
 - [docs/project/Technology_Stack_AI_SYS.md](docs/project/Technology_Stack_AI_SYS.md)
 - [docs/project/Project_Description_Progress_2026-04-16.md](docs/project/Project_Description_Progress_2026-04-16.md)
+- [docs/research/User_Evaluation_Report.md](docs/research/User_Evaluation_Report.md)
 - [code/Data_Build_Guide_AI_SYS.md](code/Data_Build_Guide_AI_SYS.md)
 - [code/Run_Guide_AI_SYS.md](code/Run_Guide_AI_SYS.md)
 - [code/db/schema.sql](code/db/schema.sql)
