@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">검색과 근거 추적을 나누어 평가한다</title>
+  <desc id="description">RQ1은 의미 검색의 참고 근거 검색 개선 여부, RQ2는 실제 전달 근거와 생성 문장을 연결한 검수 가능성을 묻는다. 검색, 실제 입력, 생성, 검수의 네 단계를 분리하며 물리 기기 비용인 RQ3은 후속 과제다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">03 / 이론과 연구 질문</text>
+    <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">검색과 근거 추적을 나누어 평가한다</text>
+    <text x="64" y="151" fill="#BBC6D1" font-size="20">RAG로 근거를 제공하되, 검색 성공을 설명의 타당성으로 대신하지 않는다.</text>
+    <g id="research-scope">
+      <rect x="64" y="194" width="250" height="58" rx="3" fill="#1B222B" stroke="#8ABFC6"/>
+      <text x="189" y="231" text-anchor="middle" fill="#8ABFC6" font-size="24" font-weight="600">RQ1 · 검색 개선?</text>
+      <rect x="364" y="194" width="852" height="58" rx="3" fill="#1B222B" stroke="#D7B282"/>
+      <text x="790" y="231" text-anchor="middle" fill="#D7B282" font-size="24" font-weight="600">RQ2 · 실제 근거와 생성 문장을 연결해 검수할 수 있는가?</text>
+    </g>
+    <g id="evaluation-stages" text-anchor="middle">
+      <rect x="64" y="296" width="250" height="164" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <text x="189" y="339" fill="#EDF0F3" font-size="27" font-weight="600">검색 관련성</text>
+      <text x="189" y="379" fill="#BBC6D1" font-size="20">키워드 + E5</text>
+      <text x="189" y="414" fill="#8ABFC6" font-size="19">RRF 순위 융합</text>
+      <text x="189" y="442" fill="#8896A5" font-size="17">순위와 참고 거절</text>
+      <rect x="364" y="296" width="250" height="164" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <text x="489" y="339" fill="#EDF0F3" font-size="27" font-weight="600">실제 입력</text>
+      <text x="489" y="379" fill="#BBC6D1" font-size="20">선택 근거와 발췌</text>
+      <text x="489" y="414" fill="#BBC6D1" font-size="19">E0 · E1 · E2</text>
+      <text x="489" y="442" fill="#8896A5" font-size="17">원문 위치·해시</text>
+      <rect x="664" y="296" width="250" height="164" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <text x="789" y="339" fill="#EDF0F3" font-size="27" font-weight="600">생성 출력</text>
+      <text x="789" y="379" fill="#BBC6D1" font-size="20">로컬 Llama</text>
+      <text x="789" y="414" fill="#BBC6D1" font-size="19">모델 원시 출력</text>
+      <text x="789" y="442" fill="#8896A5" font-size="17">반환과 성공 분리</text>
+      <rect x="964" y="296" width="252" height="164" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <text x="1090" y="339" fill="#EDF0F3" font-size="27" font-weight="600">검수</text>
+      <text x="1090" y="379" fill="#BBC6D1" font-size="20">인용 형식 검사</text>
+      <text x="1090" y="414" fill="#BBC6D1" font-size="19">원문과 내용 대조</text>
+      <text x="1090" y="442" fill="#8896A5" font-size="17">법률 검수는 별도</text>
+    </g>
+    <g fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M314 378 H350 M614 378 H650 M914 378 H950" fill="none"/>
+      <polygon points="350,372 360,378 350,384" stroke="none"/>
+      <polygon points="650,372 660,378 650,384" stroke="none"/>
+      <polygon points="950,372 960,378 950,384" stroke="none"/>
+    </g>
+    <text x="64" y="530" fill="#BBC6D1" font-size="24">이론: RAG → 검색 조건부 생성 / E5 → 의미 표현 / RRF → 검색 순위 결합</text>
+    <text x="64" y="580" fill="#D7B282" font-size="22">RQ3 · 실기기 자원 비용은 미평가. 이번 발표는 RQ1·RQ2의 파일럿에 집중.</text>
+    <path d="M64 642 H1216" stroke="#53606E"/>
+    <text x="64" y="681" fill="#8896A5" font-size="15">설계 근거: Lewis et al., 2020 · Cormack et al., 2009 · Wang et al., 2024 / 독립 법률 검수 미수행</text>
+  </g>
+</svg>

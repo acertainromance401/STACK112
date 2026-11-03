@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">판례 검색에서 설명 검증까지</title>
+  <desc id="description">기기 내부의 원문, 검색, 실제 근거 전달, 로컬 생성, 검증을 연결한 연구 개념도다. 관련 판례를 찾는 것과 정확하게 설명하는 것은 다르며, 실제 앱 화면이나 효과 검증 결과를 표현하지 않는다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">01 / 연구 개요</text>
+    <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">판례 검색에서 설명 검증까지</text>
+    <text x="64" y="151" fill="#BBC6D1" font-size="20">원문 · 검색 · 실제 입력 · 출력을 연결하는 온디바이스 연구 경로</text>
+    <g id="local-boundary">
+      <rect x="64" y="194" width="1152" height="306" rx="3" fill="none" stroke="#53606E" stroke-width="1.5"/>
+      <text x="88" y="231" fill="#8ABFC6" font-size="18">기기 내부에서 검색·생성 / 추론 중 외부 서버 호출 없음</text>
+      <g text-anchor="middle">
+        <rect x="88" y="278" width="190" height="130" rx="3" fill="#1B222B" stroke="#53606E"/>
+        <text x="183" y="319" fill="#EDF0F3" font-size="26" font-weight="600">로컬 원문</text>
+        <text x="183" y="354" fill="#BBC6D1" font-size="19">현재 + 저장 판례</text>
+        <text x="183" y="384" fill="#8896A5" font-size="17">원문 위치·해시</text>
+        <rect x="326" y="278" width="190" height="130" rx="3" fill="#1B222B" stroke="#8ABFC6"/>
+        <text x="421" y="319" fill="#EDF0F3" font-size="26" font-weight="600">참고 검색</text>
+        <text x="421" y="354" fill="#BBC6D1" font-size="19">키워드 + E5</text>
+        <text x="421" y="384" fill="#8896A5" font-size="17">순위 융합</text>
+        <rect x="564" y="278" width="190" height="130" rx="3" fill="#1B222B" stroke="#8ABFC6"/>
+        <text x="659" y="319" fill="#EDF0F3" font-size="26" font-weight="600">실제 근거</text>
+        <text x="659" y="354" fill="#BBC6D1" font-size="19">E0 · E1 · E2</text>
+        <text x="659" y="384" fill="#8896A5" font-size="17">전달 발췌 기록</text>
+        <rect x="802" y="278" width="166" height="130" rx="3" fill="#1B222B" stroke="#53606E"/>
+        <text x="885" y="319" fill="#EDF0F3" font-size="26" font-weight="600">로컬 생성</text>
+        <text x="885" y="354" fill="#BBC6D1" font-size="19">Llama</text>
+        <text x="885" y="384" fill="#8896A5" font-size="17">원시 출력</text>
+        <rect x="1016" y="278" width="176" height="130" rx="3" fill="#1B222B" stroke="#D7B282"/>
+        <text x="1104" y="319" fill="#EDF0F3" font-size="26" font-weight="600">검증</text>
+        <text x="1104" y="354" fill="#BBC6D1" font-size="19">형식 · 원문 대조</text>
+        <text x="1104" y="384" fill="#8896A5" font-size="17">실패도 기록</text>
+      </g>
+      <g fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+        <path d="M278 343 H313 M516 343 H551 M754 343 H789 M968 343 H1003" fill="none"/>
+        <polygon points="313,337 323,343 313,349" stroke="none"/>
+        <polygon points="551,337 561,343 551,349" stroke="none"/>
+        <polygon points="789,337 799,343 789,349" stroke="none"/>
+        <polygon points="1003,337 1013,343 1003,349" stroke="none"/>
+      </g>
+      <text x="88" y="463" fill="#BBC6D1" font-size="20">무엇을 찾았나? → 무엇을 전달했나? → 무엇을 생성했나?</text>
+    </g>
+    <text x="640" y="578" text-anchor="middle" fill="#EDF0F3" font-size="34" font-weight="700">관련 판례를 찾기 ≠ 근거에 맞게 설명하기</text>
+    <path d="M64 642 H1216" stroke="#53606E"/>
+    <text x="64" y="681" fill="#8896A5" font-size="15">구조 개념도 · 실제 UI 화면이 아님 · 성능 향상이나 법률 정확도를 보증하는 그림이 아님</text>
+  </g>
+</svg>

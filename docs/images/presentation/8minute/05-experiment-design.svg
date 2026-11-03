@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">같은 생성 모델에서 세 검색 조건을 비교한다</title>
+  <desc id="description">평가 코퍼스는 재산분할 판결 A, 관련 일반 법리 선례 B, 면접교섭 결정 C의 세 문서다. 세 질문을 현재 판례만, 키워드, 하이브리드 조건에서 각각 한 번 실행해 아홉 요청을 수집했다. 물리 기기가 아닌 시뮬레이터 파일럿이며 전문가 미검수다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">05 / 실제 판례 파일럿 설계</text>
+    <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">같은 생성 모델에서 세 검색 조건을 비교한다</text>
+    <text x="64" y="151" fill="#BBC6D1" font-size="20">평가 코퍼스는 3문서 / 3질문 × 3조건 × 1회 = 9개 요청</text>
+    <g id="corpus" text-anchor="middle">
+      <rect x="64" y="190" width="352" height="112" rx="3" fill="#1B222B" stroke="#8ABFC6"/>
+      <text x="240" y="225" fill="#8ABFC6" font-size="24" font-weight="600">A · 재산분할</text>
+      <text x="240" y="257" fill="#EDF0F3" font-size="23">2024므16033, 16040</text>
+      <text x="240" y="286" fill="#BBC6D1" font-size="18">L1·L2의 현재 판례</text>
+      <rect x="464" y="190" width="352" height="112" rx="3" fill="#1B222B" stroke="#8ABFC6"/>
+      <text x="640" y="225" fill="#8ABFC6" font-size="24" font-weight="600">B · 일반 법리 선례</text>
+      <text x="640" y="257" fill="#EDF0F3" font-size="23">97므1486, 1493</text>
+      <text x="640" y="286" fill="#BBC6D1" font-size="18">L1·L2의 기대 참고</text>
+      <rect x="864" y="190" width="352" height="112" rx="3" fill="#1B222B" stroke="#D7B282"/>
+      <text x="1040" y="225" fill="#D7B282" font-size="24" font-weight="600">C · 면접교섭 이행명령</text>
+      <text x="1040" y="257" fill="#EDF0F3" font-size="23">2026으552</text>
+      <text x="1040" y="286" fill="#BBC6D1" font-size="18">L3의 현재 결정 · 기대 참고 없음</text>
+    </g>
+    <g id="comparison-matrix">
+      <rect x="64" y="336" width="796" height="220" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <path d="M64 390 H860 M64 445 H860 M64 500 H860 M328 336 V556" stroke="#53606E"/>
+      <text x="88" y="371" fill="#BBC6D1" font-size="21" font-weight="600">조건</text>
+      <text x="352" y="371" fill="#BBC6D1" font-size="21" font-weight="600">생성에 사용하는 근거</text>
+      <text x="88" y="425" fill="#EDF0F3" font-size="24">B0 · 현재 판례만</text>
+      <text x="352" y="425" fill="#EDF0F3" font-size="24">현재 판례 E0</text>
+      <text x="88" y="480" fill="#EDF0F3" font-size="24">B1 · 키워드</text>
+      <text x="352" y="480" fill="#EDF0F3" font-size="24">E0 + 키워드 참고</text>
+      <text x="88" y="535" fill="#8ABFC6" font-size="24">H · 하이브리드</text>
+      <text x="352" y="535" fill="#8ABFC6" font-size="24">E0 + 키워드·E5 참고</text>
+      <text x="1040" y="413" text-anchor="middle" fill="#EDF0F3" font-size="64" font-weight="700">9</text>
+      <text x="1040" y="454" text-anchor="middle" fill="#BBC6D1" font-size="24">실제 요청·출력</text>
+      <text x="1040" y="495" text-anchor="middle" fill="#D7B282" font-size="19">독립 질문 9개가 아님</text>
+      <text x="1040" y="528" text-anchor="middle" fill="#8896A5" font-size="17">반복·무작위화·seed 고정 없음</text>
+    </g>
+    <text x="64" y="600" fill="#BBC6D1" font-size="19">생성 고정: Llama-3.2-1B-Instruct Q4_K_M / H 임베딩: multilingual-e5-base Q8_0</text>
+    <path d="M64 642 H1216" stroke="#53606E"/>
+    <text x="64" y="681" fill="#8896A5" font-size="15">자료: 고정 manifest·experiment.json / iPhone 16 Simulator, iOS 26.1 / 문맥 512토큰 / 전문가 미검수</text>
+  </g>
+</svg>

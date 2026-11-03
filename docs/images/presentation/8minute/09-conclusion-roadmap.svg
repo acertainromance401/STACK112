@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">완료한 것과 남은 검증을 구분한다</title>
+  <desc id="description">현재 기여는 원문, 실제 발췌, 출력, 실패를 연결한 로컬 연구 경로 구현과 파일럿 수집이다. 세 문서와 세 질문을 조건별 한 번씩 실행한 결과로 하이브리드 우월성, 법률 정확도, 학습 효과, 실기기 효율은 미확정이다. 참고 거절, 근거 보존, 출력 안정화, 독립 검수 및 실기기 평가는 후속 작업이다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">09 / 결론과 후속 검증</text>
+    <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">완료한 것과 남은 검증을 구분한다</text>
+    <text x="64" y="151" fill="#BBC6D1" font-size="20">검색을 넘어 실제 근거 전달과 생성 결과까지 관찰하는 연구 경로</text>
+    <g id="contribution">
+      <rect x="64" y="194" width="1152" height="110" rx="3" fill="#1B222B" stroke="#8ABFC6"/>
+      <text x="92" y="248" fill="#8ABFC6" font-size="27" font-weight="600">현재 기여</text>
+      <text x="300" y="238" fill="#EDF0F3" font-size="26">원문 · 실제 발췌 · 원시 출력 · 실패를 연결한 로컬 연구 경로</text>
+      <text x="300" y="279" fill="#BBC6D1" font-size="20">실제 모델 연동과 기록 수집 / 기존 카드의 복구 결과와 연구 출력을 구분</text>
+    </g>
+    <g id="limitations">
+      <rect x="64" y="330" width="1152" height="110" rx="3" fill="#1B222B" stroke="#D7B282"/>
+      <text x="92" y="384" fill="#D7B282" font-size="27" font-weight="600">검증 한계</text>
+      <text x="300" y="374" fill="#EDF0F3" font-size="26">3문서 · 3질문 · 조건별 1회 / 독립 법률 전문가 검수 없음</text>
+      <text x="300" y="415" fill="#D7B282" font-size="20">하이브리드 우월성 · 법률 정확도 · 학습 효과 · 실기기 효율은 미확정</text>
+    </g>
+    <text x="64" y="489" fill="#BBC6D1" font-size="23" font-weight="600">다음 단계 / 아래 항목은 모두 후속 개선·검증 과제</text>
+    <g id="future-work" text-anchor="middle">
+      <rect x="64" y="522" width="250" height="82" rx="3" fill="none" stroke="#D7B282" stroke-dasharray="6 4"/>
+      <text x="189" y="572" fill="#EDF0F3" font-size="26">참고 거절</text>
+      <rect x="364" y="522" width="250" height="82" rx="3" fill="none" stroke="#D7B282" stroke-dasharray="6 4"/>
+      <text x="489" y="572" fill="#EDF0F3" font-size="26">근거 보존</text>
+      <rect x="664" y="522" width="250" height="82" rx="3" fill="none" stroke="#D7B282" stroke-dasharray="6 4"/>
+      <text x="789" y="572" fill="#EDF0F3" font-size="26">출력 안정화</text>
+      <rect x="964" y="522" width="252" height="82" rx="3" fill="none" stroke="#D7B282" stroke-dasharray="6 4"/>
+      <text x="1090" y="572" fill="#EDF0F3" font-size="24">독립 검수·실기기</text>
+    </g>
+    <g fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M314 563 H350 M614 563 H650 M914 563 H950" fill="none" stroke-dasharray="4 4"/>
+      <polygon points="350,557 360,563 350,569" stroke="none"/>
+      <polygon points="650,557 660,563 650,569" stroke="none"/>
+      <polygon points="950,557 960,563 950,569" stroke="none"/>
+    </g>
+    <path d="M64 642 H1216" stroke="#53606E"/>
+    <text x="64" y="681" fill="#8896A5" font-size="15">구현·파일럿 수집 완료와 연구 효과 입증은 다름 / 개선 전 원자료를 보존하고 별도 개발셋·고정 테스트셋으로 재평가</text>
+  </g>
+</svg>

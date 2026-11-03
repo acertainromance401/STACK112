@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">검색과 발췌와 생성을 나누어 실패를 해석한다</title>
+  <desc id="description">검색은 비관련 참고를 거절하지 못했다. 자동 청킹은 최대 320자와 64자 겹침으로 존재하지만 이번에 전달된 근거는 각각 96자였고 L3 금지 결론이 빠졌다. 생성은 요구 인용 형식을 지키지 못했다. 관측된 문제이지 각 요인의 인과 효과를 분리해 입증한 것은 아니다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">08 / 실패 해석</text>
+    <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">청킹은 자동화되어 있다. 실제 발췌는 별도 문제다.</text>
+    <text x="64" y="151" fill="#BBC6D1" font-size="20">관측한 문제를 단계별로 구분하고, 수정 효과는 별도 실험으로 확인해야 한다.</text>
+    <g id="observed-failure-stages">
+      <rect x="64" y="200" width="352" height="310" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <text x="92" y="246" fill="#8ABFC6" font-size="28" font-weight="600">01 · 검색</text>
+      <text x="92" y="297" fill="#EDF0F3" font-size="25">참고 없음 질문에도</text>
+      <text x="92" y="335" fill="#EDF0F3" font-size="25">비관련 판례 채택</text>
+      <path d="M92 365 H388" stroke="#53606E"/>
+      <text x="92" y="406" fill="#BBC6D1" font-size="20">L3: 면접교섭 질문</text>
+      <text x="92" y="441" fill="#D7B282" font-size="20">실제 참고: 재산분할 판례</text>
+      <text x="92" y="482" fill="#8896A5" font-size="18">과제: 최종 채택·거절 검증</text>
+      <rect x="464" y="200" width="352" height="310" rx="3" fill="#1B222B" stroke="#D7B282"/>
+      <text x="492" y="246" fill="#D7B282" font-size="28" font-weight="600">02 · 발췌</text>
+      <text x="492" y="289" fill="#BBC6D1" font-size="20">자동 청크: 최대 320자</text>
+      <text x="492" y="322" fill="#BBC6D1" font-size="20">겹침 64자 → 실제 발췌 96자</text>
+      <path d="M492 350 H788" stroke="#53606E"/>
+      <text x="492" y="393" fill="#EDF0F3" font-size="24">“…다른 내용을 추가하는”</text>
+      <text x="492" y="435" fill="#D7B282" font-size="20">L3 입력에 금지 결론이 없음</text>
+      <text x="492" y="482" fill="#8896A5" font-size="18">과제: 조건·예외·결론 보존</text>
+      <rect x="864" y="200" width="352" height="310" rx="3" fill="#1B222B" stroke="#53606E"/>
+      <text x="892" y="246" fill="#8ABFC6" font-size="28" font-weight="600">03 · 생성</text>
+      <text x="892" y="297" fill="#EDF0F3" font-size="25">요구 인용 형식 미준수</text>
+      <text x="892" y="335" fill="#EDF0F3" font-size="25">질문·원문과 어긋난 설명</text>
+      <path d="M892 365 H1188" stroke="#53606E"/>
+      <text x="892" y="406" fill="#BBC6D1" font-size="20">원시 출력과 실패 사유 기록</text>
+      <text x="892" y="441" fill="#D7B282" font-size="20">기본 근거 검사 평균: 미측정</text>
+      <text x="892" y="482" fill="#8896A5" font-size="18">과제: 형식 안정화·내용 검수</text>
+    </g>
+    <g fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M416 340 H451 M816 340 H851" fill="none"/>
+      <polygon points="451,334 461,340 451,346" stroke="none"/>
+      <polygon points="851,334 861,340 851,346" stroke="none"/>
+    </g>
+    <text x="640" y="573" text-anchor="middle" fill="#EDF0F3" font-size="27" font-weight="600">관측된 실패 경로 ≠ 각 요인의 인과 효과 입증</text>
+    <text x="640" y="611" text-anchor="middle" fill="#D7B282" font-size="20">Llama 한국어 능력 하나로 원인을 단정하지 않음 / 위 개선 과제는 아직 후속 작업</text>
+    <path d="M64 642 H1216" stroke="#53606E"/>
+    <text x="64" y="681" fill="#8896A5" font-size="15">자료: 실제 전달 E0·실패 기록·앱 청킹/발췌 코드 / 96자는 이번 실행에서 관측된 근거별 전달 길이</text>
+  </g>
+</svg>
