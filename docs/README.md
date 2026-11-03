@@ -41,6 +41,8 @@
 - [개선 계획 및 RAG 구축 상태 점검 (2026-11-02)](project/Improvement_Plan_and_RAG_Audit_2026-11-02.md): 개선 우선순위, 완료 기준, RAG 호출 경로와 검증 한계
 - [논문용 온디바이스 RAG 평가 프로토콜](research/OnDevice_RAG_Protocol.md): 별도 근거 분석·OX 초안, 5가지 지표, 평가셋 형식과 실기기 실험 절차
 - [연구 논리 흐름과 발표용 이미지](research/STACK112_Research_Narrative.md): 연구 문제 → 이론 → 방법론 → 실험 → 검증 → 결론, 사용자 로드맵과 RAG 설명 이미지
+- [실행 로그 기반 성능·안정성 분석](research/Execution_Log_Performance_Analysis_2026-11-03.md): pandas 로그·그래프, 제안·비교 모델, 14절 실제 판례 3건·9개 요청의 검색·출력 품질 결과
+- [첫 실제 판례 평가 파일럿](research/datasets/sc-2024me16033-v1/README.md): 2024므16033, 16040 원문, 앱 가져오기 파일, 질문 10개와 검수 전 정답 초안
 - 프로젝트 기획/로드맵: `docs/project/`
 - 역할별 실행 가이드: `docs/roles/`
 - 협업 운영 가이드: `docs/governance/DISCUSSIONS_AND_WIKI.md`

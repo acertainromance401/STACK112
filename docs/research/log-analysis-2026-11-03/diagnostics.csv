@@ -1,0 +1,42 @@
+log,line,kind,message
+ondevice-rag-tests.log,1842,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+ondevice-rag-tests.log,1847,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+ondevice-rag-tests.log,2197,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+ondevice-rag-tests.log,2198,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+ondevice-rag-tests.log,2199,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+ondevice-rag-tests.log,2200,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+ondevice-rag-tests.log,2201,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+ondevice-rag-tests.log,2202,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-final.log,1393,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-research-tests-final.log,1397,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-research-tests-final.log,1748,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-final.log,1749,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-final.log,1750,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-final.log,1751,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-final.log,1752,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-final.log,1753,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-research-tests-regressions.log,748,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-e5-tests.log,907,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-e5-tests.log,1414,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-tests.log,1798,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-tests.log,2185,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-focused.log,477,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-focused.log,902,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-focused.log,1334,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-base-tests.log,831,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-e5-base-tests.log,1248,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-base-tests.log,1787,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-e5-base-tests.log,2230,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-real-e2e.log,718,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-real-e2e.log,995,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-real-e2e.log,1808,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-real-e2e.log,1985,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-real-e2e.log,1986,double_bos_warning,check_double_bos_eos: Added a BOS token to the prompt as specified by the model but the prompt also starts with a BOS token. So now the final prompt starts with 2 BOS tokens. Are you sure this is what you want?
+rag-pinned-final-tests.log,699,gpu_offload,load_tensors: offloaded 0/17 layers to GPU
+rag-pinned-final-tests.log,715,xctest_interleaved_progress,Matched active AISYSAppTests.AISYSAppTests testSaveWrongQuizRecordReturnsId; original: Test Case '-[A.ISYSAppTests.AISYSAppTests testSaveWrongQuizRecordReturnsId]' passed (0.012 seconds).
+rag-pinned-final-tests.log,1128,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-pinned-final-tests.log,1655,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-pinned-final-tests.log,2098,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-ui-metadata-final.log,478,gpu_offload,load_tensors: offloaded 0/13 layers to GPU
+rag-ui-metadata-final.log,606,xctest_interleaved_prefix,llama_model_loader: - kv   2:    Test Case '-[AISYSAppTests.RAGResearchTests testDatasetValidationRejectsDuplicateIDsAndTargetLeakage]' passed (0.033 seconds).
+rag-ui-metadata-final.log,615,xctest_interleaved_prefix,llama_model_loader: - kv  10:        Test Case '-[AISYSAppTests.RAGResearchTests testEvaluationExportsAllModesAndKeepsSimulatorPerformanceUnmeasured]' started.

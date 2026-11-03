@@ -1,0 +1,4 @@
+mode,samples,mode_matches,output_present,output_success,exact_reference_sets,irrelevant_document_selections,irrelevant_evidence_selections,ai_review_correct,valid_and_ai_correct
+currentOnly,3,3,3,0,1,0,0,0.0,0.0
+keyword,3,3,3,0,0,4,1,0.0,0.0
+hybrid,3,3,3,0,0,4,1,0.0,0.0

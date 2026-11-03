@@ -1,0 +1,10 @@
+query_id,mode,output_sha256,semantic_rating,evidence_rating,reason,reviewer,independent_expert
+L1,currentOnly,c9cef2683105ac86cdd319638f19a86dd1d6407e9eb0804b4776ea65a17bf69c,partial,unsupported,"기여도와 당사자 사정을 언급하지만 쌍방의 일체 사정과 액수·방법 기준을 완결하지 못하고 원문에 없는 소유권 행사 시간을 추가함. 전달 E0에는 기준 문장의 후반이 없음.",Copilot_source_bounded_review,false
+L1,keyword,f654542c1ad4d67b8a37348fa6a02a9c3177b4cb95f4f7cf4dc86cca7e8c0ba6,incorrect,unsupported,"필수 기여도 기준을 설명하지 못하고 원문에 없는 분당분할·공수분할을 열거함. 전달된 참고 발췌도 공통 기준 문장까지 도달하지 않음.",Copilot_source_bounded_review,false
+L1,hybrid,4e3e404ce22eee1b1914ee4c2442f32876f91766a49d4e20c3fbacd2c39b47f1,partial,partially_supported,"기여도와 당사자 사정의 참작은 언급하나 분할 액수·방법에 관한 공통 기준을 완결하지 못함. 같은 내용 반복과 pháp원이라는 언어 혼입이 있고 인용이 없음.",Copilot_source_bounded_review,false
+L2,currentOnly,eda3425e2abbb710696e3ec60ed7a6dac4a2f36cc96561bf3d21cf339d576f06,incorrect,unsupported,"두 판례의 공통 기준 대신 소유권 분할에 관한 근거 없는 설명을 생성하고 기여도·쌍방 사정 기준을 누락함. E0에도 해당 기준이 없음.",Copilot_source_bounded_review,false
+L2,keyword,1edcb1ec90d777e079d13ca0481695d398bcf63a48b565d3fbbe9f0be0045e49,incorrect,unsupported,"특유재산과 일상가사 채무를 혼동하고 채무 예외의 범위를 뒤집는 설명을 함. 요청한 공통 기준은 답하지 못함.",Copilot_source_bounded_review,false
+L2,hybrid,4491a6bf54e992dcacc5b131c065d09c21f68e0daf83f630c6be0e438461ea1c,incorrect,unsupported,"질문을 반복하고 공보일 1998.3.15를 선고일처럼 제시하며 실제로 제공하지 않은 E3 표기를 생성함. 공통 법리 설명은 없음.",Copilot_source_bounded_review,false
+L3,currentOnly,92c4b0cf1cad12c75d92d673145f60908eff6c29492655c4c9c1782c90379424,incorrect,unsupported,"새 조건을 추가할 수 있는 경우에만 적용된다고 하여 전체 원문의 허용 불가 취지와 반대임. 전달 E0는 제목 도중에서 끝나 금지 법리를 포함하지 않음.",Copilot_source_bounded_review,false
+L3,keyword,68924d206593e960ee5d759a182e0ab722efe1430d58ba62c6e583d554e8e369,incorrect,unsupported,"첫 문장의 불가 방향은 맞지만 시스템 지시인 판례 혼합 금지를 법률 원칙인 것처럼 정의하고 근거 없는 설명·날짜를 덧붙임. 정답 설명으로 승인할 수 없음.",Copilot_source_bounded_review,false
+L3,hybrid,9f6829a6eca8adcc9b5c95028d044a00f339429e018af0dc8ede45be47ab0887,incorrect,off_topic,"면접교섭 이행명령 질문에 재산분할 판례의 문장을 사용함. 시스템의 판례 혼합 금지 지시를 법률 원칙처럼 말하며 현재 결정의 쟁점에 답하지 않음.",Copilot_source_bounded_review,false

@@ -58,6 +58,7 @@ targets:
     hostApplication: AISYSApp
     sources:
       - AISYSAppTests
+      - path: ../../docs/research/datasets/family-law-retrieval-v1/family_law_retrieval_v1.json
     dependencies:
       - target: AISYSApp
     settings:

@@ -1,0 +1,4 @@
+timing_group,tests,seconds,share_of_case_time
+Hosted corpus synchronization,1,4.627000,0.191769
+Native E5 checks,3,15.276000,0.633123
+Other functional checks,32,4.225000,0.175108

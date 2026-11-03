@@ -1,0 +1,78 @@
+{
+  "scope": "Simulator XCTest wall time; not physical-device performance",
+  "analysis_schema_version": 1,
+  "analysis_script_sha256": "8244fae9ee9f6162908ce2659f58b3989ed3325ac641e2368d449483b0de98be",
+  "source_commit_at_analysis": "d4104e74f6bae3812e8796092933df743b264c83",
+  "versions": {
+    "python": "3.12.2",
+    "pandas": "2.3.0",
+    "matplotlib": "3.9.2"
+  },
+  "log_count": 11,
+  "completed_case_observations": 236,
+  "unique_test_methods": 39,
+  "current_test_method_count": 38,
+  "historical_only_test_method_count": 1,
+  "current_test_latest_status": {
+    "passed": 38
+  },
+  "current_test_source_sha256": {
+    "code/ios/AISYSAppTests/AISYSAppTests.swift": "d61a9516d3a987bf8bc79462447f99c90562c1d8ea42a2914737372cc5add8b5",
+    "code/ios/AISYSAppTests/GGUFEmbeddingTests.swift": "2a8feff15d8e96a39a1d7aa6243ca7db4c2a2b229f681d1a8cb45d5bed9c8614",
+    "code/ios/AISYSAppTests/RAGResearchTests.swift": "6b93db6179fd646f2a03ddf74089ae8f066e1cf58f2d3756bad4ec291d0f9d2d"
+  },
+  "passed_case_observations": 232,
+  "failed_case_observations": 4,
+  "assertion_failure_records": 8,
+  "latest_observed_status": {
+    "passed": 39
+  },
+  "final_case_seconds_sum": 24.128000000000004,
+  "final_group_timings": [
+    {
+      "timing_group": "Hosted corpus synchronization",
+      "tests": 1,
+      "seconds": 4.627,
+      "share_of_case_time": 0.191768899204244
+    },
+    {
+      "timing_group": "Native E5 checks",
+      "tests": 3,
+      "seconds": 15.276,
+      "share_of_case_time": 0.6331233421750662
+    },
+    {
+      "timing_group": "Other functional checks",
+      "tests": 32,
+      "seconds": 4.2250000000000005,
+      "share_of_case_time": 0.17510775862068964
+    }
+  ],
+  "corrected_native_checks": [
+    {
+      "test_name": "testActualGGUFHybridRetrievalHasVerifiableModelIdentity",
+      "observations": 3,
+      "min_seconds": 3.637,
+      "max_seconds": 5.689
+    },
+    {
+      "test_name": "testOversizedEmbeddingDoesNotSilentlyTruncateSource",
+      "observations": 2,
+      "min_seconds": 3.414,
+      "max_seconds": 4.163
+    },
+    {
+      "test_name": "testRealKoreanEmbeddingsRankParaphraseAboveUnrelatedTextAndReuseExactVectors",
+      "observations": 2,
+      "min_seconds": 6.728,
+      "max_seconds": 8.074
+    }
+  ],
+  "rag_e2e_case_seconds": 97.987,
+  "rag_e2e_observations": 1,
+  "raw_token_performance_line_count": 0,
+  "structured_measurement_line_count": 0,
+  "physical_device_log_count": 0,
+  "double_bos_warning_records": 14,
+  "buffer_unit": "MiB; allocation declarations, not process footprint"
+}

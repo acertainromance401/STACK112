@@ -1,0 +1,3 @@
+Test Case '-[AISYSAppTests.LegalCasePilotTests testRealThreeJudgmentRetrievalAndGenerationPilot]' started.
+Test Case '-[AISYSAppTests.LegalCasePilotTests testRealThreeJudgmentRetrievalAndGenerationPilot]' passed (1219.988 seconds).
+** TEST SUCCEEDED **

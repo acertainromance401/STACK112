@@ -1,0 +1,12 @@
+log,label,started_at_local,environment,outcome,tests,passed_tests,failed_tests,skipped_tests,assertion_failures,case_seconds_sum,reported_case_seconds,suite_elapsed_seconds,observer_elapsed_seconds,observer_minus_suite_seconds,summary_line,observer_line,native_perf_lines,structured_measurement_lines
+ondevice-rag-tests.log,Legacy runtime,2026-11-02 17:20:26.031,iOS Simulator,passed,14,14,0,0,0,236.058000,236.056000,236.072000,371.297000,135.225000,2229,2230,0,0
+ondevice-rag-root-tests.log,Root synchronization,2026-11-02 17:27:11.605,iOS Simulator,passed,2,2,0,0,0,3.496000,3.496000,3.502000,129.499000,125.997000,615,616,0,0
+rag-research-tests.log,Research integration,2026-11-02 18:29:24.726,iOS Simulator,passed,27,27,0,0,0,7.352000,7.352000,7.384000,218.168000,210.784000,823,824,0,0
+rag-research-tests-final.log,Research + native generation,2026-11-02 18:35:04.208,iOS Simulator,passed,30,30,0,0,0,297.176000,297.177000,297.200000,380.183000,82.983000,1827,1828,0,0
+rag-research-tests-regressions.log,Research regressions,2026-11-02 18:44:12.633,iOS Simulator,passed,31,31,0,0,0,8.347000,8.349000,8.379000,68.261000,59.882000,999,1000,0,0
+rag-e5-tests.log,Initial E5 integration,2026-11-02 18:57:51.653,iOS Simulator,failed,36,33,3,0,7,13.075000,13.073000,13.115000,145.704000,132.589000,2321,2322,0,0
+rag-e5-focused.log,Small conversion check,2026-11-02 19:02:18.701,iOS Simulator,failed,6,5,1,0,1,6.302000,6.303000,6.314000,116.717000,110.403000,1455,1456,0,0
+rag-e5-base-tests.log,E5-base regression,2026-11-02 19:09:14.139,iOS Simulator,passed,36,36,0,0,0,24.060000,24.060000,24.105000,107.544000,83.439000,2399,2400,0,0
+rag-real-e2e.log,Native RAG E2E,2026-11-02 19:12:32.068,iOS Simulator,passed,1,1,0,0,0,97.987000,97.987000,97.992000,190.532000,92.540000,1997,1998,0,0
+rag-pinned-final-tests.log,Pinned regression,2026-11-02 19:16:59.287,iOS Simulator,passed,36,36,0,0,0,24.128000,24.129000,24.244000,112.550000,88.306000,2267,2268,0,0
+rag-ui-metadata-final.log,Final research regression,2026-11-02 19:21:52.719,iOS Simulator,passed,17,17,0,0,0,8.949000,8.949000,9.169000,102.829000,93.660000,1170,1171,0,0

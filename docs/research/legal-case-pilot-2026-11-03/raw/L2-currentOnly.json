@@ -1,0 +1,92 @@
+{
+  "outputSHA256" : "eda3425e2abbb710696e3ec60ed7a6dac4a2f36cc96561bf3d21cf339d576f06",
+  "outputSuccess" : false,
+  "run" : {
+    "claims" : [
+
+    ],
+    "corpusFingerprints" : {
+      "sc-2024me16033-16040" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+      "sc-2026eu552" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+      "sc-97me1486-1493" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8"
+    },
+    "createdAt" : "2026-11-03T07:28:38Z",
+    "deviceIdentifier" : "arm64",
+    "environment" : "simulator_not_device_evidence",
+    "evidence" : [
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 2635,
+          "id" : "sc-2024me16033-16040:3f315774e7de:2539-2817",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 2539,
+          "text" : "에게 그대로 귀속시키되, 그로 인해 발생되는 원고의 부족분을 약간 상회하는 금액인 143억 원을 피고가 원고에게 금전으로 지급하도록 재산분할을 하였다.\n3. 대법원의 판단\n",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "id" : "E0"
+      }
+    ],
+    "failureReason" : "생성 문장은 [E0] 내용 형식과 유효한 근거 ID가 필요합니다.",
+    "generation" : {
+      "attempts" : 1,
+      "engine" : "llama.cpp",
+      "evidence" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 2635,
+            "id" : "sc-2024me16033-16040:3f315774e7de:2539-2817",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 2539,
+            "text" : "에게 그대로 귀속시키되, 그로 인해 발생되는 원고의 부족분을 약간 상회하는 금액인 143억 원을 피고가 원고에게 금전으로 지급하도록 재산분할을 하였다.\n3. 대법원의 판단\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "id" : "E0"
+        }
+      ],
+      "inferenceMS" : 89635.69137500053,
+      "model" : "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "output" : "3. 대법원의 판단은 971486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라.\n\n1.  1. 소유권의 분할은 재산분할에 대한 가장 fundamental한 판례이다. 2. 재산분할의 기본 판단 기준은 재산의 상당한 분할을 원고에 대한 지급금액과 대조적으로 소유권의 분할을 원고에 대한 지급금액으로 determined하는 것이다. 3. 재산분할의 기준은 재산의 상",
+      "promptCharacters" : 384
+    },
+    "id" : "D37E206D-0C05-4996-A094-2CB0A14099A5",
+    "memory" : {
+      "afterMB" : 2099.5020141601562,
+      "beforeMB" : 2099.6895141601562,
+      "intervalMS" : 50,
+      "sampleCount" : 1663,
+      "sampledPeakMB" : 2100.0020141601562
+    },
+    "modelPreparationMS" : 0.004041667125420645,
+    "modelWasReady" : true,
+    "osVersion" : "Version 26.1 (Build 23B86)",
+    "question" : "이 판결이 인용한 97므1486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라.",
+    "retrievalMS" : 0.17495833344582934,
+    "search" : {
+      "chunkCount" : 0,
+      "effectiveMode" : "currentOnly",
+      "hits" : [
+
+      ],
+      "requestedMode" : "currentOnly",
+      "semanticModelIdentity" : {
+
+      },
+      "semanticScoredChunkCount" : 0,
+      "warnings" : [
+
+      ]
+    },
+    "targetDocumentID" : "sc-2024me16033-16040",
+    "targetFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+    "task" : "analysis",
+    "totalMS" : 89654.29066666547
+  }
+}

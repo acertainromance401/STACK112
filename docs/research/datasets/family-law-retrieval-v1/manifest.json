@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "stack112-family-law-retrieval-v1",
+  "kind": "real",
+  "provenance": "사용자가 제공한 공개 비실명 재판문서 3건. 2024므16033의 공식 URL은 확인했으며 나머지 두 전문은 사용자 제공 전사를 보존한 것으로 개별 공식 URL을 아직 대조하지 않았다. 독립 법률 전문가 검수와 모집단 대표성은 확보하지 않았다.",
+  "annotator": "사용자 제시 관련/비관련 관계를 바탕으로 Copilot이 질문별 초안을 작성. 모델 실행 전 고정, 독립 전문가 미검수.",
+  "sources": [
+    {
+      "file": "../sc-2024me16033-v1/source.txt",
+      "document": {
+        "id": "sc-2024me16033-16040",
+        "caseNumber": "2024므16033, 16040",
+        "title": "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법",
+        "subject": "가사·이혼·재산분할",
+        "sourceKind": "user_provided_judgment",
+        "sourceURL": "https://lx.scourt.go.kr/search/detail/precedent/0/2026000041679"
+      }
+    },
+    {
+      "file": "reference-97me1486.txt",
+      "document": {
+        "id": "sc-97me1486-1493",
+        "caseNumber": "97므1486, 1493",
+        "title": "이혼및위자료등·이혼등",
+        "subject": "가사·이혼·재산분할",
+        "sourceKind": "user_provided_judgment"
+      }
+    },
+    {
+      "file": "distractor-2026eu552.txt",
+      "document": {
+        "id": "sc-2026eu552",
+        "caseNumber": "2026으552",
+        "title": "이행명령",
+        "subject": "가사·면접교섭·이행명령",
+        "sourceKind": "user_provided_judgment"
+      }
+    }
+  ],
+  "queries": [
+    {
+      "id": "L1",
+      "targetDocumentID": "sc-2024me16033-16040",
+      "question": "재산분할의 액수와 방법을 정할 때 재산 형성 기여도와 당사자들의 사정을 어떻게 참작해야 하는가?",
+      "relevantDocumentIDs": ["sc-97me1486-1493"]
+    },
+    {
+      "id": "L2",
+      "targetDocumentID": "sc-2024me16033-16040",
+      "question": "이 판결이 인용한 97므1486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라.",
+      "relevantDocumentIDs": ["sc-97me1486-1493"]
+    },
+    {
+      "id": "L3",
+      "targetDocumentID": "sc-2026eu552",
+      "question": "면접교섭 허용 의무에 대한 이행명령으로 확정된 판결에 없던 새로운 조건을 추가할 수 있는가?",
+      "relevantDocumentIDs": []
+    }
+  ],
+  "answerDrafts": [
+    {
+      "queryID": "L1",
+      "requiredClaims": ["재산 형성 기여도를 고려한다.", "당사자 쌍방의 일체의 사정을 참작하여 분할 액수와 방법을 정한다."],
+      "forbiddenClaims": ["면접교섭 이행명령 법리가 재산분할 방법의 직접 근거다."],
+      "sourceQuotes": [
+        {"documentID": "sc-2024me16033-16040", "quote": "그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 한다."},
+        {"documentID": "sc-97me1486-1493", "quote": "그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바"}
+      ]
+    },
+    {
+      "queryID": "L2",
+      "requiredClaims": ["두 판례 모두 재산 형성 기여도 등 쌍방의 사정을 고려하여 분할 액수와 방법을 정한다는 기준을 제시한다."],
+      "forbiddenClaims": ["97므1486에서 비상장주식의 대상분할 원칙과 형평상 혼용을 직접 판시했다."],
+      "sourceQuotes": [
+        {"documentID": "sc-2024me16033-16040", "quote": "그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 한다"},
+        {"documentID": "sc-97me1486-1493", "quote": "그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바"}
+      ]
+    },
+    {
+      "queryID": "L3",
+      "requiredClaims": ["이행명령으로 기존에 확정된 의무를 실질적으로 변경하거나 새로운 의무를 창설해서는 안 된다.", "이 사건에서 면접교섭을 실질적으로 제한하는 새 조건의 부가는 허용되지 않는다."],
+      "forbiddenClaims": ["자녀 복리를 내세우면 이행명령으로 어떤 새 조건도 부가할 수 있다.", "재산분할 판례가 면접교섭 제한의 직접 근거다."],
+      "sourceQuotes": [
+        {"documentID": "sc-2026eu552", "quote": "이행명령으로 판결 등에 의하여 확정되어 있는 의무의 내용을 변경하거나 의무자에 대하여 새로운 의무를 창설할 수 있는 것은 아니다."},
+        {"documentID": "sc-2026eu552", "quote": "따라서 이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다."}
+      ]
+    }
+  ]
+}

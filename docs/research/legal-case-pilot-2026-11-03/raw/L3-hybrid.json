@@ -1,0 +1,214 @@
+{
+  "outputSHA256" : "9f6829a6eca8adcc9b5c95028d044a00f339429e018af0dc8ede45be47ab0887",
+  "outputSuccess" : false,
+  "run" : {
+    "claims" : [
+
+    ],
+    "corpusFingerprints" : {
+      "sc-2024me16033-16040" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+      "sc-2026eu552" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+      "sc-97me1486-1493" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8"
+    },
+    "createdAt" : "2026-11-03T07:38:49Z",
+    "deviceIdentifier" : "arm64",
+    "environment" : "simulator_not_device_evidence",
+    "evidence" : [
+      {
+        "chunk" : {
+          "caseNumber" : "2026으552",
+          "documentFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+          "documentID" : "sc-2026eu552",
+          "endUTF16" : 96,
+          "id" : "sc-2026eu552:2d2581cb0f3b:0-320",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 0,
+          "text" : "대법원 2026. 8. 24. 자 2026으552 결정\n【이행명령】〈면접교섭 허용 의무 이행명령을 하면서 면접교섭 조건에 관하여 이혼 사건 판결 주문과 다른 내용을 추가하는",
+          "title" : "이행명령"
+        },
+        "id" : "E0"
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 3771,
+          "id" : "sc-2024me16033-16040:3f315774e7de:3675-3987",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 3675,
+          "text" : "만을 고집할 것이 아니라 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려하여야 한다.\n나. 앞서 본 사실관계와 기록에 의하여 알 수 있는 아래와 같",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "id" : "E1"
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 5663,
+          "id" : "sc-2024me16033-16040:3f315774e7de:5567-5786",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 5567,
+          "text" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "id" : "E2"
+      }
+    ],
+    "failureReason" : "생성 문장은 [E0] 내용 형식과 유효한 근거 ID가 필요합니다.",
+    "generation" : {
+      "attempts" : 1,
+      "engine" : "llama.cpp",
+      "evidence" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2026으552",
+            "documentFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+            "documentID" : "sc-2026eu552",
+            "endUTF16" : 96,
+            "id" : "sc-2026eu552:2d2581cb0f3b:0-320",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 2026. 8. 24. 자 2026으552 결정\n【이행명령】〈면접교섭 허용 의무 이행명령을 하면서 면접교섭 조건에 관하여 이혼 사건 판결 주문과 다른 내용을 추가하는",
+            "title" : "이행명령"
+          },
+          "id" : "E0"
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 3771,
+            "id" : "sc-2024me16033-16040:3f315774e7de:3675-3987",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 3675,
+            "text" : "만을 고집할 것이 아니라 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려하여야 한다.\n나. 앞서 본 사실관계와 기록에 의하여 알 수 있는 아래와 같",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "id" : "E1"
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 5663,
+            "id" : "sc-2024me16033-16040:3f315774e7de:5567-5786",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 5567,
+            "text" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "id" : "E2"
+        }
+      ],
+      "inferenceMS" : 111958.49699999962,
+      "model" : "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "output" : "판례 혼합 금지에 대한 제안은 '원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유이다'로, 판례 혼합 금지의 원칙에 따라 원심의 판단은 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다.",
+      "promptCharacters" : 618
+    },
+    "id" : "F6D9A440-0D05-4385-B929-DCA34A09B05D",
+    "memory" : {
+      "afterMB" : 2100.2988891601562,
+      "beforeMB" : 2100.4395141601562,
+      "intervalMS" : 50,
+      "sampleCount" : 2974,
+      "sampledPeakMB" : 2100.7988891601562
+    },
+    "modelPreparationMS" : 0.0036250003176974133,
+    "modelWasReady" : true,
+    "osVersion" : "Version 26.1 (Build 23B86)",
+    "question" : "면접교섭 허용 의무에 대한 이행명령으로 확정된 판결에 없던 새로운 조건을 추가할 수 있는가?",
+    "retrievalMS" : 48777.42424999997,
+    "search" : {
+      "chunkCount" : 43,
+      "effectiveMode" : "hybrid",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 3987,
+            "id" : "sc-2024me16033-16040:3f315774e7de:3675-3987",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 3675,
+            "text" : "만을 고집할 것이 아니라 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려하여야 한다.\n나. 앞서 본 사실관계와 기록에 의하여 알 수 있는 아래와 같은 사정을 위 법리에 비추어 보면, 원심이 이 사건 주식에 관하여 오로지 대상분할 방식으로 재산분할을 명한 것은 당사자들의 형평을 현저히 해하는 방식으로 허용될 수 없다고 볼 여지가 있다.\n1) 원심은 주식회사 △△△ 비상장주식에 대하여는 당사자들의 분할 방법에 대한 합의를 존중하여 현물분할을 명하면서도 이 사건 주식을 포함한 나머지 부부 공동재산 전부에 대하여는 대상분할을 명하였다.",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 1,
+          "score" : 0.032266458495966696,
+          "semanticRank" : 3
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 5786,
+            "id" : "sc-2024me16033-16040:3f315774e7de:5567-5786",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 5567,
+            "text" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 다시 심리·판단하도록 원심법원에 환송하기로 하여, 관여 대법관의 일치된 의견으로 주문과 같이 판결한다.\n대법관 마용주(재판장), 천대엽, 서경환(주심), 신숙희\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 5,
+          "score" : 0.030536130536130537,
+          "semanticRank" : 6
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 205,
+            "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "keywordRank" : 6,
+          "score" : 0.028665028665028666,
+          "semanticRank" : 14
+        }
+      ],
+      "requestedMode" : "hybrid",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "17",
+        "vectorCacheMisses" : "27",
+        "warmBeforeSearch" : "true"
+      },
+      "semanticScoredChunkCount" : 43,
+      "warnings" : [
+
+      ]
+    },
+    "targetDocumentID" : "sc-2026eu552",
+    "targetFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+    "task" : "analysis",
+    "totalMS" : 160756.63287499992
+  }
+}

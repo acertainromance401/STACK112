@@ -1,0 +1,4 @@
+test_name,observations,min_seconds,max_seconds
+testActualGGUFHybridRetrievalHasVerifiableModelIdentity,3,3.637000,5.689000
+testOversizedEmbeddingDoesNotSilentlyTruncateSource,2,3.414000,4.163000
+testRealKoreanEmbeddingsRankParaphraseAboveUnrelatedTextAndReuseExactVectors,2,6.728000,8.074000

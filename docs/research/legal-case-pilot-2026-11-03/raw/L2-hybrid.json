@@ -1,0 +1,210 @@
+{
+  "outputSHA256" : "4491a6bf54e992dcacc5b131c065d09c21f68e0daf83f630c6be0e438461ea1c",
+  "outputSuccess" : false,
+  "run" : {
+    "claims" : [
+
+    ],
+    "corpusFingerprints" : {
+      "sc-2024me16033-16040" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+      "sc-2026eu552" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+      "sc-97me1486-1493" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8"
+    },
+    "createdAt" : "2026-11-03T07:32:57Z",
+    "deviceIdentifier" : "arm64",
+    "environment" : "simulator_not_device_evidence",
+    "evidence" : [
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 2635,
+          "id" : "sc-2024me16033-16040:3f315774e7de:2539-2817",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 2539,
+          "text" : "에게 그대로 귀속시키되, 그로 인해 발생되는 원고의 부족분을 약간 상회하는 금액인 143억 원을 피고가 원고에게 금전으로 지급하도록 재산분할을 하였다.\n3. 대법원의 판단\n",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "id" : "E0"
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 96,
+          "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 0,
+          "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "id" : "E1"
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 1970,
+          "id" : "sc-97me1486-1493:c5af08af5466:1874-2129",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 1874,
+          "text" : " 채무는 일상가사에 관한 것 이외에는 원칙으로 그 개인의 채무로서 청산의 대상이 되지 않으나 그것이 공동재산의 형성에 수반하여 부담한 채무인 경우에는 청산의 대상이 된다고 ",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "id" : "E2"
+      }
+    ],
+    "failureReason" : "생성 문장은 [E0] 내용 형식과 유효한 근거 ID가 필요합니다.",
+    "generation" : {
+      "attempts" : 1,
+      "engine" : "llama.cpp",
+      "evidence" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 2635,
+            "id" : "sc-2024me16033-16040:3f315774e7de:2539-2817",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 2539,
+            "text" : "에게 그대로 귀속시키되, 그로 인해 발생되는 원고의 부족분을 약간 상회하는 금액인 143억 원을 피고가 원고에게 금전으로 지급하도록 재산분할을 하였다.\n3. 대법원의 판단\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "id" : "E0"
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 96,
+            "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "id" : "E1"
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1970,
+            "id" : "sc-97me1486-1493:c5af08af5466:1874-2129",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1874,
+            "text" : " 채무는 일상가사에 관한 것 이외에는 원칙으로 그 개인의 채무로서 청산의 대상이 되지 않으나 그것이 공동재산의 형성에 수반하여 부담한 채무인 경우에는 청산의 대상이 된다고 ",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "id" : "E2"
+        }
+      ],
+      "inferenceMS" : 129452.16966666703,
+      "model" : "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "output" : "E0: 이 판결은 971486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라.\n\nE1: E0에서 971486 판례는 1493 판결에 따라 대법원 1998.2.13 선고를Given.\n\nE2: E1에서 971486 판례는 1493 판결에 따라 대법원 1998.3.15 선고가 Given.\n\nE3: E2에서 E1의 내용은 \"일방의 특유재산이 채",
+      "promptCharacters" : 616
+    },
+    "id" : "D48DB07A-21DC-493F-9559-99B5F32B88E8",
+    "memory" : {
+      "afterMB" : 2100.1270141601562,
+      "beforeMB" : 2099.7051391601562,
+      "intervalMS" : 50,
+      "sampleCount" : 2422,
+      "sampledPeakMB" : 2100.3457641601562
+    },
+    "modelPreparationMS" : 0.0023749998945277184,
+    "modelWasReady" : true,
+    "osVersion" : "Version 26.1 (Build 23B86)",
+    "question" : "이 판결이 인용한 97므1486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라.",
+    "retrievalMS" : 860.4165416672913,
+    "search" : {
+      "chunkCount" : 42,
+      "effectiveMode" : "hybrid",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 205,
+            "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "keywordRank" : 1,
+          "score" : 0.03278688524590164,
+          "semanticRank" : 1
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 2129,
+            "id" : "sc-97me1486-1493:c5af08af5466:1874-2129",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1874,
+            "text" : " 채무는 일상가사에 관한 것 이외에는 원칙으로 그 개인의 채무로서 청산의 대상이 되지 않으나 그것이 공동재산의 형성에 수반하여 부담한 채무인 경우에는 청산의 대상이 된다고 할 것이며, 재산분할의 방법이나 그 비율 또는 액수는 당사자 쌍방의 협력으로 이룩한 재산의 액수 기타의 사정을 참작하여 법원이 이를 정하되 그 모든 사정을 개별적·구체적으로 일일이 특정하여 설시하여야 하는 것은 아니다(대법원 1993. 5. 25. 선고 92므501 판결 등 참조).\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "keywordRank" : 2,
+          "score" : 0.03128054740957967,
+          "semanticRank" : 6
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2026으552",
+            "documentFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+            "documentID" : "sc-2026eu552",
+            "endUTF16" : 4704,
+            "id" : "sc-2026eu552:2d2581cb0f3b:4418-4704",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 4418,
+            "text" : " 대한 면접교섭 허용 의무를 아래와 같이 이행하라.”라는 이행명령(이하 ‘이 사건 이행명령’이라고 한다)을 하였다. 이 사건 이행명령의 준수사항 2)항에는 “신청인이 사건본인을 면접교섭할 시 사건본인의 혈족이 아닌 여성이 동석하지 않도록 한다.”라는 내용이 기재되어 있는데(이하 ‘이 사건 추가준수사항’이라고 한다), 이는 이 사건 판결에는 없던 내용이다. 이 사건 추가준수사항 외에 이 사건 이행명령에서 정한 면접교섭의 일정, 방법, 준수사항은 이 사건 판결과 동일하다.\n3. 앞서 본 법리에 비추어 살펴본다.",
+            "title" : "이행명령"
+          },
+          "keywordRank" : 19,
+          "score" : 0.025478740668614087,
+          "semanticRank" : 18
+        }
+      ],
+      "requestedMode" : "hybrid",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "42",
+        "vectorCacheMisses" : "1",
+        "warmBeforeSearch" : "true"
+      },
+      "semanticScoredChunkCount" : 42,
+      "warnings" : [
+
+      ]
+    },
+    "targetDocumentID" : "sc-2024me16033-16040",
+    "targetFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+    "task" : "analysis",
+    "totalMS" : 130334.55520833377
+  }
+}

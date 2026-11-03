@@ -24,10 +24,12 @@
 		4E3AA712F44889CCA43FE258 /* AppRuntimeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBEFAB5D777B33C22B73B67 /* AppRuntimeState.swift */; };
 		513C47C9CDDB2B78639D796A /* NewMainScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90624E4F59B2689EC5885F6 /* NewMainScreens.swift */; };
 		560C1B9272893D23416FC18F /* rag_synthetic_v1.json in Resources */ = {isa = PBXBuildFile; fileRef = 22C7BFF4C80C09BB16CD4DFD /* rag_synthetic_v1.json */; };
+		598264DD1B6BF4CBAE6C1B40 /* family_law_retrieval_v1.json in Resources */ = {isa = PBXBuildFile; fileRef = D6162DD45BCCDED99C8AAA33 /* family_law_retrieval_v1.json */; };
 		5ED93C1DBCD4871901E32373 /* DemoSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9F668837C28CE9BD27A040 /* DemoSeed.swift */; };
 		69718A360E32436E7D1A3273 /* LocalLLMEngines.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0924461A409E76F7CC7881A /* LocalLLMEngines.swift */; };
 		6C7AE35587BD67A806F105ED /* multilingual-e5-base-Q8_0.gguf in Resources */ = {isa = PBXBuildFile; fileRef = 4F6D35AECEB248DFB9F6B381 /* multilingual-e5-base-Q8_0.gguf */; };
 		6CAF6AAB2C1264661813FB8F /* LocalCaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E0E9EAE4A447F9B2997442 /* LocalCaseStore.swift */; };
+		782C89CA301384F1895384D5 /* LegalCasePilotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F051EB8E88C0C019B856783A /* LegalCasePilotTests.swift */; };
 		7FE09BD6D18E0B2360E87FB7 /* GGUFEmbeddingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F9B82295F75B4A9F27CD973 /* GGUFEmbeddingProvider.swift */; };
 		8996C6B976101B7FBEA8CD20 /* AISYSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB8550D7167F38BF77BC796 /* AISYSApp.swift */; };
 		9D035A99BE4917EFBE6056D6 /* JudgmentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB44A22E03C40B5664F17E87 /* JudgmentParser.swift */; };
@@ -93,6 +95,7 @@
 		CB44A22E03C40B5664F17E87 /* JudgmentParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JudgmentParser.swift; sourceTree = "<group>"; };
 		CDB179791D8521B717057551 /* StudyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyStore.swift; sourceTree = "<group>"; };
 		D5962B6EEF79210E69E003D5 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		D6162DD45BCCDED99C8AAA33 /* family_law_retrieval_v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = family_law_retrieval_v1.json; sourceTree = "<group>"; };
 		D71F7EC6215383E28B8504D6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		D89D87DA9C3E581310F65BAA /* PasteJudgmentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteJudgmentSheet.swift; sourceTree = "<group>"; };
 		DD11CA09209358EC629EDC9F /* RAGCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGCore.swift; sourceTree = "<group>"; };
@@ -100,6 +103,7 @@
 		E3CEB7BE4D8B74C17B53298B /* RAGResearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGResearchTests.swift; sourceTree = "<group>"; };
 		E502DA99506E6616DB6CF25A /* LocalSimilarityEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSimilarityEngine.swift; sourceTree = "<group>"; };
 		EF0A7D33042C8959C4D5E809 /* SearchFlowViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFlowViews.swift; sourceTree = "<group>"; };
+		F051EB8E88C0C019B856783A /* LegalCasePilotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalCasePilotTests.swift; sourceTree = "<group>"; };
 		FC16EFD30739BDD18535D6D1 /* CaseSummaryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseSummaryViewModel.swift; sourceTree = "<group>"; };
 		FD3B36D079CBDA4C27382A09 /* NavigationBackButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationBackButton.swift; sourceTree = "<group>"; };
 		FE170875E59DB4941C4441FB /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
@@ -130,6 +134,15 @@
 			path = AISYSApp/Resources;
 			sourceTree = "<group>";
 		};
+		15850ED605B39DD4EF600A66 /* family-law-retrieval-v1 */ = {
+			isa = PBXGroup;
+			children = (
+				D6162DD45BCCDED99C8AAA33 /* family_law_retrieval_v1.json */,
+			);
+			name = "family-law-retrieval-v1";
+			path = "../../docs/research/datasets/family-law-retrieval-v1";
+			sourceTree = "<group>";
+		};
 		A5F2AD8B184F65E904735D91 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -144,6 +157,7 @@
 			children = (
 				7AC5138A411C914DB4D5AE9F /* AISYSAppTests.swift */,
 				19AC5819BEE7D9163EB39C40 /* GGUFEmbeddingTests.swift */,
+				F051EB8E88C0C019B856783A /* LegalCasePilotTests.swift */,
 				E3CEB7BE4D8B74C17B53298B /* RAGResearchTests.swift */,
 			);
 			path = AISYSAppTests;
@@ -153,6 +167,7 @@
 			isa = PBXGroup;
 			children = (
 				CED744CC7EDAB7F187997964 /* AISYSAppTests */,
+				15850ED605B39DD4EF600A66 /* family-law-retrieval-v1 */,
 				14E3C27F43EA5B61006593CE /* Resources */,
 				D14B24A4C871F531B3F8521B /* Sources */,
 				A5F2AD8B184F65E904735D91 /* Products */,
@@ -227,6 +242,7 @@
 			buildConfigurationList = 511B09D86D29E78315042DE7 /* Build configuration list for PBXNativeTarget "AISYSAppTests" */;
 			buildPhases = (
 				E665484E1621D77381A9C640 /* Sources */,
+				093EE87995C4DA2BF294EF76 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -283,6 +299,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		093EE87995C4DA2BF294EF76 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				598264DD1B6BF4CBAE6C1B40 /* family_law_retrieval_v1.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A603105F4988A78EF03A2321 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -343,6 +367,7 @@
 			files = (
 				17842704C3A11AEB56ED1DAA /* AISYSAppTests.swift in Sources */,
 				FB5F63AE295DDC311AD88D7E /* GGUFEmbeddingTests.swift in Sources */,
+				782C89CA301384F1895384D5 /* LegalCasePilotTests.swift in Sources */,
 				294706CF5868FDC1EF1B1138 /* RAGResearchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

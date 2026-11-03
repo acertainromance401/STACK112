@@ -1,0 +1,192 @@
+{
+  "outputSHA256" : "f654542c1ad4d67b8a37348fa6a02a9c3177b4cb95f4f7cf4dc86cca7e8c0ba6",
+  "outputSuccess" : false,
+  "run" : {
+    "claims" : [
+
+    ],
+    "corpusFingerprints" : {
+      "sc-2024me16033-16040" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+      "sc-2026eu552" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+      "sc-97me1486-1493" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8"
+    },
+    "createdAt" : "2026-11-03T07:23:41Z",
+    "deviceIdentifier" : "arm64",
+    "environment" : "simulator_not_device_evidence",
+    "evidence" : [
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 347,
+          "id" : "sc-2024me16033-16040:3f315774e7de:251-571",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 251,
+          "text" : "히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n【판결요지】\n법원은 재산분할 사건에서 당사자의 청구에 의하",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "id" : "E0"
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 237,
+          "id" : "sc-97me1486-1493:c5af08af5466:141-461",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 141,
+          "text" : " 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n[1] 민법 제839조의2에 규정된 재산분할제도는 혼인 중",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "id" : "E1"
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 1504,
+          "id" : "sc-97me1486-1493:c5af08af5466:1408-1682",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 1408,
+          "text" : "(반소원고)의, 부대상고비용은 원고(반소피고)의 각 부담으로 한다.\n【이 유】\n상고 및 부대상고이유를 함께 본다.\n민법 제839조의2에 규정된 재산분할제도는 혼인 중에 취득",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "id" : "E2"
+      }
+    ],
+    "failureReason" : "생성 문장은 [E0] 내용 형식과 유효한 근거 ID가 필요합니다.",
+    "generation" : {
+      "attempts" : 1,
+      "engine" : "llama.cpp",
+      "evidence" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 347,
+            "id" : "sc-2024me16033-16040:3f315774e7de:251-571",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 251,
+            "text" : "히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n【판결요지】\n법원은 재산분할 사건에서 당사자의 청구에 의하",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "id" : "E0"
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 237,
+            "id" : "sc-97me1486-1493:c5af08af5466:141-461",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 141,
+            "text" : " 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n[1] 민법 제839조의2에 규정된 재산분할제도는 혼인 중",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "id" : "E1"
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1504,
+            "id" : "sc-97me1486-1493:c5af08af5466:1408-1682",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1408,
+            "text" : "(반소원고)의, 부대상고비용은 원고(반소피고)의 각 부담으로 한다.\n【이 유】\n상고 및 부대상고이유를 함께 본다.\n민법 제839조의2에 규정된 재산분할제도는 혼인 중에 취득",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "id" : "E2"
+        }
+      ],
+      "inferenceMS" : 132346.19545833266,
+      "model" : "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "output" : "재산분할은 당사자의 사정에 따라 다를 수 있는 재산 분할 방법을 정해주는 법률입니다.\n\n1.  **재산분할의수** : 재산분할은 당사자의 사정에 따라 다를 수 있는 재산 분할 방법을 정해주는 법률입니다. 예를 들어, 민법 제839조의 2에 규정된 재산분할제도는 혼인 중에 취득하는 경우, 현물분할, 분당분할, 공수분할 등이 있습니다. 각 방법은 당사자의",
+      "promptCharacters" : 621
+    },
+    "id" : "66E32E6A-AE64-4246-A1AE-8C1132A9AF0E",
+    "memory" : {
+      "afterMB" : 1724.655517578125,
+      "beforeMB" : 1724.671142578125,
+      "intervalMS" : 50,
+      "sampleCount" : 2463,
+      "sampledPeakMB" : 1725.155517578125
+    },
+    "modelPreparationMS" : 0.26087500009452924,
+    "modelWasReady" : true,
+    "osVersion" : "Version 26.1 (Build 23B86)",
+    "question" : "재산분할의 액수와 방법을 정할 때 재산 형성 기여도와 당사자들의 사정을 어떻게 참작해야 하는가?",
+    "retrievalMS" : 33.250916667384445,
+    "search" : {
+      "chunkCount" : 42,
+      "effectiveMode" : "keyword",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 461,
+            "id" : "sc-97me1486-1493:c5af08af5466:141-461",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 141,
+            "text" : " 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n[1] 민법 제839조의2에 규정된 재산분할제도는 혼인 중에 취득한 실질적인 공동재산을 청산 분배하는 것을 주된 목적으로 하는 것이므로, 부부가 재판상 이혼을 할 때 쌍방의 협력으로 이룩한 재산이 있는 한, 법원으로서는 당사자의 청구에 의하여 그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바, 이 경우 부부 일방의 특유재산은 원칙적으로 분할의 대상이 되지 아니하나 특유재산일지라도 다른 일방이 적극",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "keywordRank" : 1,
+          "score" : 0.01639344262295082
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1682,
+            "id" : "sc-97me1486-1493:c5af08af5466:1408-1682",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1408,
+            "text" : "(반소원고)의, 부대상고비용은 원고(반소피고)의 각 부담으로 한다.\n【이 유】\n상고 및 부대상고이유를 함께 본다.\n민법 제839조의2에 규정된 재산분할제도는 혼인 중에 취득한 실질적인 공동재산을 청산 분배하는 것을 주된 목적으로 하는 것이므로, 부부가 재판상 이혼을 할 때 쌍방의 협력으로 이룩한 재산이 있는 한, 법원으로서는 당사자의 청구에 의하여 그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바{대법원 1995. 10. 12.",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "keywordRank" : 2,
+          "score" : 0.016129032258064516
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2026으552",
+            "documentFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+            "documentID" : "sc-2026eu552",
+            "endUTF16" : 4274,
+            "id" : "sc-2026eu552:2d2581cb0f3b:3958-4274",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 3958,
+            "text" : "본인에 대한 면접교섭권에 관하여 “신청인은 사건본인이 성년이 될 때까지 다음과 같이 사건본인을 면접교섭할 수 있다.”라고 하면서, 면접교섭 일정[월 2회, 매월 둘째, 넷째 주 토요일 10:00부터 그다음 날 18:00까지(1박 2일), 여름방학 및 겨울방학 기간 중 서로 협의하여 정한 각 2박 3일, 설날, 추석 연휴기간 중 서로 협의하여 정한 각 1박 2일]과 함께 그 방법, 협조의무를 정하였다.\n다. 신청인은, 피신청인이 신청인에게 이 사건 판결에 의한 면접교섭 일정을 지키지 않고 매월 2회 당일 면접교섭만 허용하였다고 주장하며, 2024. 10. 29.",
+            "title" : "이행명령"
+          },
+          "keywordRank" : 17,
+          "score" : 0.012987012987012988
+        }
+      ],
+      "requestedMode" : "keyword",
+      "semanticModelIdentity" : {
+
+      },
+      "semanticScoredChunkCount" : 0,
+      "warnings" : [
+
+      ]
+    },
+    "targetDocumentID" : "sc-2024me16033-16040",
+    "targetFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+    "task" : "analysis",
+    "totalMS" : 132407.21091666637
+  }
+}

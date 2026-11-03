@@ -1,0 +1,92 @@
+{
+  "outputSHA256" : "c9cef2683105ac86cdd319638f19a86dd1d6407e9eb0804b4776ea65a17bf69c",
+  "outputSuccess" : false,
+  "run" : {
+    "claims" : [
+
+    ],
+    "corpusFingerprints" : {
+      "sc-2024me16033-16040" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+      "sc-2026eu552" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+      "sc-97me1486-1493" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8"
+    },
+    "createdAt" : "2026-11-03T07:21:29Z",
+    "deviceIdentifier" : "arm64",
+    "environment" : "simulator_not_device_evidence",
+    "evidence" : [
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 347,
+          "id" : "sc-2024me16033-16040:3f315774e7de:251-571",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 251,
+          "text" : "히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n【판결요지】\n법원은 재산분할 사건에서 당사자의 청구에 의하",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "id" : "E0"
+      }
+    ],
+    "failureReason" : "생성 문장은 [E0] 내용 형식과 유효한 근거 ID가 필요합니다.",
+    "generation" : {
+      "attempts" : 1,
+      "engine" : "llama.cpp",
+      "evidence" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 347,
+            "id" : "sc-2024me16033-16040:3f315774e7de:251-571",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 251,
+            "text" : "히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n【판결요지】\n법원은 재산분할 사건에서 당사자의 청구에 의하",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "id" : "E0"
+        }
+      ],
+      "inferenceMS" : 128120.73491666706,
+      "model" : "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "output" : "판결요지: 재산분할의수와 방법을 정할 때, 당사자의 사정과 현물 분할 방법을 고려해야 하는 것이 중요합니다.\n\n1.  **재산 형성 기여도**: 재산의 형성 기여도는 당사자의 재산을 분할하는 데 영향을 미치기 때문에, 당사자의 재산 형성 기여도를 고려해야 합니다. 당사자는 재산의 형성에 참여한 시간, 재산의 소유권을 exercised 한 시간 등이 중요합니다.\n2.  **당사자의 사정**:",
+      "promptCharacters" : 389
+    },
+    "id" : "433BDC02-C209-4C83-AA25-599DAFB2F297",
+    "memory" : {
+      "afterMB" : 1724.671142578125,
+      "beforeMB" : 39.6014404296875,
+      "intervalMS" : 50,
+      "sampleCount" : 3218,
+      "sampledPeakMB" : 1724.858642578125
+    },
+    "modelPreparationMS" : 49177.82554166661,
+    "modelWasReady" : false,
+    "osVersion" : "Version 26.1 (Build 23B86)",
+    "question" : "재산분할의 액수와 방법을 정할 때 재산 형성 기여도와 당사자들의 사정을 어떻게 참작해야 하는가?",
+    "retrievalMS" : 983.5721666659083,
+    "search" : {
+      "chunkCount" : 0,
+      "effectiveMode" : "currentOnly",
+      "hits" : [
+
+      ],
+      "requestedMode" : "currentOnly",
+      "semanticModelIdentity" : {
+
+      },
+      "semanticScoredChunkCount" : 0,
+      "warnings" : [
+
+      ]
+    },
+    "targetDocumentID" : "sc-2024me16033-16040",
+    "targetFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+    "task" : "analysis",
+    "totalMS" : 178333.1553333337
+  }
+}

@@ -1,0 +1,9 @@
+log,line,class_name,test_name,message
+rag-e5-tests.log,1490,AISYSAppTests.GGUFEmbeddingTests,testOversizedEmbeddingDoesNotSilentlyTruncateSource,"failed: caught error: ""invalidInput(""384차원 E5 인코더 모델이 아닙니다."")"""
+rag-e5-tests.log,1874,AISYSAppTests.GGUFEmbeddingTests,testRealKoreanEmbeddingsRankParaphraseAboveUnrelatedTextAndReuseExactVectors,"failed: caught error: ""invalidInput(""384차원 E5 인코더 모델이 아닙니다."")"""
+rag-e5-tests.log,2262,AISYSAppTests.RAGResearchTests,testActualGGUFHybridRetrievalHasVerifiableModelIdentity,"XCTAssertEqual failed: (""0"") is not equal to (""1"")"
+rag-e5-tests.log,2263,AISYSAppTests.RAGResearchTests,testActualGGUFHybridRetrievalHasVerifiableModelIdentity,"XCTAssertEqual failed: (""keyword"") is not equal to (""hybrid"")"
+rag-e5-tests.log,2264,AISYSAppTests.RAGResearchTests,testActualGGUFHybridRetrievalHasVerifiableModelIdentity,"XCTAssertEqual failed: (""nil"") is not equal to (""Optional(""intfloat/multilingual-e5-small"")"")"
+rag-e5-tests.log,2265,AISYSAppTests.RAGResearchTests,testActualGGUFHybridRetrievalHasVerifiableModelIdentity,"XCTAssertEqual failed: (""nil"") is not equal to (""Optional(""384"")"")"
+rag-e5-tests.log,2266,AISYSAppTests.RAGResearchTests,testActualGGUFHybridRetrievalHasVerifiableModelIdentity,XCTAssertNotNil failed
+rag-e5-focused.log,1018,AISYSAppTests.GGUFEmbeddingTests,testRealKoreanEmbeddingsRankParaphraseAboveUnrelatedTextAndReuseExactVectors,"XCTAssertGreaterThan failed: (""0.9591288063350618"") is not greater than (""0.9615957016480539"")"
