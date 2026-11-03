@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">STACK112 근거 전달과 로컬 생성</title>
+  <desc id="description">현재 판례 E0와 참고 최대 2개를 구성하고 실제 토크나이저로 예산을 확인해 로컬 언어모델에 전달한다. 인용과 형식을 기초 검사한 뒤 사용자가 원문을 대조하고 검수 기록과 실행 JSON을 내보낸다. 실패는 성공으로 대체하지 않으며 형식 통과는 법률 정답을 뜻하지 않는다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <g id="heading">
+      <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">04 / 근거 전달 · 생성 · 검수</text>
+      <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">답변을 만드는 과정까지 추적한다</text>
+      <text x="64" y="151" fill="#BBC6D1" font-size="20">검색 결과를 전부 넣지 않고, 실제 전달한 발췌와 원시 출력을 함께 남긴다.</text>
+    </g>
+    <g id="connectors" fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M328 272 H430 M730 272 H832 M1029 338 V420 M842 493 H740 M440 493 H338" fill="none"/>
+      <polygon points="430,266 439,272 430,278" stroke="none"/>
+      <polygon points="832,266 841,272 832,278" stroke="none"/>
+      <polygon points="1023,420 1029,429 1035,420" stroke="none"/>
+      <polygon points="740,487 731,493 740,499" stroke="none"/>
+      <polygon points="338,487 329,493 338,499" stroke="none"/>
+    </g>
+    <g id="generation" text-anchor="middle">
+      <g id="step-evidence">
+        <rect x="64" y="206" width="264" height="132" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+        <text x="196" y="246" fill="#EDF0F3" font-size="27" font-weight="600">근거 묶음</text>
+        <text x="196" y="283" fill="#8ABFC6" font-size="20">[E0] 현재 판례</text>
+        <text x="196" y="314" fill="#BBC6D1" font-size="20">[E1/E2] 참고 발췌</text>
+      </g>
+      <g id="step-budget">
+        <rect x="440" y="206" width="290" height="132" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="585" y="246" fill="#EDF0F3" font-size="27" font-weight="600">토큰 예산 검사</text>
+        <text x="585" y="283" fill="#BBC6D1" font-size="19">질문 보존 · 발췌만 축소</text>
+        <text x="585" y="314" fill="#BBC6D1" font-size="18">실제 GGUF 토크나이저</text>
+      </g>
+      <g id="step-generate">
+        <rect x="842" y="206" width="374" height="132" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+        <text x="1029" y="246" fill="#EDF0F3" font-size="28" font-weight="600">로컬 언어모델 생성</text>
+        <text x="1029" y="283" fill="#BBC6D1" font-size="20">인용 분석 / 근거 기반 OX 초안</text>
+        <text x="1029" y="314" fill="#8ABFC6" font-size="18">각 줄에 [E0] 같은 인용 ID</text>
+      </g>
+    </g>
+    <g id="verification" text-anchor="middle">
+      <g id="step-check">
+        <rect x="842" y="430" width="374" height="126" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="1029" y="471" fill="#EDF0F3" font-size="27" font-weight="600">인용·형식 기초 검사</text>
+        <text x="1029" y="509" fill="#BBC6D1" font-size="19">ID · 숫자 · 따옴표 · 문구 겹침</text>
+        <text x="1029" y="538" fill="#BBC6D1" font-size="18">OX 초안은 3줄·O/X도 검사</text>
+      </g>
+      <g id="step-compare">
+        <rect x="440" y="430" width="290" height="126" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="585" y="476" fill="#EDF0F3" font-size="27" font-weight="600">답변·원문 대조</text>
+        <text x="585" y="514" fill="#BBC6D1" font-size="19">인용 ID와 실제 발췌 비교</text>
+        <text x="585" y="542" fill="#BBC6D1" font-size="18">원문 위치·해시 확인</text>
+      </g>
+      <g id="step-record">
+        <rect x="64" y="430" width="264" height="126" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="196" y="476" fill="#EDF0F3" font-size="27" font-weight="600">검수·실행 기록</text>
+        <text x="196" y="514" fill="#BBC6D1" font-size="19">실패도 남김 · JSON 내보내기</text>
+        <text x="196" y="542" fill="#BBC6D1" font-size="18">시간·표본 메모리·모델 정보</text>
+      </g>
+    </g>
+    <g id="footer">
+      <text x="64" y="608" fill="#D7B282" font-size="20" font-weight="600">형식 통과 ≠ 법률적 정답. 원문이 주장을 지지하는지는 사람의 검수가 필요하다.</text>
+      <path d="M64 642 H1216" stroke="#53606E" stroke-width="1"/>
+      <text x="64" y="681" fill="#8896A5" font-size="15">코드: RAGResearchService.run · LLMService.generateRAGAnswer · RAGGrounding · RAGResearchViews</text>
+    </g>
+  </g>
+</svg>

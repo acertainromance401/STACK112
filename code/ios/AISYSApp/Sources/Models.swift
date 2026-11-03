@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Backend API Models
 
 /// FastAPI 백엔드 /search 및 /cases/{caseNumber} 응답 모델
-struct APICase: Codable, Identifiable {
+struct APICase: Codable, Identifiable, Hashable, Sendable {
     let id: String
     let caseNumber: String
     let caseName: String

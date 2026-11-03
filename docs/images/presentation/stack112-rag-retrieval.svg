@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">STACK112 RAG 참고 근거 검색</title>
+  <desc id="description">질문과 현재 판례 제목을 질의로 사용한다. 저장 원문을 청킹해 키워드·사건번호 검색과 E5 의미 검색의 순위를 RRF로 융합한다. 현재 판례와 같은 사건은 참고 후보에서 제외한다. 임베딩 불가 시 키워드로 전환하고 실제 모드를 기록한다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <g id="heading">
+      <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">03 / RAG 근거 검색</text>
+      <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">같은 표현과 비슷한 의미를 함께 찾는다</text>
+      <text x="64" y="151" fill="#BBC6D1" font-size="20">질문과 등록 원문을 기기 안에서 비교해, 참고할 발췌의 순서를 정한다.</text>
+    </g>
+    <g id="connectors" fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M254 252 H544 V447 M510 447 H578 M544 252 H578 M254 447 H290" fill="none"/>
+      <polygon points="290,441 299,447 290,453" stroke="none"/>
+      <polygon points="578,246 587,252 578,258" stroke="none"/>
+      <polygon points="578,441 587,447 578,453" stroke="none"/>
+      <path d="M838 252 H870 V354 H898 M838 447 H870 V354" fill="none"/>
+      <polygon points="898,348 907,354 898,360" stroke="none"/>
+    </g>
+    <g id="inputs" text-anchor="middle">
+      <g id="input-query">
+        <rect x="64" y="200" width="190" height="104" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="159" y="243" fill="#EDF0F3" font-size="24" font-weight="600">질문 + 판례 제목</text>
+        <text x="159" y="279" fill="#BBC6D1" font-size="18">검색 질의</text>
+      </g>
+      <g id="input-corpus">
+        <rect x="64" y="388" width="190" height="118" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="159" y="436" fill="#EDF0F3" font-size="26" font-weight="600">저장 판례</text>
+        <text x="159" y="474" fill="#BBC6D1" font-size="18">SwiftData 원문</text>
+      </g>
+      <g id="step-chunking">
+        <rect x="300" y="388" width="210" height="118" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="405" y="426" fill="#EDF0F3" font-size="26" font-weight="600">원문 청크</text>
+        <text x="405" y="460" fill="#BBC6D1" font-size="17">최대 320자 · 겹침 64자</text>
+        <text x="405" y="487" fill="#BBC6D1" font-size="17">원문 위치 · 해시 보존</text>
+      </g>
+    </g>
+    <g id="rankings" text-anchor="middle">
+      <g id="rank-keyword">
+        <rect x="588" y="200" width="250" height="104" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="713" y="243" fill="#EDF0F3" font-size="25" font-weight="600">키워드·사건번호</text>
+        <text x="713" y="279" fill="#BBC6D1" font-size="18">문자 일치 순위</text>
+      </g>
+      <g id="rank-semantic">
+        <rect x="588" y="388" width="250" height="118" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+        <text x="713" y="432" fill="#8ABFC6" font-size="26" font-weight="600">E5 의미 검색</text>
+        <text x="713" y="468" fill="#BBC6D1" font-size="18">768차원 · 코사인</text>
+        <text x="713" y="491" fill="#8896A5" font-size="16">별도 로컬 GGUF 인코더</text>
+      </g>
+      <g id="step-fusion">
+        <rect x="908" y="268" width="308" height="172" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+        <text x="1062" y="315" fill="#EDF0F3" font-size="28" font-weight="600">RRF 순위 융합</text>
+        <text x="1062" y="353" fill="#BBC6D1" font-size="18">정확한 사건번호 가산</text>
+        <text x="1062" y="386" fill="#8ABFC6" font-size="20" font-weight="600">상위 3청크</text>
+        <text x="1062" y="417" fill="#BBC6D1" font-size="18">문서당 최대 2개</text>
+      </g>
+    </g>
+    <g id="notes">
+      <text x="64" y="566" fill="#BBC6D1" font-size="19">현재 판례와 같은 사건은 참고 검색에서 제외하고, 현재 원문은 E0로 따로 보존한다.</text>
+      <text x="64" y="607" fill="#D7B282" font-size="18">의미 모델 사용 불가 → 키워드 전환 · 경고 기록 · 하이브리드로 집계하지 않음</text>
+      <path d="M64 642 H1216" stroke="#53606E" stroke-width="1"/>
+      <text x="64" y="681" fill="#8896A5" font-size="15">코드: RAGCore.RAGChunker / RAGRetriever · GGUFEmbeddingProvider · RAGResearchService.run</text>
+    </g>
+  </g>
+</svg>

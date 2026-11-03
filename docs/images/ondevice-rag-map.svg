@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="rag-map" xmlns="http://www.w3.org/2000/svg" width="1320" height="1056" viewBox="0 0 1320 1056" role="group" aria-labelledby="map-title map-desc">
+          <title id="map-title">STACK112 온디바이스 RAG 동작 지도</title>
+          <desc id="map-desc">첫 줄은 사진·텍스트 입력, 로컬 분석, SwiftData 저장, 검색 코퍼스 동기화다. 둘째 줄은 현재 판례 선택, 요약 캐시, 검색, 근거 선택이다. 셋째 줄은 오른쪽에서 왼쪽으로 프롬프트 예산 검사, 로컬 생성, 후처리, 화면 표시다. 점선은 주입 요약 보존, 캐시 적중, 입력 예산 실패 경로다. 유사 판례 top5 조회는 별도 병렬 경로다.</desc>
+          <style>
+            text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; fill: #262e28; }
+            .node { cursor: pointer; transition: opacity .16s; }
+            .card { fill: #fff; stroke: #c2cbc1; stroke-width: 1.2; rx: 4px; ry: 4px; }
+            .node:hover .card, .node:focus .card { stroke: #365d4d; stroke-width: 2; }
+            .node.selected .card { fill: #fff8f1; stroke: #a64b2a; stroke-width: 2.2; }
+            .node.selected .small { fill: #a64b2a; }
+            .node:focus { outline: none; }
+            .small { font-size: 10px; font-weight: 650; letter-spacing: 1px; }
+            .heading { font-size: 21px; font-weight: 700; letter-spacing: -.6px; }
+            .body { font-size: 14px; fill: #515f55; }
+            .code, .code-function { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 11px; fill: #626c63; }
+            .code-function { fill: #306957; }
+            .lane { font-size: 12px; font-weight: 700; fill: #606d62; letter-spacing: .5px; }
+            .edge-label { font-size: 12px; fill: #68756c; font-weight: 500; }
+            .wire { fill: none; stroke: #8c9a8d; stroke-width: 1.7; marker-end: url(#arrow); stroke-linecap: round; stroke-linejoin: round; }
+            .rag-wire { fill: none; stroke: #286c61; stroke-width: 2; marker-end: url(#arrow-teal); stroke-linejoin: round; }
+            .bypass { fill: none; stroke: #aa7446; stroke-width: 1.7; stroke-dasharray: 5 5; marker-end: url(#arrow-amber); stroke-linejoin: round; }
+            .blue, .purple { fill: #657269; } .teal { fill: #286c61; } .amber { fill: #976038; }
+            .row-bg { fill: #f0f3ed; }
+            @media (prefers-reduced-motion: reduce) { .node { transition: none; } }
+          </style>
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8c9a8d"/></marker>
+            <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#286c61"/></marker>
+            <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#aa7446"/></marker>
+          </defs>
+          <rect width="1320" height="1056" fill="#fff"/>
+          <rect x="22" y="18" width="1276" height="44" rx="3" fill="#2c362e"/>
+          <text x="42" y="46" font-size="15" font-weight="700" style="fill:#fff">STACK112 · iPhone 내부 · SwiftUI / SwiftData / llama.cpp</text>
+          <text x="735" y="46" font-size="12" style="fill:#c4d5e5">활성 탭: 홈 / 판례 스캔 / 문제풀이 / 오답노트 / AI분석</text>
+          <text x="32" y="99" class="lane">A / 입력 · 분석 · 개인 코퍼스 준비 →</text>
+          <rect x="22" y="106" width="1276" height="180" rx="16" class="row-bg"/>
+          <text x="32" y="382" class="lane">B / 현재 판례 선택 · 관련 근거 검색 →</text>
+          <rect x="22" y="390" width="1276" height="210" rx="16" class="row-bg"/>
+          <text x="32" y="710" class="lane">C / 화면 표시 · 후처리 · 로컬 생성 ← 오른쪽부터 읽기</text>
+          <rect x="22" y="718" width="1276" height="210" rx="16" class="row-bg"/>
+
+          <path class="wire" d="M310 196 H354"/>
+          <path class="wire" d="M636 196 H680"/>
+          <path class="wire" d="M962 196 H1006"/>
+          <path class="wire" d="M497 276 V310 H171 V396"/>
+          <text x="52" y="333" class="edge-label">현재 APICase + IR / 주입 요약</text>
+          <path class="rag-wire" d="M1149 276 V310 H823 V396"/>
+          <text x="857" y="334" class="edge-label teal">검색용 + 표시용 + revision</text>
+          <path class="wire" d="M310 495 H354"/>
+          <path class="rag-wire" d="M636 495 H680"/>
+          <path class="rag-wire" d="M962 495 H1006"/>
+          <text x="315" y="477" class="edge-label">생성</text>
+          <text x="640" y="477" class="edge-label teal">miss</text>
+          <path class="bypass" d="M171 590 V724"/>
+          <text x="53" y="645" class="edge-label amber">유효한 주입 요약 보존</text>
+          <text x="53" y="666" class="edge-label amber">→ LLM 요약 생성 생략</text>
+          <path class="bypass" d="M497 590 V724"/>
+          <text x="510" y="645" class="edge-label amber">캐시 hit</text>
+          <text x="510" y="666" class="edge-label amber">→ 기존 후처리 결과 재사용</text>
+          <path class="rag-wire" d="M1149 590 V724"/>
+          <text x="1162" y="645" class="edge-label teal">참고 0~2건</text>
+          <text x="1162" y="666" class="edge-label teal">검색 0건 → 블록 생략</text>
+          <path class="wire" d="M1010 823 H966"/>
+          <path class="wire" d="M684 823 H640"/>
+          <path class="wire" d="M358 823 H314"/>
+          <text x="971" y="805" class="edge-label">통과</text>
+          <path class="bypass" d="M1149 918 V950 H497 V922"/>
+          <rect x="657" y="937" width="405" height="25" rx="8" fill="#fff9ed"/>
+          <text x="670" y="954" class="edge-label amber">최소 발췌도 예산 초과 → 진단 기록 + 원문 기반 카드</text>
+
+          <g class="node" data-id="input" data-stage="data" tabindex="0" role="button" aria-label="01 사진 또는 텍스트 입력" aria-pressed="false">
+            <rect class="card" x="32" y="116" width="278" height="160" rx="13"/>
+            <text x="52" y="143" class="small blue">01 / INPUT</text>
+            <text x="52" y="175" class="heading">사진 / 텍스트 입력</text>
+            <text x="52" y="204" class="body">사진 → Apple Vision OCR</text>
+            <text x="52" y="227" class="body">붙여넣기 → 텍스트 직접 전달</text>
+            <text x="52" y="247" class="code-function">recognize(items:)</text>
+            <text x="52" y="266" class="code">OCRView.swift:184</text>
+          </g>
+          <g class="node" data-id="analysis" data-stage="data" tabindex="0" role="button" aria-label="02 기기 내 판결문 분석" aria-pressed="false">
+            <rect class="card" x="358" y="116" width="278" height="160" rx="13"/>
+            <text x="378" y="143" class="small blue">02 / LOCAL ANALYSIS</text>
+            <text x="378" y="175" class="heading">판결문 구조 분석</text>
+            <text x="378" y="204" class="body">정규화 · 키워드 · 핵심 문장</text>
+            <text x="378" y="227" class="body">쟁점 / 판결요지 · 준비 요약</text>
+            <text x="378" y="247" class="code-function">extract(text:…)</text>
+            <text x="378" y="266" class="code">LocalIRPipeline.swift:20</text>
+          </g>
+          <g class="node" data-id="storage" data-stage="data" tabindex="0" role="button" aria-label="03 SwiftData 영구 저장" aria-pressed="false">
+            <rect class="card" x="684" y="116" width="278" height="160" rx="13"/>
+            <text x="704" y="143" class="small blue">03 / PERSISTENCE</text>
+            <text x="704" y="175" class="heading">SwiftData 영구 저장</text>
+            <text x="704" y="204" class="body">원문 · IR · 요약 · 사건 정보</text>
+            <text x="704" y="227" class="body">다음 실행에서도 자료 유지</text>
+            <text x="704" y="247" class="code-function">@Model ScannedCase</text>
+            <text x="704" y="266" class="code">ScannedCase.swift:6</text>
+          </g>
+          <g class="node" data-id="corpus" data-stage="rag" tabindex="0" role="button" aria-label="04 검색 코퍼스 동기화" aria-pressed="false">
+            <rect class="card" x="1010" y="116" width="278" height="160" rx="13"/>
+            <text x="1030" y="143" class="small teal">04 / CORPUS</text>
+            <text x="1030" y="175" class="heading">검색 코퍼스 동기화</text>
+            <text x="1030" y="204" class="body">초기 진입 · 추가 · 수정 · 삭제</text>
+            <text x="1030" y="227" class="body">검색용 / 표시용 분리 · revision</text>
+            <text x="1030" y="247" class="code-function">onChange(initial: true)</text>
+            <text x="1030" y="266" class="code">RootTabView.swift:42</text>
+          </g>
+          <g class="node" data-id="selection" data-stage="paths" tabindex="0" role="button" aria-label="05 현재 판례 선택과 주입 요약 분기" aria-pressed="false">
+            <rect class="card" x="32" y="400" width="278" height="190" rx="13"/>
+            <text x="52" y="428" class="small amber">05 / ROUTING</text>
+            <text x="52" y="460" class="heading">현재 판례 선택</text>
+            <text x="52" y="490" class="body">유효한 주입 요약이 있는가?</text>
+            <text x="52" y="514" class="body">예: OCR/스캔 문서 → 보존 ↓</text>
+            <text x="52" y="538" class="body">아니오: 요약 생성 경로 →</text>
+            <text x="52" y="558" class="code-function">select(caseItem:)</text>
+            <text x="52" y="579" class="code">CaseSummaryViewModel.swift:202</text>
+          </g>
+          <g class="node" data-id="cache" data-stage="paths" tabindex="0" role="button" aria-label="06 요약 캐시와 무효화" aria-pressed="false">
+            <rect class="card" x="358" y="400" width="278" height="190" rx="13"/>
+            <text x="378" y="428" class="small amber">06 / SUMMARY CACHE</text>
+            <text x="378" y="460" class="heading">변경을 반영하는 캐시</text>
+            <text x="378" y="490" class="body">판례 전체 내용 + 코퍼스 revision</text>
+            <text x="378" y="514" class="body">+ 모델 로드 revision</text>
+            <text x="378" y="538" class="body">hit: 화면으로 ↓ / miss: 검색 →</text>
+            <text x="378" y="558" class="code-function">summarize(caseItem:)</text>
+            <text x="378" y="579" class="code">LLMService.swift:136</text>
+          </g>
+          <g class="node" data-id="retrieval" data-stage="rag" tabindex="0" role="button" aria-label="07 본문과 법률 키워드로 유사 판례 검색" aria-pressed="false">
+            <rect class="card" x="684" y="400" width="278" height="190" rx="13"/>
+            <text x="704" y="428" class="small teal">07 / RETRIEVAL</text>
+            <text x="704" y="460" class="heading">유사 판례 검색</text>
+            <text x="704" y="490" class="body">현재 본문 + 법률 키워드 확장</text>
+            <text x="704" y="514" class="body">자기 자신 · 실제 사건번호 중복 제외</text>
+            <text x="704" y="538" class="body">미등록 OCR 가능 · RAG 후보 top3</text>
+            <text x="704" y="558" class="code-function">similar(to:in:topK:)</text>
+            <text x="704" y="579" class="code">LocalCaseSearchEngine.swift:65</text>
+          </g>
+          <g class="node" data-id="evidence" data-stage="rag" tabindex="0" role="button" aria-label="08 표시 자료로 참고 근거 선택" aria-pressed="false">
+            <rect class="card" x="1010" y="400" width="278" height="190" rx="13"/>
+            <text x="1030" y="428" class="small teal">08 / EVIDENCE</text>
+            <text x="1030" y="460" class="heading">참고 근거 선택</text>
+            <text x="1030" y="490" class="body">검색 hit → 표시용 판례로 매핑</text>
+            <text x="1030" y="514" class="body">사건번호 + 쟁점 / 결론 발췌</text>
+            <text x="1030" y="538" class="body">예산에 따라 최대 2건 → 1건</text>
+            <text x="1030" y="558" class="code-function">prepareSummaryPrompt(…)</text>
+            <text x="1030" y="579" class="code">LLMService.swift:1702</text>
+          </g>
+          <g class="node" data-id="prompt" data-stage="rag" tabindex="0" role="button" aria-label="09 프롬프트 조립과 실제 토큰 예산 검사" aria-pressed="false">
+            <rect class="card" x="1010" y="728" width="278" height="190" rx="13"/>
+            <text x="1030" y="756" class="small purple">09 / AUGMENTATION</text>
+            <text x="1030" y="788" class="heading">프롬프트 + 예산 검사</text>
+            <text x="1030" y="818" class="body">[현재 판례] / [참고 판례] / [출력]</text>
+            <text x="1030" y="842" class="body">문자 한도 + 실제 GGUF 토큰 검사</text>
+            <text x="1030" y="866" class="body">발췌 축소 · chat / 출력 여유 보존</text>
+            <text x="1030" y="886" class="code-function">LLMPromptTemplate.summarize(…)</text>
+            <text x="1030" y="907" class="code">PromptTemplates.swift:4</text>
+          </g>
+          <g class="node" data-id="generation" data-stage="paths" tabindex="0" role="button" aria-label="10 기기 내 생성과 엔진 폴백" aria-pressed="false">
+            <rect class="card" x="684" y="728" width="278" height="190" rx="13"/>
+            <text x="704" y="756" class="small purple">10 / GENERATION</text>
+            <text x="704" y="788" class="heading">기기 내 생성</text>
+            <text x="704" y="818" class="body">llama.cpp + 로컬 GGUF 우선</text>
+            <text x="704" y="842" class="body">실패 → 복구 재시도 → 규칙 엔진</text>
+            <text x="704" y="866" class="body">매 요청 KV 초기화 · 이전 판례 분리</text>
+            <text x="704" y="886" class="code-function">LlamaCppEngine.generate(…)</text>
+            <text x="704" y="907" class="code">LocalLLMEngines.swift:461</text>
+          </g>
+          <g class="node" data-id="postprocess" data-stage="paths" tabindex="0" role="button" aria-label="11 파싱과 원 판례 우선 후처리" aria-pressed="false">
+            <rect class="card" x="358" y="728" width="278" height="190" rx="13"/>
+            <text x="378" y="756" class="small purple">11 / POSTPROCESS</text>
+            <text x="378" y="788" class="heading">파싱 · 원 판례 우선</text>
+            <text x="378" y="818" class="body">LLMSummary 4개 필드 파싱</text>
+            <text x="378" y="842" class="body">원 판례 쟁점 · 결론 · 포인트 우선</text>
+            <text x="378" y="866" class="body">실패 시 정규화 / 원문 카드 복구</text>
+            <text x="378" y="886" class="code-function">postprocessSummary(…)</text>
+            <text x="378" y="907" class="code">LLMService.swift:499</text>
+          </g>
+          <g class="node" data-id="display" data-stage="output" tabindex="0" role="button" aria-label="12 학습 카드와 유사 판례 목록 표시" aria-pressed="false">
+            <rect class="card" x="32" y="728" width="278" height="190" rx="13"/>
+            <text x="52" y="756" class="small blue">12 / STUDY EXPERIENCE</text>
+            <text x="52" y="788" class="heading">학습 카드 표시</text>
+            <text x="52" y="818" class="body">한줄요약 · 쟁점 · 결론 · 포인트</text>
+            <text x="52" y="842" class="body">유사 판례 목록 · 학습 가이드</text>
+            <text x="52" y="866" class="body">연계 기능: OX / 오답 / AI분석</text>
+            <text x="52" y="886" class="code-function">CaseSummaryView</text>
+            <text x="52" y="907" class="code">SearchFlowViews.swift:189</text>
+          </g>
+          <rect x="32" y="979" width="1256" height="55" rx="3" fill="#f1f5ef" stroke="#aabfab" stroke-dasharray="5 4"/>
+          <text x="52" y="1002" class="small teal">별도 병렬 경로 / 주입 요약을 보존해도 실행</text>
+          <text x="52" y="1023" font-size="13" class="teal">CaseSummaryViewModel.swift:380 → NetworkService.swift:113 · listSimilarCases(caseItem, topK: 5) → 유사 판례 목록</text>
+          <text x="34" y="1050" font-size="10" style="fill:#6a7e90">2026-11-02 · 개선 반영 후 로컬 작업 트리 기준 · App Store 배포 상태와 다름</text>
+        </svg>

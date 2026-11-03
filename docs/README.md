@@ -38,6 +38,9 @@
 
 ## 현재 문서와 연결
 
+- [개선 계획 및 RAG 구축 상태 점검 (2026-11-02)](project/Improvement_Plan_and_RAG_Audit_2026-11-02.md): 개선 우선순위, 완료 기준, RAG 호출 경로와 검증 한계
+- [논문용 온디바이스 RAG 평가 프로토콜](research/OnDevice_RAG_Protocol.md): 별도 근거 분석·OX 초안, 5가지 지표, 평가셋 형식과 실기기 실험 절차
+- [연구 논리 흐름과 발표용 이미지](research/STACK112_Research_Narrative.md): 연구 문제 → 이론 → 방법론 → 실험 → 검증 → 결론, 사용자 로드맵과 RAG 설명 이미지
 - 프로젝트 기획/로드맵: `docs/project/`
 - 역할별 실행 가이드: `docs/roles/`
 - 협업 운영 가이드: `docs/governance/DISCUSSIONS_AND_WIKI.md`

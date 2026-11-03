@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "stack112-synthetic-v1",
+  "kind": "synthetic",
+  "provenance": "프로그램 검증을 위해 직접 작성한 가상 규칙과 문서. 실제 판례·법률의 정답 자료가 아님.",
+  "annotator": "synthetic-fixture-author",
+  "documents": [
+    {"id":"s1","caseNumber":"SYN-001","title":"가상 긴급체포 절차 A","subject":"긴급체포","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n긴급체포 기록에는 가상 표식 청색을 적는다. 표식이 없으면 가상 심사에 실패한다."},
+    {"id":"s2","caseNumber":"SYN-002","title":"가상 긴급체포 절차 B","subject":"긴급체포","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n긴급체포 기록의 청색 표식 유무를 확인한다. 표식이 있으면 가상 심사를 진행한다."},
+    {"id":"s3","caseNumber":"SYN-003","title":"가상 압수수색 기록 A","subject":"압수수색","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n압수수색 기록은 가상 보관함 나무에 넣는다. 가상 보관 위치를 문서에 표시한다."},
+    {"id":"s4","caseNumber":"SYN-004","title":"가상 압수수색 기록 B","subject":"압수수색","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n압수수색 기록의 보관함은 나무라는 이름이다. 보관 위치를 확인한 뒤 가상 문서를 닫는다."},
+    {"id":"s5","caseNumber":"SYN-005","title":"가상 사기 문서 A","subject":"사기","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n사기 관련 가상 문서에는 별 모양 표지를 붙인다. 문서 표지는 심사 대상과 구별한다."},
+    {"id":"s6","caseNumber":"SYN-006","title":"가상 사기 문서 B","subject":"사기","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n사기 관련 가상 문서의 별 모양 표지를 확인한다. 별 표지가 없는 문서는 가상 분류를 보류한다."},
+    {"id":"s7","caseNumber":"SYN-007","title":"가상 행정 기록","subject":"행정","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n행정 기록은 가상 번호 7을 사용한다. 번호 8은 다른 묶음의 식별자다."},
+    {"id":"s8","caseNumber":"SYN-008","title":"가상 무관 자료","subject":"일반","sourceKind":"synthetic","text":"자동 검증용 가상 규칙이다. 실제 법률이 아니다.\n정원의 꽃과 연못에 관한 일상 메모다."}
+  ],
+  "queries": [
+    {"id":"q1","targetDocumentID":"s1","question":"긴급체포 청색 표식 기록","relevantDocumentIDs":["s2"]},
+    {"id":"q2","targetDocumentID":"s3","question":"압수수색 나무 보관함 위치","relevantDocumentIDs":["s4"]},
+    {"id":"q3","targetDocumentID":"s5","question":"사기 문서 별 표지","relevantDocumentIDs":["s6"]}
+  ]
+}

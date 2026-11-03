@@ -10,6 +10,7 @@
 
 ## 주요 문서
 
+- [개선 계획 및 RAG 구축 상태 점검 (2026-11-02)](Improvement_Plan_and_RAG_Audit_2026-11-02.md): 개선 백로그, RAG 구현 판정 및 프롬프트 절단 재현
 - `PRD_AI_SYS.md`
 - `WBS_AI_SYS.md`
 - `Technology_Stack_AI_SYS.md`

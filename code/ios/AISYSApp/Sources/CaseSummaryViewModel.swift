@@ -382,7 +382,7 @@ final class CaseSummaryViewModel: ObservableObject {
         defer { isLoadingSimilarCases = false }
 
         do {
-            similarCases = try await network.listSimilarCases(caseNumber: caseItem.caseNumber, topK: 5)
+            similarCases = try await network.listSimilarCases(caseItem: caseItem, topK: 5)
         } catch {
             // 유사 판례 로딩 실패는 상세 요약 UX를 막지 않음
             similarCases = []

@@ -7,6 +7,8 @@
 
 ## 참고 문서
 
+- **[온디바이스 RAG 동작 지도 — 인터랙티브 HTML](OnDevice_RAG_Map_2026-11-02.html)**: 개선 반영 후 로컬 iOS 코드 기준. 입력·저장·검색·근거 조립·생성·표시 및 주입 요약/캐시/복구 분기를 시각화한다. 각 노드에 파일명·함수·시작 줄 번호를 표시하며, 상세 설명·검색 가능한 코드 색인·VS Code 줄 이동·확대 기능을 제공한다. [로컬 CSS](ondevice-rag-map.css)와 같은 폴더에 보관하면 외부 네트워크 없이 동작한다. 줄 번호는 2026-11-02 작업 트리 기준이며 소스 수정 시 갱신해야 한다.
+- [같은 지도의 정적 SVG](../images/ondevice-rag-map.svg): 이미지 뷰어·공유·인쇄용. HTML 안의 SVG가 원본이며 수정 시 함께 갱신한다.
 - `code/ARCHITECTURE_AND_DEPLOYMENT.md`
 - `code/PRODUCTION_DEPLOYMENT_GUIDE.md`
 - `docs/images/request-sequence.mmd`

@@ -145,22 +145,12 @@ struct SearchView: View {
         }
         .task(priority: .utility) {
             apiConnectionHint = await NetworkService.shared.deviceConnectionHint()
-            LocalCaseStore.shared.updateScanned(
-                searchable: scannedCases.map { $0.toSearchableAPICase() },
-                display: scannedCases.map { $0.toAPICase() }
-            )
             // 약점 카드 등에서 탭 전환과 함께 pendingSearchQuery 가 미리 설정된 경우 즉시 트리거
             if let pending = runtime.pendingSearchQuery?.trimmingCharacters(in: .whitespacesAndNewlines), !pending.isEmpty {
                 keyword = pending
                 runtime.pendingSearchQuery = nil
                 await viewModel.search(query: pending)
             }
-        }
-        .onChange(of: scannedCases.count) { _ in
-            LocalCaseStore.shared.updateScanned(
-                searchable: scannedCases.map { $0.toSearchableAPICase() },
-                display: scannedCases.map { $0.toAPICase() }
-            )
         }
     }
 
@@ -222,6 +212,15 @@ struct CaseSummaryView: View {
                         .font(AppFont.title)
                         .foregroundStyle(AppColor.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    if let apiCase {
+                        NavigationLink {
+                            RAGAnalysisView(caseItem: apiCase, rawText: viewModel.irSourceText)
+                        } label: {
+                            Label("원문 근거 분석 · RAG", systemImage: "text.magnifyingglass")
+                                .font(AppFont.body)
+                        }
+                    }
 
                     // ── 엔진 정보 패널 (사용자 노출 X. 내부 진단용 — SHOW_LLM_DEBUG_PANEL 컴파일 플래그가 설정되면 표시) ──────────────
                     #if SHOW_LLM_DEBUG_PANEL
@@ -1620,4 +1619,3 @@ private struct WrongOXCard: View {
         }
     }
 }
-

@@ -53,16 +53,43 @@ enum LocalCaseSearchEngine {
             }
         }
 
-        scored.sort { $0.1 > $1.1 }
+        scored.sort {
+            if $0.1 != $1.1 { return $0.1 > $1.1 }
+            return $0.0.id < $1.0.id
+        }
         return scored.prefix(limit).map { $0.0 }
     }
 
     /// 특정 케이스와 유사한 다른 케이스 후보. 토큰 매칭 기반(actor-safe).
     /// 보다 정밀한 의미 유사도가 필요할 때는 `LocalSimilarityEngine` 을 직접 호출하세요.
     static func similar(to target: APICase, in corpus: [APICase], topK: Int = 5) -> [APICase] {
-        let pool = corpus.filter { $0.id != target.id }
-        let queryText = [target.caseName, target.subject, target.issueSummary ?? "", target.holdingSummary ?? ""]
-            .joined(separator: " ")
-        return search(query: queryText, in: pool, limit: topK)
+        let categories: Set<String> = ["형법", "형소법", "형사소송법", "헌법", "경찰학", "일반", "·"]
+        let subjectTerms = target.subject.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !categories.contains($0) }.joined(separator: " ")
+        let queryText = [target.caseName, subjectTerms, target.issueSummary ?? "", target.holdingSummary ?? "", target.examPoints ?? ""]
+            .joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !queryText.isEmpty else { return [] }
+
+        let detected = LegalIssueDictionary.detect(in: queryText)
+        let legalTerms = detected.direct + detected.related
+        let targetNumber = normalizedCaseNumber(target.caseNumber)
+        let pool = corpus.filter { candidate in
+            guard candidate.id != target.id else { return false }
+            if let targetNumber, normalizedCaseNumber(candidate.caseNumber) == targetNumber { return false }
+            guard !legalTerms.isEmpty else { return true }
+            let text = [candidate.caseName, candidate.subject, candidate.issueSummary ?? "",
+                        candidate.holdingSummary ?? "", candidate.examPoints ?? ""].joined(separator: " ")
+            return legalTerms.contains { text.contains($0) }
+        }
+        var seen = Set<String>()
+        return search(query: queryText, in: pool, limit: pool.count).filter { candidate in
+            let identity = normalizedCaseNumber(candidate.caseNumber).map { "case:\($0)" } ?? "id:\(candidate.id)"
+            return seen.insert(identity).inserted
+        }.prefix(topK).map { $0 }
+    }
+
+    static func normalizedCaseNumber(_ value: String) -> String? {
+        let compact = value.filter { !$0.isWhitespace }
+        return compact.range(of: #"^\d{2,4}[가-힣]{1,3}\d+$"#, options: .regularExpression) == nil ? nil : compact
     }
 }

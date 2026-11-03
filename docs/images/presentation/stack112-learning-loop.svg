@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1152" viewBox="0 0 768 1152" role="img" aria-labelledby="title description">
+  <title id="title">STACK112 사용자 학습 순환</title>
+  <desc id="description">판례 선택, 요약과 쟁점 확인, OX 풀이, 오답과 메모 확인, 학습 통계와 회독 확인, 판례 재학습의 순환. 문제풀이 탭은 일일 통계를 갱신한다. 추천 문구는 누적 기록에 대한 규칙과 집계이며 자동 개인화 학습 모델이 아니다.</desc>
+  <rect width="768" height="1152" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <g id="heading">
+      <text x="64" y="52" fill="#8ABFC6" font-size="16" font-weight="600">02 / 학습 순환</text>
+      <text x="64" y="104" fill="#EDF0F3" font-size="34" font-weight="700">오답에서 다시 학습으로</text>
+      <text x="64" y="141" fill="#BBC6D1" font-size="20">사용자가 탭을 오가며 이어가는 복습 과정</text>
+    </g>
+    <g id="connectors" fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M338 274 V307 M338 418 V451 M338 562 V595 M338 706 V739 M338 850 V883" fill="none"/>
+      <polygon points="332,307 338,317 344,307" stroke="none"/>
+      <polygon points="332,451 338,461 344,451" stroke="none"/>
+      <polygon points="332,595 338,605 344,595" stroke="none"/>
+      <polygon points="332,739 338,749 344,739" stroke="none"/>
+      <polygon points="332,883 338,893 344,883" stroke="none"/>
+      <path d="M544 944 H630 Q650 944 650 924 V244 Q650 224 630 224 H555" fill="none" stroke="#8ABFC6"/>
+      <polygon points="555,218 545,224 555,230" fill="#8ABFC6" stroke="none"/>
+    </g>
+    <g id="steps" text-anchor="middle">
+      <g id="step-select">
+        <rect x="132" y="174" width="412" height="100" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="338" y="216" fill="#EDF0F3" font-size="28" font-weight="600">학습할 판례 선택</text>
+        <text x="338" y="250" fill="#BBC6D1" font-size="18">스캔하거나 저장한 원문에서 시작</text>
+      </g>
+      <g id="step-understand">
+        <rect x="132" y="318" width="412" height="100" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="338" y="360" fill="#EDF0F3" font-size="28" font-weight="600">요약·쟁점 확인</text>
+        <text x="338" y="394" fill="#BBC6D1" font-size="18">필요하면 별도 RAG에서 근거 대조</text>
+      </g>
+      <g id="step-practice">
+        <rect x="132" y="462" width="412" height="100" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="338" y="504" fill="#EDF0F3" font-size="28" font-weight="600">OX 문제풀이</text>
+        <text x="338" y="538" fill="#BBC6D1" font-size="18">문제풀이 탭에서 정답·확신도 기록</text>
+      </g>
+      <g id="step-notes">
+        <rect x="132" y="606" width="412" height="100" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="338" y="648" fill="#EDF0F3" font-size="28" font-weight="600">오답·메모 확인</text>
+        <text x="338" y="682" fill="#BBC6D1" font-size="18">틀린 이유와 설명을 함께 복습</text>
+      </g>
+      <g id="step-analysis">
+        <rect x="132" y="750" width="412" height="100" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="338" y="792" fill="#EDF0F3" font-size="28" font-weight="600">학습 통계·회독 확인</text>
+        <text x="338" y="826" fill="#BBC6D1" font-size="18">최근 정답률 · 확신도 · 학습량</text>
+      </g>
+      <g id="step-repeat">
+        <rect x="132" y="894" width="412" height="100" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+        <text x="338" y="936" fill="#8ABFC6" font-size="28" font-weight="600">판례 재학습</text>
+        <text x="338" y="970" fill="#BBC6D1" font-size="18">기록을 참고해 다음 학습을 선택</text>
+      </g>
+    </g>
+    <g id="footer">
+      <path d="M64 1030 H704" stroke="#53606E" stroke-width="1"/>
+      <text x="64" y="1065" fill="#BBC6D1" font-size="18">회독 문구는 기록 기반 규칙·집계이며 RAG 추천 모델이 아니다.</text>
+      <text x="64" y="1102" fill="#8896A5" font-size="15">코드: NewMainScreens · StudyStore · Models.ReviewStore</text>
+    </g>
+  </g>
+</svg>

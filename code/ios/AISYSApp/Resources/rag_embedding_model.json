@@ -1,0 +1,18 @@
+{
+  "model": "intfloat/multilingual-e5-base",
+  "fileName": "multilingual-e5-base-Q8_0.gguf",
+  "conversion": "yixuan-chia/multilingual-e5-base-gguf",
+  "revision": "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+  "sha256": "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+  "bytes": 303138656,
+  "license": "MIT",
+  "upstream": "https://huggingface.co/intfloat/multilingual-e5-base",
+  "licenseSource": "https://github.com/microsoft/unilm/blob/master/LICENSE",
+  "dimensions": 768,
+  "tokenizer": "t5",
+  "maxTokens": 512,
+  "pooling": "mean",
+  "normalization": "L2",
+  "queryPrefix": "query: ",
+  "documentPrefix": "passage: "
+}

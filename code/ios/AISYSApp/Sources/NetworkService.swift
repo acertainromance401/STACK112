@@ -51,7 +51,11 @@ actor NetworkService {
     static let overrideKey = "AISYS_API_BASE_URL_OVERRIDE"
     static let userIDKey = "AISYS_USER_ID"
 
-    private init() {}
+    private let store: LocalCaseStore
+
+    init(store: LocalCaseStore = .shared) {
+        self.store = store
+    }
 
     // MARK: - Compat (UI 잔존 호출 호환)
 
@@ -79,33 +83,35 @@ actor NetworkService {
     /// 검색은 raw 가 포함된 corpus 위에서 수행하지만, 사용자에게 노출될 때는
     /// raw 가 빠진 displayCorpus 의 동일 id 케이스로 치환한다.
     func searchCases(query: String, limit: Int = 10) async throws -> [APICase] {
-        let store = LocalCaseStore.shared
-        let hits = LocalCaseSearchEngine.search(query: query, in: store.searchCorpus, limit: limit)
-        let displayPool = store.displayCorpus
-        return hits.map { hit in
-            displayPool.first { $0.id == hit.id } ?? hit
-        }
+        let snapshot = store.snapshot()
+        let hits = LocalCaseSearchEngine.search(query: query, in: snapshot.searchable, limit: limit)
+        return snapshot.displayCases(for: hits)
     }
 
     /// 최신순 corpus 미리보기 (스캔 케이스가 앞쪽에 위치)
     func listCases(limit: Int = 20) async throws -> [APICase] {
-        Array(LocalCaseStore.shared.allCases.prefix(limit))
+        Array(store.displayCorpus.prefix(limit))
     }
 
     func getCase(caseNumber: String) async throws -> APICase {
-        guard let found = LocalCaseStore.shared.find(caseNumber: caseNumber) else {
+        guard let found = store.find(caseNumber: caseNumber) else {
             throw NetworkError.caseNotFound(caseNumber)
         }
         return found
     }
 
-    /// 유사 판례 — NLEmbedding + 토큰 매칭 결합
+    /// 유사 판례 — 법률 키워드 확장 + 텍스트 매칭.
     func listSimilarCases(caseNumber: String, topK: Int = 5) async throws -> [APICase] {
-        let corpus = LocalCaseStore.shared.allCases
-        guard let target = corpus.first(where: { $0.caseNumber == caseNumber || $0.id == caseNumber }) else {
-            return []
+        let snapshot = store.snapshot()
+        guard let target = snapshot.searchable.first(where: { $0.caseNumber == caseNumber || $0.id == caseNumber }) else {
+            throw NetworkError.caseNotFound(caseNumber)
         }
-        return LocalCaseSearchEngine.similar(to: target, in: corpus, topK: topK)
+        return snapshot.similar(to: target, topK: topK)
+    }
+
+    /// 아직 저장되지 않은 OCR 결과도 사건번호 등록 없이 본문으로 검색한다.
+    func listSimilarCases(caseItem: APICase, topK: Int = 5) async throws -> [APICase] {
+        store.snapshot().similar(to: caseItem, topK: topK)
     }
 
     // MARK: - IR Extract

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 // MARK: - 새 RootTabView (5탭 구조)
 //
@@ -15,6 +16,16 @@ import SwiftUI
 //
 struct RootTabView: View {
     @EnvironmentObject private var runtime: AppRuntimeState
+    @Query(sort: \ScannedCase.scannedAt, order: .reverse) private var scannedCases: [ScannedCase]
+    private let caseStore: LocalCaseStore
+
+    init(caseStore: LocalCaseStore = .shared) {
+        self.caseStore = caseStore
+    }
+
+    private var ragDocuments: [RAGDocument] {
+        scannedCases.map { $0.toRAGDocument() }
+    }
 
     var body: some View {
         TabView(selection: $runtime.selectedTab) {
@@ -28,6 +39,13 @@ struct RootTabView: View {
         .toolbarBackground(AppColor.background, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarColorScheme(.dark, for: .tabBar)
+        .onChange(of: ragDocuments, initial: true) { _, documents in
+            caseStore.updateScanned(
+                searchable: scannedCases.map { $0.toSearchableAPICase() },
+                display: scannedCases.map { $0.toAPICase() },
+                documents: documents
+            )
+        }
     }
 
     @ViewBuilder

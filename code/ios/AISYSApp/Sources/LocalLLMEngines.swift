@@ -8,13 +8,19 @@ protocol LocalLLMEngine: AnyObject {
     var name: String { get }
     func loadModel() async throws
     func resetModel() async
+    func validatePrompt(_ prompt: String, maxTokens: Int) throws
     func generate(prompt: String, maxTokens: Int) async throws -> String
+}
+
+extension LocalLLMEngine {
+    func validatePrompt(_ prompt: String, maxTokens: Int) throws {}
 }
 
 enum LocalLLMEngineError: LocalizedError {
     case runtimeUnavailable(String)
     case modelNotFound(String)
     case modelNotLoaded
+    case promptTooLong(actual: Int, limit: Int)
 
     var errorDescription: String? {
         switch self {
@@ -24,6 +30,8 @@ enum LocalLLMEngineError: LocalizedError {
             return message
         case .modelNotLoaded:
             return "로컬 모델이 로드되지 않았습니다."
+        case .promptTooLong(let actual, let limit):
+            return "입력 \(actual)토큰이 온디바이스 입력 예산 \(limit)토큰을 초과합니다."
         }
     }
 }
@@ -43,6 +51,10 @@ struct LocalLLMModelResolution {
 }
 
 enum LocalLLMModelLocator {
+    static func isGenerationModelFileName(_ fileName: String) -> Bool {
+        fileName.lowercased().hasSuffix(".gguf") && !GGUFEmbeddingProvider.isEmbeddingFileName(fileName)
+    }
+
     private static let model1BFileNames = [
         "llama-3.2-1b-instruct-q4_k_m.gguf",
         "Llama-3.2-1B-Instruct-Q4_K_M.gguf"
@@ -204,7 +216,7 @@ enum LocalLLMModelLocator {
             return nil
         }
 
-        for fileName in candidates {
+        for fileName in candidates where isGenerationModelFileName(fileName) {
             let url = modelsDir.appendingPathComponent(fileName)
             if FileManager.default.fileExists(atPath: url.path) {
                 return url
@@ -218,13 +230,13 @@ enum LocalLLMModelLocator {
             options: [.skipsHiddenFiles]
         )
         return files?
-            .filter { $0.pathExtension.lowercased() == "gguf" }
+            .filter { isGenerationModelFileName($0.lastPathComponent) }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
             .first
     }
 
     private static func resolveFromBundle(candidates: [String]) -> URL? {
-        for fileName in candidates {
+        for fileName in candidates where isGenerationModelFileName(fileName) {
             if let bundled = Bundle.main.url(forResource: fileName, withExtension: nil) {
                 return bundled
             }
@@ -232,6 +244,7 @@ enum LocalLLMModelLocator {
 
         return Bundle.main
             .urls(forResourcesWithExtension: "gguf", subdirectory: nil)?
+            .filter { isGenerationModelFileName($0.lastPathComponent) }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
             .first
     }
@@ -428,6 +441,23 @@ final class LlamaCppEngine: LocalLLMEngine {
         #endif
     }
 
+    func validatePrompt(_ prompt: String, maxTokens: Int) throws {
+        #if canImport(LlamaSwift)
+        guard isLoaded, let context, let vocab else { throw LocalLLMEngineError.modelNotLoaded }
+        let count = try tokenize(text: prompt, vocab: vocab).count
+        let limit = promptTokenBudget(contextSize: Int(llama_n_ctx(context)), maxTokens: maxTokens)
+        guard count <= limit else { throw LocalLLMEngineError.promptTooLong(actual: count, limit: limit) }
+        #else
+        throw LocalLLMEngineError.runtimeUnavailable("llama.cpp 토큰 예산을 확인할 수 없습니다.")
+        #endif
+    }
+
+    private func promptTokenBudget(contextSize: Int, maxTokens: Int) -> Int {
+        let memoryGB = ProcessInfo.processInfo.physicalMemory / 1_073_741_824
+        let reserve = min(maxTokens, memoryGB <= 6 ? 72 : 96)
+        return max(1, contextSize - reserve - 8)
+    }
+
     func generate(prompt: String, maxTokens: Int) async throws -> String {
         guard isLoaded else {
             throw LocalLLMEngineError.modelNotLoaded
@@ -440,9 +470,10 @@ final class LlamaCppEngine: LocalLLMEngine {
 
         // 무거운 llama_decode 연산을 백그라운드 스레드에서 실행하여 메인 스레드 블로킹 방지
         // 이는 Objective-C 타입 정보 경고를 해결하고 UI 렉을 개선합니다.
-        let result = try await Task.detached(priority: .userInitiated) { () -> String in
-            // 현재 연결된 llama.swift 버전에는 llama_kv_cache_clear 심볼이 없어 sampler만 초기화합니다.
-            // 컨텍스트 누적 이슈는 프롬프트/생성 토큰 상한으로 방지합니다.
+        let work = Task.detached(priority: .userInitiated) { () -> String in
+            try Task.checkCancellation()
+            // 판례 간 KV 상태를 공유하지 않아 이전 판례가 다음 추론에 섞이지 않게 한다.
+            llama_memory_clear(llama_get_memory(context), true)
             llama_sampler_reset(sampler)
 
             // 1. 프롬프트 전체를 토큰화
@@ -461,9 +492,8 @@ final class LlamaCppEngine: LocalLLMEngine {
                 throw LocalLLMEngineError.runtimeUnavailable("현재 기기 메모리에서는 3B 모델이 불안정하여 1B로 자동 폴백합니다.")
             }
 
-            let contextBudget = memoryGB <= 4 ? 320 : (memoryGB <= 6 ? 384 : (memoryGB <= 8 ? 448 : 512))
-            let reservedForGeneration = memoryGB <= 6 ? 72 : 96
-            let promptBudget = max(64, contextBudget - reservedForGeneration - 8)
+            let contextBudget = Int(llama_n_ctx(context))
+            let promptBudget = self.promptTokenBudget(contextSize: contextBudget, maxTokens: maxTokens)
             if promptTokens.count > promptBudget {
                 promptTokens = Array(promptTokens.prefix(promptBudget))
             }
@@ -480,6 +510,7 @@ final class LlamaCppEngine: LocalLLMEngine {
             }
             var start = 0
             while start < promptTokens.count {
+                try Task.checkCancellation()
                 let end = min(start + batchLimit, promptTokens.count)
                 var chunk = Array(promptTokens[start..<end])
                 let prefillResult = chunk.withUnsafeMutableBufferPointer { buffer -> Int32 in
@@ -501,6 +532,7 @@ final class LlamaCppEngine: LocalLLMEngine {
             generated.reserveCapacity(maxOut)
 
             for _ in 0..<maxOut {
+                try Task.checkCancellation()
                 // 현재 컨텍스트를 바탕으로 다음 토큰 1개를 샘플링합니다.
                 let token = llama_sampler_sample(sampler, context, -1)
                 if llama_vocab_is_eog(vocab, token) || token == llama_vocab_eos(vocab) {
@@ -517,16 +549,22 @@ final class LlamaCppEngine: LocalLLMEngine {
                     return llama_decode(context, batch)
                 }
                 if nextResult != 0 {
-                    break
+                    throw LocalLLMEngineError.runtimeUnavailable("출력 토큰 디코딩에 실패했습니다. code=\(nextResult)")
                 }
             }
 
             let text = self.decodeTokens(generated, vocab: vocab)
             let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            return cleaned.isEmpty ? "- one_line_summary: \(prompt.prefix(80))" : cleaned
-        }.value
-
-        return result
+            guard !cleaned.isEmpty else {
+                throw LocalLLMEngineError.runtimeUnavailable("모델 생성 결과가 비어 있습니다.")
+            }
+            return cleaned
+        }
+        return try await withTaskCancellationHandler {
+            try await work.value
+        } onCancel: {
+            work.cancel()
+        }
         #else
         throw LocalLLMEngineError.runtimeUnavailable(
             "llama.cpp 생성 루틴이 아직 연결되지 않았습니다."
@@ -638,11 +676,19 @@ final class RuleBasedLocalEngine: LocalLLMEngine {
     /// 프롬프트에서 필드 값을 추출해 구조화된 응답을 생성합니다.
     func generate(prompt: String, maxTokens: Int) async throws -> String {
         _ = maxTokens
-        
+        let fieldPrompt: String
+        if let current = prompt.range(of: "[현재 판례]\n") {
+            fieldPrompt = String(prompt[current.upperBound...])
+                .components(separatedBy: "[참고 판례]").first?
+                .components(separatedBy: "[출력]").first ?? ""
+        } else {
+            fieldPrompt = prompt
+        }
+
         // 프롬프트의 마지막 부분에서 필드 추출 (정규식 대신 간단한 string 처리)
         func extractField(_ keyword: String) -> String {
             // "case_name:" 또는 "caseName:" 형식으로 검색
-            let lowerPrompt = prompt.lowercased()
+            let lowerPrompt = fieldPrompt.lowercased()
             let lowerKeyword = keyword.lowercased()
             
             guard let range = lowerPrompt.range(of: lowerKeyword + ":") else {
@@ -650,7 +696,7 @@ final class RuleBasedLocalEngine: LocalLLMEngine {
             }
             
             // 키워드 이후의 텍스트 추출
-            let afterKeyword = String(prompt[range.upperBound...])
+            let afterKeyword = String(fieldPrompt[range.upperBound...])
             
             // 첫 번째 줄 또는 쉼표까지의 텍스트
             let endCharacters = CharacterSet(charactersIn: "\n,;]}")
@@ -660,13 +706,13 @@ final class RuleBasedLocalEngine: LocalLLMEngine {
             return value.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         
-        let caseName = extractField("case_name").isEmpty
-            ? extractField("caseName")
-            : extractField("case_name")
-        
-        let issue = extractField("issue")
-        let keywords = extractField("keywords")
-        let keySentences = extractField("key_sentences").prefix(200)
+        func firstField(_ keys: [String]) -> String {
+            keys.map { extractField($0) }.first { !$0.isEmpty } ?? ""
+        }
+        let caseName = firstField(["사건명", "case_name", "caseName"])
+        let issue = firstField(["쟁점", "issue"])
+        let keywords = firstField(["시험포인트", "keywords"])
+        let keySentences = firstField(["판결", "key_sentences"]).prefix(200)
         
         // 모두 빈 경우를 대비한 폴백
         if caseName.isEmpty && issue.isEmpty && keywords.isEmpty {

@@ -1,57 +1,21 @@
 import Foundation
 
 enum LLMPromptTemplate {
-    static func summarize(caseNumber: String, caseName: String, issue: String, holding: String, examPoints: String, ragEvidence: String = "") -> String {
-        let issueShort = String(issue.prefix(160))
-        let holdingShort = String(holding.prefix(160))
+    static func summarize(caseNumber: String, caseName: String, issue: String, holding: String, examPoints: String, ragEvidence: String = "", fieldLimit: Int = 96) -> String {
         let ragBlock: String
         if ragEvidence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             ragBlock = ""
         } else {
-            ragBlock = "\n\n유사판례 근거:\n\(ragEvidence.prefix(400))"
+            ragBlock = "\n[참고 판례]\n\(ragEvidence)"
         }
         return """
-        한국 경찰/공무원 시험 학습용 판례 카드를 만든다. 강의 대체가 아닌 핸드폰 화면에서 한 번에 이해되는 짧은 카드이다.
-
-        [지시]
-        - 한국어로만 출력. 한 줄씩.
-        - 근거에 없는 사실 추가 금지. 판단이 부족하면 "근거 부족"이라고 쓴다.
-        - 한줄요약: 60자 이내, "[도메인] 사건명 사건. 핵심 쟁점에 관해 결론 방향 판단한 사례." 형식.
-        - 핵심쟁점: 한 문장. "...여부." 또는 "...기준."으로 끝낸다.
-        - 결론: 한 문장. "...한다." / "...해당한다." / "...위법하다." 등 결과 동사로 끝낸다.
-        - 포인트: 키워드 3~5개를 쉼표로 나열. 문장으로 쓰지 마라.
-
-        [예시1]
-        사건번호: 2024다311181
-        사건명: 영업정지처분취소
-        쟁점: 행정청의 영업정지처분이 재량권 일탈·남용에 해당하는지 여부
-        판결: 재량권의 행사는 비례원칙과 신뢰보호원칙을 준수해야 하며, 위 처분은 위법하다.
-        시험포인트: 재량권, 비례원칙, 신뢰보호
-
-        한줄요약: [행정] 영업정지처분취소 사건. 재량권 일탈·남용 여부에 관해 위법하다고 판단한 사례.
-        핵심쟁점: 행정청의 영업정지처분이 재량권 일탈·남용에 해당하는지 여부.
-        결론: 비례원칙과 신뢰보호원칙을 위반해 위법하다.
-        포인트: 재량권, 비례원칙, 신뢰보호, 행정처분
-
-        [예시2]
-        사건번호: 2024도12345
-        사건명: 긴급체포 적법성
-        쟁점: 형사소송법 제200조의3에 따른 긴급체포의 적법 여부
-        판결: 도주 우려와 증거인멸 가능성이 동시에 인정되지 않으면 위법한 체포이다.
-        시험포인트: 긴급체포, 영장주의, 도주우려
-
-        한줄요약: [형소법] 긴급체포 적법성 사건. 긴급체포 요건 충족 여부에 관해 위법하다고 판단한 사례.
-        핵심쟁점: 형사소송법 제200조의3에 따른 긴급체포가 적법한지 여부.
-        결론: 도주우려·증거인멸 가능성이 함께 인정되지 않아 위법한 체포이다.
-        포인트: 긴급체포, 영장주의, 도주우려, 증거인멸
-
-        [본문]
+        현재 판례만 요약. 참고 판례의 결론과 혼합 금지. 불명확하면 근거 부족.
+        [현재 판례]
         사건번호: \(caseNumber)
-        사건명: \(String(caseName.prefix(80)))
-        쟁점: \(issueShort)
-        판결: \(holdingShort)
-        시험포인트: \(String(examPoints.prefix(120)))\(ragBlock)
-
+        사건명: \(String(caseName.prefix(min(40, fieldLimit))))
+        쟁점: \(String(issue.prefix(fieldLimit)))
+        판결: \(String(holding.prefix(fieldLimit)))
+        시험포인트: \(String(examPoints.prefix(min(32, fieldLimit))))\(ragBlock)
         [출력]
         한줄요약:
         핵심쟁점:

@@ -138,6 +138,10 @@ final class ScannedCase {
             sourceUrl: nil
         )
     }
+
+    func toRAGDocument() -> RAGDocument {
+        RAGDocument(caseItem: toAPICase(), rawText: ocrRawText)
+    }
 }
 
 private extension DateFormatter {

@@ -59,23 +59,33 @@ final class LLMService: ObservableObject {
 
     private let primaryEngine: LocalLLMEngine
     private let fallbackEngine: LocalLLMEngine
+    private let caseStore: LocalCaseStore
     private var useFallback = true
+    private var modelRevision: UInt64 = 0
+
+    private struct SummaryCacheKey: Hashable {
+        let caseItem: APICase
+        let corpusRevision: UInt64
+        let modelRevision: UInt64
+    }
 
     // MARK: - Caches (똑같은 판례 재진입 시 LLM 재호출 회피)
     // LLMService 가 @MainActor 이므로 단순 Dictionary 로 안전. 최대 32건 LRU-lite.
-    private var summaryCache: [String: LLMSummary] = [:]
+    private var summaryCache: [SummaryCacheKey: LLMSummary] = [:]
     private var oxCache: [String: [OXQuizQuestion]] = [:]
-    private var ragCache: [String: String] = [:]
+    private var ragCache: [SummaryCacheKey: [APICase]] = [:]
     private let cacheCapacity = 32
     /// 약점 키워드(개인화 hint) 공급 클로저. RootTabView에서 ReviewStore 와 바인딩.
     var weakKeywordsProvider: (() -> [String])? = nil
 
-    private init(
+    init(
         primaryEngine: LocalLLMEngine = LlamaCppEngine(),
-        fallbackEngine: LocalLLMEngine = RuleBasedLocalEngine()
+        fallbackEngine: LocalLLMEngine = RuleBasedLocalEngine(),
+        caseStore: LocalCaseStore = .shared
     ) {
         self.primaryEngine = primaryEngine
         self.fallbackEngine = fallbackEngine
+        self.caseStore = caseStore
     }
 
     // MARK: - Model Loading
@@ -86,6 +96,10 @@ final class LLMService: ObservableObject {
     }
 
     func load() async {
+        modelRevision += 1
+        summaryCache.removeAll()
+        ragCache.removeAll()
+        oxCache.removeAll()
         state = .loading(progress: 0)
         lastLoadMessage = nil
         selectedModelSource = nil
@@ -122,8 +136,8 @@ final class LLMService: ObservableObject {
     func summarize(caseItem: APICase) async throws -> LLMSummary? {
         guard case .ready = state else { throw LLMError.notReady }
 
-        // 캐시 히트 — 동일 case 재진입이면 즉시 반환
-        let cacheKey = "sum:\(caseItem.caseNumber)"
+        let snapshot = caseStore.snapshot()
+        let cacheKey = SummaryCacheKey(caseItem: caseItem, corpusRevision: snapshot.revision, modelRevision: modelRevision)
         if let cached = summaryCache[cacheKey] {
             return cached
         }
@@ -133,26 +147,18 @@ final class LLMService: ObservableObject {
             if case .inferring = state { state = .ready }
         }
 
-        let ragEvidence = await buildRAGEvidence(caseItem: caseItem)
-
-        // APICase의 판례 필드를 PromptTemplates.summarize 형식으로 직렬화합니다.
-        // 여기서 만든 문자열이 그대로 llama 엔진의 입력 프롬프트가 됩니다.
-        let prompt = LLMPromptTemplate.summarize(
-            caseNumber: caseItem.caseNumber,
-            caseName: caseItem.caseName,
-            issue: caseItem.issueSummary ?? "",
-            holding: caseItem.holdingSummary ?? "",
-            examPoints: caseItem.examPoints ?? "",
-            ragEvidence: ragEvidence
-        )
+        let references = await retrieveRAGCases(caseItem: caseItem, snapshot: snapshot, cacheKey: cacheKey)
 
         // 백엔드 grounded 분기는 v1.0에서 제거됨 — 모든 추론은 온디바이스 우선.
         // 로컬 1B 출력이 실패하면 RuleBasedLocalEngine + buildSummaryOutput 폴백으로 처리한다.
 
         let rawOutput: String
         do {
+            let prompt = try prepareSummaryPrompt(caseItem: caseItem, references: references)
             rawOutput = try await generateUsingBestAvailableEngine(prompt: prompt, maxTokens: 240, purpose: "summarize")
         } catch {
+            logger.error("Summary generation failed: \(error.localizedDescription, privacy: .public)")
+            lastLoadMessage = "요약 생성 실패로 원문 기반 카드를 표시합니다: \(error.localizedDescription)"
             let fallbackRaw = buildSummaryOutput(caseItem: caseItem)
             return LLMSummary(rawOutput: fallbackRaw)
         }
@@ -355,8 +361,10 @@ final class LLMService: ObservableObject {
     private func wrapForLlama3Instruct(userPrompt: String, purpose: String) -> String {
         let systemMessage: String
         switch purpose {
+        case "rag_analysis":
+            systemMessage = "근거만. E0 현재, 나머지 참고. 각 줄 [E0] 내용. 판례 혼합 금지."
         case "summarize":
-            systemMessage = "당신은 한국 판례 복습 보조이다. 강의 대체가 아닌 시험 복습용 짧은 한국어 출력만 작성한다. 제공된 근거 외 사실을 만들지 않는다. 출력 형식(- one_line_summary: ... 등)을 정확히 지킨다."
+            systemMessage = "한국어 판례 학습 카드. 주어진 근거와 출력 형식만 사용."
         case "ox_quiz":
             systemMessage = "당신은 한국 경찰/공무원 시험 OX 문항 출제자이다. 강의 해설은 쓰지 말고 한 글자/숫자 함정을 활용한 짧은 OX 문항만 만든다. O와 X를 반드시 섞고 출력 형식(--- 구분)을 지킨다."
         case "quiz":
@@ -1679,42 +1687,128 @@ final class LLMService: ObservableObject {
         return jongseong == 0 ? neun : eun
     }
 
-    private func buildRAGEvidence(caseItem: APICase) async -> String {
-        // OCR 임시 케이스는 서버 유사도 검색을 생략
-        if caseItem.caseNumber.hasPrefix("OCR-") {
-            return ""
-        }
-
-        // 세션 캐시 — 같은 case 재진입 시 네트워크 호출 회피
-        if let cached = ragCache[caseItem.caseNumber] {
+    private func retrieveRAGCases(caseItem: APICase, snapshot: LocalCaseStore.Snapshot, cacheKey: SummaryCacheKey) async -> [APICase] {
+        if let cached = ragCache[cacheKey] {
             return cached
         }
+        let similar = await Task.detached(priority: .userInitiated) {
+            snapshot.similar(to: caseItem, topK: 3)
+        }.value
+        if ragCache.count >= cacheCapacity { ragCache.removeAll() }
+        ragCache[cacheKey] = similar
+        return similar
+    }
 
-        guard let similar = try? await NetworkService.shared.listSimilarCases(caseNumber: caseItem.caseNumber, topK: 3),
-              !similar.isEmpty else {
-            ragCache[caseItem.caseNumber] = ""
-            return ""
+    private func prepareSummaryPrompt(caseItem: APICase, references: [APICase]) throws -> String {
+        let characterLimit = isLowMemoryDevice() ? lowMemoryPromptLimit : normalPromptLimit
+        let maxTokens = min(240, isLowMemoryDevice() ? lowMemoryTokenCap : normalTokenCap)
+        var budgetError: LocalLLMEngineError?
+        for fieldLimit in [96, 64, 48, 32, 16, 8] {
+            let evidence = references.prefix(fieldLimit >= 64 ? 2 : 1).enumerated().map { index, item in
+                "[R\(index + 1)] \(item.caseNumber)\n쟁점: \(String((item.issueSummary ?? "").prefix(fieldLimit)))\n판결: \(String((item.holdingSummary ?? "").prefix(fieldLimit)))"
+            }.joined(separator: "\n")
+            let prompt = LLMPromptTemplate.summarize(
+                caseNumber: caseItem.caseNumber, caseName: caseItem.caseName,
+                issue: caseItem.issueSummary ?? "", holding: caseItem.holdingSummary ?? "",
+                examPoints: caseItem.examPoints ?? "", ragEvidence: evidence, fieldLimit: fieldLimit
+            )
+            guard prompt.count <= characterLimit else { continue }
+            if !useFallback {
+                do {
+                    try primaryEngine.validatePrompt(wrapForLlama3Instruct(userPrompt: prompt, purpose: "summarize"), maxTokens: maxTokens)
+                } catch LocalLLMEngineError.promptTooLong(let actual, let limit) {
+                    budgetError = .promptTooLong(actual: actual, limit: limit)
+                    continue
+                }
+            }
+            return prompt
         }
-
-        let joined = similar.map {
-            let issue = ($0.issueSummary ?? "").prefix(80)
-            let holding = ($0.holdingSummary ?? "").prefix(80)
-            let exam = ($0.examPoints ?? "").prefix(60)
-            return "- \($0.caseNumber) \($0.caseName) [\($0.subject)]: 쟁점=\(issue) / 결론=\(holding) / 포인트=\(exam)"
-        }.joined(separator: "\n")
-        ragCache[caseItem.caseNumber] = joined
-        if ragCache.count > cacheCapacity { ragCache.removeAll() }
-        return joined
+        throw budgetError ?? LocalLLMEngineError.runtimeUnavailable("현재 판례와 참고 근거를 입력 예산 안에 보존할 수 없습니다.")
     }
 
     /// 캐시 저장 + 단순 capacity 관리 (LRU 아닌 wipe-on-overflow)
-    private func cacheSummary(_ summary: LLMSummary, forKey key: String) {
+    private func cacheSummary(_ summary: LLMSummary, forKey key: SummaryCacheKey) {
         if summaryCache.count >= cacheCapacity { summaryCache.removeAll() }
         summaryCache[key] = summary
     }
     private func cacheOX(_ items: [OXQuizQuestion], forKey key: String) {
         if oxCache.count >= cacheCapacity { oxCache.removeAll() }
         oxCache[key] = items
+    }
+
+    func generateRAGAnswer(question: String, evidence: [RAGEvidence], task: RAGAnalysisTask = .analysis) async throws -> RAGGenerationTrace {
+        guard case .ready = state else { throw LLMError.notReady }
+        guard !useFallback else {
+            throw RAGError.unavailable("GGUF 엔진을 사용할 수 없습니다. 규칙 기반 응답은 모델 생성 성공으로 집계하지 않습니다.")
+        }
+        guard !evidence.isEmpty else { throw RAGError.invalidInput("분석할 원문 근거가 없습니다.") }
+        state = .inferring
+        defer { if case .inferring = state { state = .ready } }
+        let tokenCap = isLowMemoryDevice() ? lowMemoryTokenCap : normalTokenCap
+        var prepared: (String, [RAGEvidence])?
+        for limit in [96, 64, 48, 32, 24, 16, 8] {
+            let excerpts = evidence.prefix(limit >= 48 ? 3 : 2).map {
+                RAGEvidence(id: $0.id, chunk: $0.chunk.excerpt(limit: limit))
+            }
+            let body = excerpts.map { "[\($0.id)] \($0.chunk.caseNumber)\n\($0.chunk.text)" }.joined(separator: "\n")
+            let instruction = task == .oxDraft ? "OX 1개. 각 줄 인용. 문항: 내용 / 정답: O 또는 X / 해설: 내용\n" : ""
+            let raw = """
+            \(instruction)\
+            질문: \(question)
+            \(body)
+            """
+            let wrapped = wrapForLlama3Instruct(userPrompt: raw, purpose: "rag_analysis")
+            do {
+                try primaryEngine.validatePrompt(wrapped, maxTokens: tokenCap)
+                prepared = (wrapped, excerpts)
+                break
+            } catch LocalLLMEngineError.promptTooLong {
+                continue
+            }
+        }
+        guard let (prompt, excerpts) = prepared else {
+            throw RAGError.unavailable("원문과 참고 근거를 토큰 예산 안에 보존할 수 없습니다.")
+        }
+        var inferenceMS = 0.0
+        var failure: String?
+        var output = ""
+        var attempts = 0
+        for attempt in 1...primaryGenerateAttempts {
+            try Task.checkCancellation()
+            attempts = attempt
+            let start = ProcessInfo.processInfo.systemUptime
+            do {
+                output = try await primaryEngine.generate(prompt: prompt, maxTokens: tokenCap)
+                inferenceMS += (ProcessInfo.processInfo.systemUptime - start) * 1000
+                failure = nil
+                break
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                inferenceMS += (ProcessInfo.processInfo.systemUptime - start) * 1000
+                failure = error.localizedDescription
+                logger.error("RAG generate attempt \(attempt) failed: \(error.localizedDescription, privacy: .public)")
+                if attempt < primaryGenerateAttempts {
+                    do {
+                        try await recoverPrimaryEngine(after: error, purpose: "rag_analysis")
+                    } catch is CancellationError {
+                        state = .error("RAG 엔진 복구가 중단되었습니다.")
+                        throw CancellationError()
+                    } catch {
+                        failure = "엔진 복구 실패: \(error.localizedDescription)"
+                        state = .error(failure ?? "RAG 엔진 복구 실패")
+                        logger.error("\(failure ?? "", privacy: .public)")
+                        break
+                    }
+                }
+            }
+        }
+        if let failure { lastLoadMessage = "RAG 생성 실패: \(failure)" }
+        return RAGGenerationTrace(
+            output: output, evidence: excerpts, engine: primaryEngine.name,
+            model: selectedModelPath.map { URL(fileURLWithPath: $0).lastPathComponent },
+            inferenceMS: inferenceMS, attempts: attempts, promptCharacters: prompt.count, failureReason: failure
+        )
     }
 
     private func buildFallbackOXQuiz(

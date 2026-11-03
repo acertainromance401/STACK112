@@ -1,6 +1,8 @@
 # STACK112 프로젝트 문서 허브
 
 > 안내: 본 문서는 기획 문서와 현재 구현 상태를 함께 관리하는 기준 문서입니다.
+>
+> 2026-11-02 온디바이스 RAG 개선: 저장 판례 동기화, OCR 본문 기반 검색, 실제 토큰 예산에 맞춘 근거 보존 및 캐시 무효화를 반영했습니다. 구조화 인용 검증과 검색·생성 품질 평가는 후속 과제입니다. [iOS 동작 안내](code/ios/README.md#온디바이스-rag)와 [점검 및 개선 내역](docs/project/Improvement_Plan_and_RAG_Audit_2026-11-02.md#7-온디바이스-rag-개선-반영)을 참고하세요.
 
 ## 앱 다운로드
 
@@ -167,6 +169,7 @@
 
 ### 프로젝트 기획/로드맵 문서
 - [docs/project/README.md](docs/project/README.md) — 프로젝트 기획 문서 모음 인덱스
+- [docs/project/Improvement_Plan_and_RAG_Audit_2026-11-02.md](docs/project/Improvement_Plan_and_RAG_Audit_2026-11-02.md) — 개선 우선순위·완료 기준 및 실제 RAG 연결 상태 점검
 - [docs/project/PRD_AI_SYS.md](docs/project/PRD_AI_SYS.md) — 제품 요구사항 문서(PRD)
 - [docs/project/Project_Description.md](docs/project/Project_Description.md) — 프로젝트 설명서
 - [docs/project/Project_Description_Progress_2026-04-16.md](docs/project/Project_Description_Progress_2026-04-16.md) — 프로젝트 진행상황 상세 보고서
@@ -296,5 +299,3 @@
 ## 8. git주소
 - 개인 저장소: `https://github.com/acertainromance401/AI_SYS_Personal`
 - 팀 저장소: `https://github.com/acertainromance401/STACK112`
-
-

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title description">
+  <title id="title">STACK112 사용자 학습 로드맵</title>
+  <desc id="description">홈에서 판례를 스캔하거나 선택한 뒤 요약, OX 풀이, 오답 확인, 분석과 복습으로 이어지는 사용자 행동 흐름. 요약 상세에서 별도 원문 근거 분석으로 진입할 수 있다. 화면 자동 전환을 의미하지 않는다.</desc>
+  <rect width="1280" height="720" fill="#0C1117"/>
+  <g font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">
+    <g id="heading">
+      <text x="64" y="58" fill="#8ABFC6" font-size="16" font-weight="600">01 / 사용자 로드맵</text>
+      <text x="64" y="111" fill="#EDF0F3" font-size="34" font-weight="700">판례를 읽고, 풀고, 다시 학습한다</text>
+      <text x="64" y="151" fill="#BBC6D1" font-size="20">기본 학습 흐름은 유지하고, 필요한 순간에 원문 근거를 확인한다.</text>
+    </g>
+    <g id="connectors" fill="#C5CED8" stroke="#C5CED8" stroke-width="2">
+      <path d="M230 294 H251 M428 294 H449 M626 294 H647 M824 294 H845 M1022 294 H1043" fill="none"/>
+      <polygon points="251,288 259,294 251,300" stroke="none"/>
+      <polygon points="449,288 457,294 449,300" stroke="none"/>
+      <polygon points="647,288 655,294 647,300" stroke="none"/>
+      <polygon points="845,288 853,294 845,300" stroke="none"/>
+      <polygon points="1043,288 1051,294 1043,300" stroke="none"/>
+    </g>
+    <g id="steps" text-anchor="middle">
+      <g id="step-home">
+        <text x="146" y="218" fill="#8896A5" font-size="16">01</text>
+        <rect x="62" y="236" width="168" height="116" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="146" y="286" fill="#EDF0F3" font-size="26" font-weight="600">홈</text>
+        <text x="146" y="319" fill="#BBC6D1" font-size="17">오늘의 학습 확인</text>
+      </g>
+      <g id="step-case">
+        <text x="344" y="218" fill="#8896A5" font-size="16">02</text>
+        <rect x="260" y="236" width="168" height="116" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="344" y="286" fill="#EDF0F3" font-size="25" font-weight="600">판례 등록·선택</text>
+        <text x="344" y="319" fill="#BBC6D1" font-size="17">사진 OCR · 보관함</text>
+      </g>
+      <g id="step-summary">
+        <text x="542" y="218" fill="#8896A5" font-size="16">03</text>
+        <rect x="458" y="236" width="168" height="116" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+        <text x="542" y="286" fill="#EDF0F3" font-size="26" font-weight="600">요약 카드</text>
+        <text x="542" y="319" fill="#BBC6D1" font-size="17">쟁점 · 판단 · 가이드</text>
+      </g>
+      <g id="step-quiz">
+        <text x="740" y="218" fill="#8896A5" font-size="16">04</text>
+        <rect x="656" y="236" width="168" height="116" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="740" y="286" fill="#EDF0F3" font-size="26" font-weight="600">OX 풀이</text>
+        <text x="740" y="319" fill="#BBC6D1" font-size="17">문제풀이 탭 · 상세</text>
+      </g>
+      <g id="step-record">
+        <text x="938" y="218" fill="#8896A5" font-size="16">05</text>
+        <rect x="854" y="236" width="168" height="116" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="938" y="286" fill="#EDF0F3" font-size="26" font-weight="600">오답 확인</text>
+        <text x="938" y="319" fill="#BBC6D1" font-size="17">풀이 기록 · 메모</text>
+      </g>
+      <g id="step-review">
+        <text x="1136" y="218" fill="#8896A5" font-size="16">06</text>
+        <rect x="1052" y="236" width="168" height="116" rx="3" fill="#1B222B" stroke="#53606E" stroke-width="1.5"/>
+        <text x="1136" y="286" fill="#EDF0F3" font-size="26" font-weight="600">분석·복습</text>
+        <text x="1136" y="319" fill="#BBC6D1" font-size="17">학습 통계 · 회독</text>
+      </g>
+    </g>
+    <g id="optional-rag">
+      <path d="M542 353 V422" fill="none" stroke="#8ABFC6" stroke-width="2" stroke-dasharray="6 5"/>
+      <polygon points="536,422 542,431 548,422" fill="#8ABFC6"/>
+      <rect x="392" y="432" width="300" height="112" rx="3" fill="#1B222B" stroke="#8ABFC6" stroke-width="1.5"/>
+      <text x="542" y="477" text-anchor="middle" fill="#8ABFC6" font-size="26" font-weight="600">원문 근거 분석</text>
+      <text x="542" y="512" text-anchor="middle" fill="#BBC6D1" font-size="18">질문 · 인용 답변 · 원문 대조</text>
+      <text x="740" y="471" fill="#8ABFC6" font-size="20" font-weight="600">필요할 때 여는 별도 RAG 경로</text>
+      <text x="740" y="507" fill="#BBC6D1" font-size="18">OX 초안은 기존 퀴즈·오답노트와 분리</text>
+    </g>
+    <g id="footer">
+      <path d="M64 611 H1216" stroke="#53606E" stroke-width="1"/>
+      <text x="64" y="648" fill="#BBC6D1" font-size="18">화살표는 사용자 행동 순서이며 자동 화면 전환이 아니다.</text>
+      <text x="64" y="682" fill="#8896A5" font-size="15">코드: RootTabView · NewMainScreens · SearchFlowViews · RAGResearchViews</text>
+    </g>
+  </g>
+</svg>
