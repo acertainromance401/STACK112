@@ -1,0 +1,225 @@
+{
+  "scope": {
+    "environment": "simulator_not_device_evidence",
+    "hybrid": "unchanged keyword + E5 RRF=60 with existing exact-case policy",
+    "llamaSwiftRevision": "7c03da71ca6adeae39fa37484d5cdf9d46779529",
+    "modes": "keyword,semantic,hybrid",
+    "order": "query order; mode order rotated by query index; cold then 3 warm repetitions per cell",
+    "osVersion": "Version 26.1 (Build 23B86)",
+    "processorCount": "8",
+    "provider_cold": "fresh provider/model/vector cache per query/mode; one first search; OS file cache not cleared",
+    "quality": "provisional document gold; P@3 fixed denominator; Recall/MRR undefined without gold",
+    "query": "question + current document title",
+    "retrieval": "320-character chunks,64 overlap,3 hits,2 chunks/document,cosine>0.30",
+    "scope": "retrieval only; no LLM generation, OCR, UI registration, or expert evaluation",
+    "semantic": "E5 cosine only; no lexical score, exact-case bonus, or keyword fallback",
+    "timing": "synchronous retriever wall time; includes per-request chunking; no task dispatch or LLM generation",
+    "warm_passages_uncached_query": "same provider after first search; evict only query vector before each of 3 repeats"
+  },
+  "native_samples": 36,
+  "unique_quality_queries_per_mode": 3,
+  "report_sha256": "05022bd439af8259488b9a6d43ae56dd6574431ef33e62fdc82a46f22a5eb08d",
+  "analysis_script_sha256": "770736ebfc7bac677c882818a55d6a2ae81b45c224c53e347898431fd6f33521",
+  "figure_helper_sha256": "5d0fd0aacff2f954f28c845e3ac0c3b5f52c6cf739464216ce65bc82c47314e3",
+  "pandas_version": "2.3.0",
+  "matplotlib_version": "3.9.2",
+  "quality": [
+    {
+      "mode": "keyword",
+      "queries": 3,
+      "positive_queries": 2,
+      "negative_queries": 1,
+      "precision_at_3": 0.2222222222,
+      "recall_at_3": 1.0,
+      "mrr_at_3": 1.0,
+      "no_reference_success": 0.0,
+      "reference_candidate_contaminated": 0.3333333333
+    },
+    {
+      "mode": "semantic",
+      "queries": 3,
+      "positive_queries": 2,
+      "negative_queries": 1,
+      "precision_at_3": 0.2222222222,
+      "recall_at_3": 1.0,
+      "mrr_at_3": 1.0,
+      "no_reference_success": 0.0,
+      "reference_candidate_contaminated": 0.3333333333
+    },
+    {
+      "mode": "hybrid",
+      "queries": 3,
+      "positive_queries": 2,
+      "negative_queries": 1,
+      "precision_at_3": 0.2222222222,
+      "recall_at_3": 1.0,
+      "mrr_at_3": 1.0,
+      "no_reference_success": 0.0,
+      "reference_candidate_contaminated": 0.3333333333
+    }
+  ],
+  "timing": [
+    {
+      "query_id": "L1",
+      "mode": "hybrid",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 81.0601348333,
+      "min_seconds": 81.0601348333,
+      "max_seconds": 81.0601348333
+    },
+    {
+      "query_id": "L1",
+      "mode": "hybrid",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.7418260417,
+      "min_seconds": 0.7411096667,
+      "max_seconds": 0.750250125
+    },
+    {
+      "query_id": "L1",
+      "mode": "keyword",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 0.0618149583,
+      "min_seconds": 0.0618149583,
+      "max_seconds": 0.0618149583
+    },
+    {
+      "query_id": "L1",
+      "mode": "keyword",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.06245825,
+      "min_seconds": 0.0587774583,
+      "max_seconds": 0.065966625
+    },
+    {
+      "query_id": "L1",
+      "mode": "semantic",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 103.1078400417,
+      "min_seconds": 103.1078400417,
+      "max_seconds": 103.1078400417
+    },
+    {
+      "query_id": "L1",
+      "mode": "semantic",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.7113217083,
+      "min_seconds": 0.7110879583,
+      "max_seconds": 0.711384875
+    },
+    {
+      "query_id": "L2",
+      "mode": "hybrid",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 77.5566357083,
+      "min_seconds": 77.5566357083,
+      "max_seconds": 77.5566357083
+    },
+    {
+      "query_id": "L2",
+      "mode": "hybrid",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.8398617083,
+      "min_seconds": 0.8232487917,
+      "max_seconds": 0.8745335833
+    },
+    {
+      "query_id": "L2",
+      "mode": "keyword",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 0.0255200417,
+      "min_seconds": 0.0255200417,
+      "max_seconds": 0.0255200417
+    },
+    {
+      "query_id": "L2",
+      "mode": "keyword",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.0249403333,
+      "min_seconds": 0.0248761667,
+      "max_seconds": 0.0250100833
+    },
+    {
+      "query_id": "L2",
+      "mode": "semantic",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 77.534636125,
+      "min_seconds": 77.534636125,
+      "max_seconds": 77.534636125
+    },
+    {
+      "query_id": "L2",
+      "mode": "semantic",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.8086107917,
+      "min_seconds": 0.8018459167,
+      "max_seconds": 0.8791034167
+    },
+    {
+      "query_id": "L3",
+      "mode": "hybrid",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 80.7683292083,
+      "min_seconds": 80.7683292083,
+      "max_seconds": 80.7683292083
+    },
+    {
+      "query_id": "L3",
+      "mode": "hybrid",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.54540775,
+      "min_seconds": 0.5450076667,
+      "max_seconds": 0.5460295417
+    },
+    {
+      "query_id": "L3",
+      "mode": "keyword",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 0.0229247083,
+      "min_seconds": 0.0229247083,
+      "max_seconds": 0.0229247083
+    },
+    {
+      "query_id": "L3",
+      "mode": "keyword",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.0227337917,
+      "min_seconds": 0.022694,
+      "max_seconds": 0.0227357917
+    },
+    {
+      "query_id": "L3",
+      "mode": "semantic",
+      "phase": "provider_cold",
+      "observations": 1,
+      "median_seconds": 84.8517081667,
+      "min_seconds": 84.8517081667,
+      "max_seconds": 84.8517081667
+    },
+    {
+      "query_id": "L3",
+      "mode": "semantic",
+      "phase": "warm_passages_uncached_query",
+      "observations": 3,
+      "median_seconds": 0.5258249583,
+      "min_seconds": 0.521609,
+      "max_seconds": 0.5258665833
+    }
+  ]
+}

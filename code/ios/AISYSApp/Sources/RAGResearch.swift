@@ -413,7 +413,7 @@ struct RAGEvaluationReport: Encodable {
 @MainActor
 enum RAGEvaluator {
     static func run(dataset: RAGEvaluationDataset, repetitions: Int = 1,
-                    modes: [RAGRetrievalMode] = RAGRetrievalMode.allCases,
+                    modes: [RAGRetrievalMode] = RAGRetrievalMode.baselineModes,
                     service: RAGResearchService, progress: (Int, Int) -> Void) async throws -> RAGEvaluationReport {
         try dataset.validate()
         guard (1...20).contains(repetitions) else { throw RAGError.invalidInput("반복 횟수는 1~20회여야 합니다.") }

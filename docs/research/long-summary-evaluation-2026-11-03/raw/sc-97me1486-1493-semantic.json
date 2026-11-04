@@ -1,0 +1,246 @@
+{
+  "documentID" : "sc-97me1486-1493",
+  "formatParsed" : false,
+  "generationMS" : 98612.43087500043,
+  "input" : {
+    "caseName" : "이혼및위자료등·이혼등",
+    "caseNumber" : "97므1486, 1493",
+    "courtName" : "대법원",
+    "examPoints" : ". 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2] 대법원 1994. 11. 11. 선고 94므963 판결(공1994하, 3274), 대법원 1996. 12. 23. 선고 95므1192, 1208 판결(공1997상, 531)\n【전 문】\n【원고, 피상고인(부대상고인, 반소피고)】\n원고\n【피고, 상고인(부대피상고인, 반소원고)】\n피고\n【사건본인】\n사건본인 1외 2인\n【원심판결】\n서울고법 1997. 9. 12. 선고 97르447, 454 판결\n",
+    "holdingSummary" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+    "id" : "sc-97me1486-1493",
+    "issueSummary" : ". 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2] 대법원 1994. 11. 11. 선고 94므963 판결(공1994하, 3274), 대법원 1996. 12. 23. 선고 95므1192, 1208 판결(공1997상, 531)\n【전 문】\n【원고, 피상고인(부대상고인, 반소피고)】\n원고\n【피고, 상고인(부대피상고인, 반소원고)】\n피고\n【사건본인】\n사건본인 1외 2인\n【원심판결】\n서울고법 1997. 9. 12. 선고 97르447, 454 판결\n",
+    "subject" : "가사·이혼·재산분할"
+  },
+  "mode" : "semantic",
+  "prompt" : "현재 판례만 요약. 참고 판례의 결론과 혼합 금지. 불명확하면 근거 부족.\n[현재 판례]\n사건번호: 97므1486, 1493\n사건명: 이혼및위자료등·이혼등\n쟁점: . 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2\n판결: 대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이\n시험포인트: . 2. 9. 선고 94므635, 642 판결(공1996상\n[출력]\n한줄요약:\n핵심쟁점:\n결론:\n포인트:",
+  "rawOutput" : "판례: 1. 부부 일방의 특유재산이 혼합 금지\n2. 불명확한 근거는 근거 부족",
+  "searches" : [
+    {
+      "chunkCount" : 16,
+      "effectiveMode" : "semantic",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1375,
+            "id" : "sc-97me1486-1493:c5af08af5466:1059-1375",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1059,
+            "text" : ". 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2] 대법원 1994. 11. 11. 선고 94므963 판결(공1994하, 3274), 대법원 1996. 12. 23. 선고 95므1192, 1208 판결(공1997상, 531)\n【전 문】\n【원고, 피상고인(부대상고인, 반소피고)】\n원고\n【피고, 상고인(부대피상고인, 반소원고)】\n피고\n【사건본인】\n사건본인 1외 2인\n【원심판결】\n서울고법 1997. 9. 12. 선고 97르447, 454 판결\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8197121030208253,
+          "semanticRank" : 1
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 205,
+            "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8183341096069215,
+          "semanticRank" : 2
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 461,
+            "id" : "sc-97me1486-1493:c5af08af5466:141-461",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 141,
+            "text" : " 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n[1] 민법 제839조의2에 규정된 재산분할제도는 혼인 중에 취득한 실질적인 공동재산을 청산 분배하는 것을 주된 목적으로 하는 것이므로, 부부가 재판상 이혼을 할 때 쌍방의 협력으로 이룩한 재산이 있는 한, 법원으로서는 당사자의 청구에 의하여 그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바, 이 경우 부부 일방의 특유재산은 원칙적으로 분할의 대상이 되지 아니하나 특유재산일지라도 다른 일방이 적극",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8171841175484619,
+          "semanticRank" : 3
+        }
+      ],
+      "requestedMode" : "semantic",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "0",
+        "vectorCacheMisses" : "17",
+        "warmBeforeSearch" : "false"
+      },
+      "semanticScoredChunkCount" : 16,
+      "warnings" : [
+
+      ]
+    },
+    {
+      "chunkCount" : 16,
+      "effectiveMode" : "semantic",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 205,
+            "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8323127584034654,
+          "semanticRank" : 1
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1375,
+            "id" : "sc-97me1486-1493:c5af08af5466:1059-1375",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1059,
+            "text" : ". 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2] 대법원 1994. 11. 11. 선고 94므963 판결(공1994하, 3274), 대법원 1996. 12. 23. 선고 95므1192, 1208 판결(공1997상, 531)\n【전 문】\n【원고, 피상고인(부대상고인, 반소피고)】\n원고\n【피고, 상고인(부대피상고인, 반소원고)】\n피고\n【사건본인】\n사건본인 1외 2인\n【원심판결】\n서울고법 1997. 9. 12. 선고 97르447, 454 판결\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.831739282937991,
+          "semanticRank" : 2
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 3465,
+            "id" : "sc-97me1486-1493:c5af08af5466:3218-3465",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 3218,
+            "text" : "특정하여 설시하지 아니하였는바, 위에서 본 법리와 기록에 의하면 원심의 이러한 조치는 수긍이 가고, 거기에 소론과 같은 채증법칙 위배로 인한 사실오인이나 재산분할에 관한 법리오인의 위법이 있다고 할 수 없다. 논지는 모두 이유 없다.\n그러므로 상고 및 부대상고를 각 기각하고 상고 및 부대상고비용은 각 패소자의 부담으로 하기로 하여 관여 법관의 일치된 의견으로 주문과 같이 판결한다.\n대법관 이용훈(재판장), 정귀호, 박준서(주심), 김형선\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8307292864285722,
+          "semanticRank" : 3
+        }
+      ],
+      "requestedMode" : "semantic",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "16",
+        "vectorCacheMisses" : "1",
+        "warmBeforeSearch" : "true"
+      },
+      "semanticScoredChunkCount" : 16,
+      "warnings" : [
+
+      ]
+    },
+    {
+      "chunkCount" : 16,
+      "effectiveMode" : "semantic",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1375,
+            "id" : "sc-97me1486-1493:c5af08af5466:1059-1375",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1059,
+            "text" : ". 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2] 대법원 1994. 11. 11. 선고 94므963 판결(공1994하, 3274), 대법원 1996. 12. 23. 선고 95므1192, 1208 판결(공1997상, 531)\n【전 문】\n【원고, 피상고인(부대상고인, 반소피고)】\n원고\n【피고, 상고인(부대피상고인, 반소원고)】\n피고\n【사건본인】\n사건본인 1외 2인\n【원심판결】\n서울고법 1997. 9. 12. 선고 97르447, 454 판결\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8118281521440512,
+          "semanticRank" : 1
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 205,
+            "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 0,
+            "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8040081003301937,
+          "semanticRank" : 2
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "97므1486, 1493",
+            "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+            "documentID" : "sc-97me1486-1493",
+            "endUTF16" : 1938,
+            "id" : "sc-97me1486-1493:c5af08af5466:1618-1938",
+            "sourceKind" : "user_provided_judgment",
+            "startUTF16" : 1618,
+            "text" : "정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바{대법원 1995. 10. 12. 선고 95므175(본소), 95므182(반소) 판결 등 참조}, 이 경우 부부 일방의 특유재산은 원칙적으로 분할의 대상이 되지 아니하나 특유재산일지라도 다른 일방이 적극적으로 그 특유재산의 유지에 협력하여 그 감소를 방지하였거나 그 증식에 협력하였다고 인정되는 경우에는 분할의 대상이 될 수 있고, 한편 부부 일방이 혼인 중 제3자에게 부담한 채무는 일상가사에 관한 것 이외에는 원칙으로 그 개인의 채무로서 청산의 대상이 되지 않으나 그것이 공동재산의 형성",
+            "title" : "이혼및위자료등·이혼등"
+          },
+          "score" : 0.8004896955922162,
+          "semanticRank" : 3
+        }
+      ],
+      "requestedMode" : "semantic",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "16",
+        "vectorCacheMisses" : "1",
+        "warmBeforeSearch" : "true"
+      },
+      "semanticScoredChunkCount" : 16,
+      "warnings" : [
+
+      ]
+    }
+  ],
+  "selectionMS" : 32599.407833331497,
+  "sourceSHA256" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+  "totalMS" : 131212.03112500007,
+  "wrappedPrompt" : "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n한국어 판례 학습 카드. 주어진 근거와 출력 형식만 사용.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n현재 판례만 요약. 참고 판례의 결론과 혼합 금지. 불명확하면 근거 부족.\n[현재 판례]\n사건번호: 97므1486, 1493\n사건명: 이혼및위자료등·이혼등\n쟁점: . 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25. 선고 92므501 판결(공1993하, 1881) \/ [2\n판결: 대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이\n시험포인트: . 2. 9. 선고 94므635, 642 판결(공1996상\n[출력]\n한줄요약:\n핵심쟁점:\n결론:\n포인트:<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+}

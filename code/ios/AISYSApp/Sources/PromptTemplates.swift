@@ -1,7 +1,7 @@
 import Foundation
 
 enum LLMPromptTemplate {
-    static func summarize(caseNumber: String, caseName: String, issue: String, holding: String, examPoints: String, ragEvidence: String = "", fieldLimit: Int = 96) -> String {
+    static func summarize(caseNumber: String, caseName: String, issue: String, holding: String, examPoints: String, ragEvidence: String = "", fieldLimit: Int? = 96) -> String {
         let ragBlock: String
         if ragEvidence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             ragBlock = ""
@@ -12,10 +12,10 @@ enum LLMPromptTemplate {
         현재 판례만 요약. 참고 판례의 결론과 혼합 금지. 불명확하면 근거 부족.
         [현재 판례]
         사건번호: \(caseNumber)
-        사건명: \(String(caseName.prefix(min(40, fieldLimit))))
-        쟁점: \(String(issue.prefix(fieldLimit)))
-        판결: \(String(holding.prefix(fieldLimit)))
-        시험포인트: \(String(examPoints.prefix(min(32, fieldLimit))))\(ragBlock)
+        사건명: \(fieldLimit.map { String(caseName.prefix(min(40, $0))) } ?? caseName)
+        쟁점: \(fieldLimit.map { String(issue.prefix($0)) } ?? issue)
+        판결: \(fieldLimit.map { String(holding.prefix($0)) } ?? holding)
+        시험포인트: \(fieldLimit.map { String(examPoints.prefix(min(32, $0))) } ?? examPoints)\(ragBlock)
         [출력]
         한줄요약:
         핵심쟁점:

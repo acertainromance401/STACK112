@@ -1,0 +1,8 @@
+	 Executed 2 tests, with 0 failures (0 unexpected) in 41.303 (41.308) seconds
+Test Case '-[AISYSAppTests.LegalCasePilotTests testRetrievalOnlyKeywordSemanticHybridAblation]' started.
+RETRIEVAL_ABLATION_FINISHED /Users/acertainromance401/Library/Developer/CoreSimulator/Devices/D8534374-0962-4B2F-B9A2-7EA002C56FB9/data/Containers/Data/Application/FD75ACB9-694A-41C0-8A4F-B2B210D16B10/Documents/retrieval-ablation-v1
+Test Case '-[AISYSAppTests.LegalCasePilotTests testRetrievalOnlyKeywordSemanticHybridAblation]' passed (518.674 seconds).
+	 Executed 19 tests, with 0 failures (0 unexpected) in 3.552 (3.562) seconds
+	 Executed 22 tests, with 0 failures (0 unexpected) in 563.529 (563.547) seconds
+	 Executed 22 tests, with 0 failures (0 unexpected) in 563.529 (563.548) seconds
+** TEST SUCCEEDED **

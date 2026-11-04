@@ -1,0 +1,76 @@
+{
+  "durationMS" : 22.735791666491423,
+  "phase" : "warm_passages_uncached_query",
+  "queryID" : "L3",
+  "queryText" : "면접교섭 허용 의무에 대한 이행명령으로 확정된 판결에 없던 새로운 조건을 추가할 수 있는가? 이행명령",
+  "relevance" : {
+    "evaluatedDocumentIDs" : [
+      "sc-2024me16033-16040",
+      "sc-97me1486-1493"
+    ],
+    "noRelevantDocumentCorrect" : false,
+    "precisionAtK" : 0
+  },
+  "repetition" : 1,
+  "search" : {
+    "chunkCount" : 43,
+    "effectiveMode" : "keyword",
+    "hits" : [
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 3987,
+          "id" : "sc-2024me16033-16040:3f315774e7de:3675-3987",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 3675,
+          "text" : "만을 고집할 것이 아니라 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려하여야 한다.\n나. 앞서 본 사실관계와 기록에 의하여 알 수 있는 아래와 같은 사정을 위 법리에 비추어 보면, 원심이 이 사건 주식에 관하여 오로지 대상분할 방식으로 재산분할을 명한 것은 당사자들의 형평을 현저히 해하는 방식으로 허용될 수 없다고 볼 여지가 있다.\n1) 원심은 주식회사 △△△ 비상장주식에 대하여는 당사자들의 분할 방법에 대한 합의를 존중하여 현물분할을 명하면서도 이 사건 주식을 포함한 나머지 부부 공동재산 전부에 대하여는 대상분할을 명하였다.",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "keywordRank" : 1,
+        "score" : 0.01639344262295082
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 4952,
+          "id" : "sc-2024me16033-16040:3f315774e7de:4693-4952",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 4693,
+          "text" : " 있는지도 불분명하며, 이 사건 주식이 매각되면 이로 인하여 발생하는 각종 세금이나 비용은 모두 피고에게 전가된다. 이에 반해, 대상분할 방식으로 재산이 분할됨으로써 원고는 이 사건 주식에 관하여 발생하는 경제적 위험에서 완전히 벗어나게 된다.\n4) 만약 피고가 주식을 매각함으로써 이 사건 회사에 대한 지배력을 상실하게 되면 피고가 창업자 및 경영자로서 이 사건 회사에 투입한 시간과 노력이 훼손되고, 나아가 이 사건 회사의 존속가치에 영향을 줄 여지도 있다.\n",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "keywordRank" : 2,
+        "score" : 0.016129032258064516
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 205,
+          "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 0,
+          "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "keywordRank" : 6,
+        "score" : 0.015151515151515152
+      }
+    ],
+    "requestedMode" : "keyword",
+    "semanticModelIdentity" : {
+
+    },
+    "semanticScoredChunkCount" : 0,
+    "warnings" : [
+
+    ]
+  }
+}

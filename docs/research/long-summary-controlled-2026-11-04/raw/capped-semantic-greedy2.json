@@ -1,0 +1,19 @@
+{
+  "conditionID" : "capped-semantic",
+  "decoder" : "greedy",
+  "formatParsed" : false,
+  "generationMS" : 94791.74512499958,
+  "id" : "capped-semantic-greedy2",
+  "manifestSHA256" : "f4005b3d722b1ad3ddf550e3b04db9faea06289c62ba9e5444fd82fe9593b598",
+  "order" : 12,
+  "repetition" : 2,
+  "result" : {
+    "contextTokens" : 8192,
+    "generatedTokenCount" : 40,
+    "originalPromptTokenCount" : 277,
+    "outputTokenLimit" : 128,
+    "promptTokenCount" : 277,
+    "stopReason" : "end_of_generation",
+    "text" : "가사소송법 제64조에 따라 가사소송법 제64조에 의한 이행명령의 범위를어나 허용될 수 없다는 결론."
+  }
+}

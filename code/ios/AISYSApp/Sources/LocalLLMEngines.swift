@@ -303,8 +303,27 @@ final class LlamaCppEngine: LocalLLMEngine {
     private var vocab: OpaquePointer?
     #endif
 
-    init(modelURL: URL? = nil) {
+    enum EvaluationSampling: Equatable, Sendable {
+        case greedy
+        case seeded(UInt32)
+    }
+
+    struct EvaluationOutput: Codable, Sendable {
+        let text: String
+        let originalPromptTokenCount: Int
+        let promptTokenCount: Int
+        let generatedTokenCount: Int
+        let contextTokens: Int
+        let outputTokenLimit: Int
+        let samplerSeed: UInt32?
+        let stopReason: String
+    }
+
+    private let evaluationContextTokens: UInt32?
+
+    init(modelURL: URL? = nil, evaluationContextTokens: UInt32? = nil) {
         self.modelURL = modelURL
+        self.evaluationContextTokens = evaluationContextTokens
     }
 
     deinit {
@@ -395,6 +414,14 @@ final class LlamaCppEngine: LocalLLMEngine {
             cparams.n_threads_batch = 2
         }
 
+        if let evaluationContextTokens {
+            guard evaluationContextTokens >= 256 else {
+                llama_model_free(loadedModel)
+                throw LocalLLMEngineError.runtimeUnavailable("평가 컨텍스트는 256토큰 이상이어야 합니다.")
+            }
+            cparams.n_ctx = evaluationContextTokens
+        }
+
         guard let loadedContext = llama_init_from_model(loadedModel, cparams) else {
             llama_model_free(loadedModel)
             throw LocalLLMEngineError.runtimeUnavailable(
@@ -411,24 +438,13 @@ final class LlamaCppEngine: LocalLLMEngine {
             )
         }
 
-        let chainParams = llama_sampler_chain_default_params()
-        guard let loadedSampler = llama_sampler_chain_init(chainParams) else {
+        guard let loadedSampler = makeSampler(sampling: nil) else {
             llama_free(loadedContext)
             llama_model_free(loadedModel)
             throw LocalLLMEngineError.runtimeUnavailable(
                 "샘플러 초기화에 실패했습니다. source=\(modelResolution.selectedSource?.rawValue ?? "알 수 없음") / path=\(modelPath)"
             )
         }
-        // 샘플러 체인 — 한국어 법률 요약처럼 사실에 가까운 출력이 우선이므로
-        // temp 를 낮춰 결정적 출력을 유도하고 repetition penalty 로 반복 토큰을 억제한다.
-        // top_k=40 / top_p=0.9 는 다양성 유지를 위해 그대로 두되, temp 0.4 + penalty 1.1 조합으로
-        // 1B 모델의 환각/같은 어절 반복 현상을 완화한다.
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_penalties(64, 1.1, 0.0, 0.0))
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_k(40))
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_top_p(0.9, 1))
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_temp(0.4))
-        llama_sampler_chain_add(loadedSampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED))
-
         model = loadedModel
         context = loadedContext
         sampler = loadedSampler
@@ -452,13 +468,39 @@ final class LlamaCppEngine: LocalLLMEngine {
         #endif
     }
 
+    func promptTokenCount(_ prompt: String) throws -> Int {
+        #if canImport(LlamaSwift)
+        guard isLoaded, let vocab else { throw LocalLLMEngineError.modelNotLoaded }
+        return try tokenize(text: prompt, vocab: vocab).count
+        #else
+        throw LocalLLMEngineError.runtimeUnavailable("llama.cpp 토큰 수를 확인할 수 없습니다.")
+        #endif
+    }
+
     private func promptTokenBudget(contextSize: Int, maxTokens: Int) -> Int {
+        if evaluationContextTokens != nil {
+            return max(1, contextSize - min(maxTokens, 128) - 8)
+        }
         let memoryGB = ProcessInfo.processInfo.physicalMemory / 1_073_741_824
         let reserve = min(maxTokens, memoryGB <= 6 ? 72 : 96)
         return max(1, contextSize - reserve - 8)
     }
 
     func generate(prompt: String, maxTokens: Int) async throws -> String {
+        try await generateOutput(prompt: prompt, maxTokens: maxTokens, sampling: nil).text
+    }
+
+    func generateForEvaluation(prompt: String, maxTokens: Int, sampling: EvaluationSampling) async throws -> EvaluationOutput {
+        guard evaluationContextTokens != nil, maxTokens > 0 else {
+            throw LocalLLMEngineError.runtimeUnavailable("평가 전용 컨텍스트와 양수 출력 예산이 필요합니다.")
+        }
+        if case .seeded(UInt32.max) = sampling {
+            throw LocalLLMEngineError.runtimeUnavailable("자동 seed 대신 명시적인 고정 seed가 필요합니다.")
+        }
+        return try await generateOutput(prompt: prompt, maxTokens: maxTokens, sampling: sampling)
+    }
+
+    private func generateOutput(prompt: String, maxTokens: Int, sampling: EvaluationSampling?) async throws -> EvaluationOutput {
         guard isLoaded else {
             throw LocalLLMEngineError.modelNotLoaded
         }
@@ -470,17 +512,30 @@ final class LlamaCppEngine: LocalLLMEngine {
 
         // 무거운 llama_decode 연산을 백그라운드 스레드에서 실행하여 메인 스레드 블로킹 방지
         // 이는 Objective-C 타입 정보 경고를 해결하고 UI 렉을 개선합니다.
-        let work = Task.detached(priority: .userInitiated) { () -> String in
+        let work = Task.detached(priority: .userInitiated) { () -> EvaluationOutput in
             try Task.checkCancellation()
+            let activeSampler: UnsafeMutablePointer<llama_sampler>
+            if sampling != nil {
+                guard let controlledSampler = self.makeSampler(sampling: sampling) else {
+                    throw LocalLLMEngineError.runtimeUnavailable("평가 샘플러 초기화에 실패했습니다.")
+                }
+                activeSampler = controlledSampler
+            } else {
+                activeSampler = sampler
+            }
+            defer {
+                if sampling != nil { llama_sampler_free(activeSampler) }
+            }
             // 판례 간 KV 상태를 공유하지 않아 이전 판례가 다음 추론에 섞이지 않게 한다.
             llama_memory_clear(llama_get_memory(context), true)
-            llama_sampler_reset(sampler)
+            llama_sampler_reset(activeSampler)
 
             // 1. 프롬프트 전체를 토큰화
             // 2. prefill decode로 컨텍스트에 주입
             // 3. sampler가 다음 토큰을 하나씩 선택
             // 4. 선택한 토큰을 다시 decode 하며 maxTokens까지 반복
             var promptTokens = try self.tokenize(text: prompt, vocab: vocab)
+            let originalPromptTokenCount = promptTokens.count
             guard !promptTokens.isEmpty else {
                 throw LocalLLMEngineError.runtimeUnavailable("프롬프트 토큰화 결과가 비어 있습니다.")
             }
@@ -495,6 +550,9 @@ final class LlamaCppEngine: LocalLLMEngine {
             let contextBudget = Int(llama_n_ctx(context))
             let promptBudget = self.promptTokenBudget(contextSize: contextBudget, maxTokens: maxTokens)
             if promptTokens.count > promptBudget {
+                if self.evaluationContextTokens != nil {
+                    throw LocalLLMEngineError.promptTooLong(actual: promptTokens.count, limit: promptBudget)
+                }
                 promptTokens = Array(promptTokens.prefix(promptBudget))
             }
 
@@ -525,22 +583,24 @@ final class LlamaCppEngine: LocalLLMEngine {
             }
 
             // 모바일 환경에서 최대 토큰 생성 수 대폭 제한 (배터리/CPU/메모리 최소화)
-            let hardMaxOut = memoryGB <= 6 ? 96 : 128
+            let hardMaxOut = self.evaluationContextTokens != nil ? 128 : (memoryGB <= 6 ? 96 : 128)
             let availableGenerationBudget = max(1, contextBudget - promptTokens.count - 4)
             let maxOut = max(1, min(maxTokens, hardMaxOut, availableGenerationBudget))
             var generated: [llama_token] = []
             generated.reserveCapacity(maxOut)
+            var stopReason = "token_limit"
 
             for _ in 0..<maxOut {
                 try Task.checkCancellation()
                 // 현재 컨텍스트를 바탕으로 다음 토큰 1개를 샘플링합니다.
-                let token = llama_sampler_sample(sampler, context, -1)
+                let token = llama_sampler_sample(activeSampler, context, -1)
                 if llama_vocab_is_eog(vocab, token) || token == llama_vocab_eos(vocab) {
+                    stopReason = "end_of_generation"
                     break
                 }
 
                 generated.append(token)
-                llama_sampler_accept(sampler, token)
+                llama_sampler_accept(activeSampler, token)
 
                 // 방금 뽑은 토큰을 다시 컨텍스트에 반영해야 다음 토큰을 이어서 생성할 수 있습니다.
                 var one = [token]
@@ -558,7 +618,14 @@ final class LlamaCppEngine: LocalLLMEngine {
             guard !cleaned.isEmpty else {
                 throw LocalLLMEngineError.runtimeUnavailable("모델 생성 결과가 비어 있습니다.")
             }
-            return cleaned
+            let actualSeed = llama_sampler_get_seed(activeSampler)
+            return EvaluationOutput(
+                text: cleaned, originalPromptTokenCount: originalPromptTokenCount,
+                promptTokenCount: promptTokens.count, generatedTokenCount: generated.count,
+                contextTokens: contextBudget, outputTokenLimit: maxOut,
+                samplerSeed: actualSeed == LLAMA_DEFAULT_SEED ? nil : actualSeed,
+                stopReason: stopReason
+            )
         }
         return try await withTaskCancellationHandler {
             try await work.value
@@ -573,6 +640,26 @@ final class LlamaCppEngine: LocalLLMEngine {
     }
 
     #if canImport(LlamaSwift)
+    private func makeSampler(sampling: EvaluationSampling?) -> UnsafeMutablePointer<llama_sampler>? {
+        guard let chain = llama_sampler_chain_init(llama_sampler_chain_default_params()) else { return nil }
+        llama_sampler_chain_add(chain, llama_sampler_init_penalties(64, 1.1, 0.0, 0.0))
+        if sampling == .greedy {
+            llama_sampler_chain_add(chain, llama_sampler_init_greedy())
+        } else {
+            let seed: UInt32
+            if case .seeded(let fixedSeed)? = sampling {
+                seed = fixedSeed
+            } else {
+                seed = LLAMA_DEFAULT_SEED
+            }
+            llama_sampler_chain_add(chain, llama_sampler_init_top_k(40))
+            llama_sampler_chain_add(chain, llama_sampler_init_top_p(0.9, 1))
+            llama_sampler_chain_add(chain, llama_sampler_init_temp(0.4))
+            llama_sampler_chain_add(chain, llama_sampler_init_dist(seed))
+        }
+        return chain
+    }
+
     private func tokenize(text: String, vocab: OpaquePointer) throws -> [llama_token] {
         var bytes = Array(text.utf8).map { CChar(bitPattern: $0) }
         return try bytes.withUnsafeMutableBufferPointer { textBuffer in

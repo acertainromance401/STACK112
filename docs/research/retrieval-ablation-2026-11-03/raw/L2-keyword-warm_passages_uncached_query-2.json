@@ -1,0 +1,75 @@
+{
+  "durationMS" : 24.94033333277912,
+  "phase" : "warm_passages_uncached_query",
+  "queryID" : "L2",
+  "queryText" : "이 판결이 인용한 97므1486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라. 이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법",
+  "relevance" : {
+    "evaluatedDocumentIDs" : [
+      "sc-97me1486-1493",
+      "sc-2026eu552"
+    ],
+    "precisionAtK" : 0.3333333333333333,
+    "recallAtK" : 1,
+    "reciprocalRank" : 1
+  },
+  "repetition" : 2,
+  "search" : {
+    "chunkCount" : 42,
+    "effectiveMode" : "keyword",
+    "hits" : [
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 205,
+          "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 0,
+          "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "keywordRank" : 1,
+        "score" : 0.01639344262295082
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 2129,
+          "id" : "sc-97me1486-1493:c5af08af5466:1874-2129",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 1874,
+          "text" : " 채무는 일상가사에 관한 것 이외에는 원칙으로 그 개인의 채무로서 청산의 대상이 되지 않으나 그것이 공동재산의 형성에 수반하여 부담한 채무인 경우에는 청산의 대상이 된다고 할 것이며, 재산분할의 방법이나 그 비율 또는 액수는 당사자 쌍방의 협력으로 이룩한 재산의 액수 기타의 사정을 참작하여 법원이 이를 정하되 그 모든 사정을 개별적·구체적으로 일일이 특정하여 설시하여야 하는 것은 아니다(대법원 1993. 5. 25. 선고 92므501 판결 등 참조).\n",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "keywordRank" : 2,
+        "score" : 0.016129032258064516
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2026으552",
+          "documentFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+          "documentID" : "sc-2026eu552",
+          "endUTF16" : 2783,
+          "id" : "sc-2026eu552:2d2581cb0f3b:2524-2783",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 2524,
+          "text" : " 같은 제재를 통하여 판결 등에 의하여 확정된 금전의 지급의무 등의 이행을 촉구하는 가사소송법상의 이행확보제도이다. 이는 권리의 존부를 확정하는 기관과 그 확정된 권리를 실현하는 기관을 엄격히 분리시키지 아니하고 권리의 존부를 확정한 판단기관 자신이 의무의 이행을 촉구하는 방식이기는 하지만, 권리의 존부를 확정하기 위한 절차가 아니라 이미 확정되어 있는 권리를 실현하기 위한 절차의 일부라는 점에서는 민사집행법에 따른 강제집행과 다르지 아니하다고 봄이 타당하다.",
+          "title" : "이행명령"
+        },
+        "keywordRank" : 17,
+        "score" : 0.012987012987012988
+      }
+    ],
+    "requestedMode" : "keyword",
+    "semanticModelIdentity" : {
+
+    },
+    "semanticScoredChunkCount" : 0,
+    "warnings" : [
+
+    ]
+  }
+}

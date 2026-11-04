@@ -358,7 +358,7 @@ final class LLMService: ObservableObject {
 
     /// Llama-3.2-Instruct 공식 chat template로 프롬프트를 감쌉니다.
     /// 시스템 메시지로 강의 대체 금지/근거 기반 출력 규칙을 고정합니다.
-    private func wrapForLlama3Instruct(userPrompt: String, purpose: String) -> String {
+    func wrapForLlama3Instruct(userPrompt: String, purpose: String) -> String {
         let systemMessage: String
         switch purpose {
         case "rag_analysis":
@@ -1699,7 +1699,7 @@ final class LLMService: ObservableObject {
         return similar
     }
 
-    private func prepareSummaryPrompt(caseItem: APICase, references: [APICase]) throws -> String {
+    func prepareSummaryPrompt(caseItem: APICase, references: [APICase]) throws -> String {
         let characterLimit = isLowMemoryDevice() ? lowMemoryPromptLimit : normalPromptLimit
         let maxTokens = min(240, isLowMemoryDevice() ? lowMemoryTokenCap : normalTokenCap)
         var budgetError: LocalLLMEngineError?

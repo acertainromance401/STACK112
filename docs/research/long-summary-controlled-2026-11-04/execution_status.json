@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "requestedCompletedGenerations": 24,
+  "originalPlannedGenerations": 40,
+  "completedAtStop": 24,
+  "nativeTestIntentionallyInterrupted": true,
+  "reason": "User explicitly reduced scope to the balanced 24-output prefix; seeds 43/44 excluded.",
+  "followingRequestMayHaveStartedBeforeTermination": true,
+  "stoppedAtUTC": "2026-11-04T03:45:33.270985+00:00",
+  "reportAssembly": "Analyst aggregation of unchanged atomic native checkpoints, not a native full-40 completion report.",
+  "generationModelLoadMS": null,
+  "generationModelLoadMSReason": "Only exported at native full-loop completion, which was intentionally interrupted."
+}

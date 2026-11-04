@@ -24,6 +24,11 @@ final class GGUFEmbeddingTests: XCTestCase {
         XCTAssertEqual(repeated.scores, first.scores)
         XCTAssertEqual(repeated.identity["vectorCacheHits"], "3")
         XCTAssertEqual(repeated.identity["vectorCacheMisses"], "0")
+        try provider.clearCachedQuery(query)
+        let uncachedQuery = try provider.scores(query: query, documents: texts)
+        XCTAssertEqual(uncachedQuery.scores, first.scores)
+        XCTAssertEqual(uncachedQuery.identity["vectorCacheHits"], "2")
+        XCTAssertEqual(uncachedQuery.identity["vectorCacheMisses"], "1")
         let changed = try provider.scores(query: query, documents: [texts[0] + " 변경", texts[1]])
         XCTAssertEqual(changed.identity["vectorCacheMisses"], "1")
     }

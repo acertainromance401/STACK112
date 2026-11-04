@@ -1,0 +1,9 @@
+condition_id,policy,mode,repetitions,identical_output,coverage_first,coverage_second
+capped-fields,capped,fields,2,True,0.16666666666666666,0.16666666666666666
+uncapped-fields,uncapped,fields,2,True,0.16666666666666666,0.16666666666666666
+capped-keyword,capped,keyword,2,True,0.16666666666666666,0.16666666666666666
+uncapped-keyword,uncapped,keyword,2,True,0.08333333333333333,0.08333333333333333
+capped-semantic,capped,semantic,2,True,0.0,0.0
+uncapped-semantic,uncapped,semantic,2,True,0.0,0.0
+capped-hybrid,capped,hybrid,2,True,0.16666666666666666,0.16666666666666666
+uncapped-hybrid,uncapped,hybrid,2,True,0.08333333333333333,0.08333333333333333

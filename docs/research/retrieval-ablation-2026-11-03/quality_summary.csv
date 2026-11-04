@@ -1,0 +1,4 @@
+mode,queries,positive_queries,negative_queries,precision_at_3,recall_at_3,mrr_at_3,no_reference_success,reference_candidate_contaminated
+keyword,3,2,1,0.2222222222222222,1.0,1.0,0.0,0.3333333333333333
+semantic,3,2,1,0.2222222222222222,1.0,1.0,0.0,0.3333333333333333
+hybrid,3,2,1,0.2222222222222222,1.0,1.0,0.0,0.3333333333333333

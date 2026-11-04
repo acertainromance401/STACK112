@@ -1,0 +1,2 @@
+04084f5536245a1aaa011393b9a9767f81f3de13838abda5b27ec56a88593ed2  docs/research/long-summary-controlled-2026-11-04/AMENDMENT.md
+acfa01df3ca5812246990ffdfdc15417515bfc209c7b87122e901d8b81f63d60  docs/research/long-summary-controlled-2026-11-04/scope_amendment.json

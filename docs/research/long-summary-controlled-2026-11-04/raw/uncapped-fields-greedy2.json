@@ -1,0 +1,19 @@
+{
+  "conditionID" : "uncapped-fields",
+  "decoder" : "greedy",
+  "formatParsed" : false,
+  "generationMS" : 505800.6219166673,
+  "id" : "uncapped-fields-greedy2",
+  "manifestSHA256" : "f4005b3d722b1ad3ddf550e3b04db9faea06289c62ba9e5444fd82fe9593b598",
+  "order" : 9,
+  "repetition" : 2,
+  "result" : {
+    "contextTokens" : 8192,
+    "generatedTokenCount" : 128,
+    "originalPromptTokenCount" : 1311,
+    "outputTokenLimit" : 128,
+    "promptTokenCount" : 1311,
+    "stopReason" : "token_limit",
+    "text" : "가사소송법 제64조에 따라 가정법원은 가사소송법 제2조 제1항 제2호 (나)목 3)에서 정한 면접교섭권의 처분 또는 제한·배제·변경에 관한 사건으로서 마류 가사비송사건에 해당하여 조정 전치주의, 심판절차에서의 필요적 심문 등 가사소송법이 예정한 절차에 따라 진행되어야 하고, 그 심판에 따라 판결 등으로 확정된 면접교섭권의 내용은 종국적으로 변경"
+  }
+}

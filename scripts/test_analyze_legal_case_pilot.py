@@ -1,12 +1,16 @@
 import hashlib
+import copy
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from matplotlib.figure import Figure
 import pandas as pd
 
-from analyze_legal_case_pilot import attach_reviews, sample_frame, save_figure
+from analyze_legal_case_pilot import (
+    attach_reviews, plot_retrieval_comparison, retrieval_summary, sample_frame, save_figure,
+)
 from analyze_rag_logs import save_figure as save_historical_figure
 
 
@@ -18,7 +22,11 @@ class LegalCaseAnalysisTests(unittest.TestCase):
         for mode in ("currentOnly", "keyword", "hybrid"):
             run = {
                 "targetDocumentID": "target", "corpusFingerprints": {"target": fingerprint},
-                "search": {"requestedMode": mode, "effectiveMode": mode, "hits": []},
+                "search": {"requestedMode": mode, "effectiveMode": mode, "hits": [],
+                           "semanticModelIdentity": {
+                               "warmBeforeSearch": "false", "vectorCacheHits": "0", "vectorCacheMisses": "1"
+                           } if mode == "hybrid" else {}},
+                "retrievalMS": 10,
                 "evidence": [{"id": "E0", "chunk": {
                     "documentID": "target", "startUTF16": 0, "endUTF16": len(text), "text": text}}],
                 "claims": [], "environment": "simulator_not_device_evidence",
@@ -60,6 +68,69 @@ class LegalCaseAnalysisTests(unittest.TestCase):
                                  "semantic_rating": "correct"}])
         with self.assertRaisesRegex(ValueError, "exact output"):
             attach_reviews(samples, reviews)
+
+    def test_retrieval_metrics_use_fixed_k_and_exclude_missing_gold(self):
+        report = self.report()
+        report["dataset"]["queries"].append({
+            "id": "positive", "targetDocumentID": "target", "relevantDocumentIDs": ["ref"]})
+        for sample in list(report["samples"]):
+            positive = copy.deepcopy(sample)
+            positive["queryID"] = "positive"
+            if positive["run"]["search"]["requestedMode"] != "currentOnly":
+                positive["run"]["search"]["hits"] = [
+                    {"chunk": {"documentID": "distractor"}}, {"chunk": {"documentID": "ref"}}]
+            report["samples"].append(positive)
+        frame = sample_frame(report)
+        summary = retrieval_summary(frame)
+        self.assertEqual(list(summary.index), ["keyword", "hybrid"])
+        for mode in summary.index:
+            self.assertAlmostEqual(summary.loc[mode, "precision_at_3"], 1 / 6)
+            self.assertEqual(summary.loc[mode, "recall_at_3"], 1)
+            self.assertEqual(summary.loc[mode, "mrr_at_3"], 0.5)
+            self.assertEqual(summary.loc[mode, "no_reference_success_rate"], 1)
+            self.assertEqual(summary.loc[mode, "positive_queries"], 1)
+            self.assertEqual(summary.loc[mode, "no_reference_queries"], 1)
+
+    def test_undefined_metrics_remain_missing_and_fallback_is_not_hybrid(self):
+        summary = retrieval_summary(sample_frame(self.report()))
+        self.assertTrue(summary["recall_at_3"].isna().all())
+        self.assertTrue(summary["mrr_at_3"].isna().all())
+        report = self.report()
+        report["samples"][-1]["run"]["search"]["effectiveMode"] = "keyword"
+        with self.assertRaisesRegex(ValueError, "fallback"):
+            retrieval_summary(sample_frame(report))
+
+    def test_invalid_timing_and_cache_metadata_are_rejected(self):
+        for value in (-1, float("nan"), None, True):
+            report = self.report()
+            report["samples"][0]["run"]["retrievalMS"] = value
+            with self.assertRaisesRegex(ValueError, "Invalid retrieval time"):
+                sample_frame(report)
+        report = self.report()
+        report["samples"][-1]["run"]["search"]["semanticModelIdentity"]["vectorCacheHits"] = "-1"
+        with self.assertRaisesRegex(ValueError, "Invalid embedding cache"):
+            sample_frame(report)
+
+    def test_quality_bars_show_real_values_and_latency_uses_log_scale(self):
+        frame = sample_frame(self.report())
+        summary = retrieval_summary(frame)
+        with patch("analyze_legal_case_pilot.save_figure") as save:
+            plot_retrieval_comparison(frame, summary, Path("."))
+        self.assertEqual(save.call_count, 3)
+        quality = save.call_args_list[1].args[0]
+        heights = [bar.get_height() for bar in quality.axes[0].patches]
+        self.assertEqual(len(heights), 10)
+        for offset in (0, 5):
+            self.assertEqual(heights[offset], 0)
+            self.assertTrue(pd.isna(heights[offset + 1]))
+            self.assertTrue(pd.isna(heights[offset + 2]))
+            self.assertEqual(heights[offset + 3], 1)
+        latency = save.call_args_list[2].args[0]
+        self.assertEqual(latency.axes[0].get_yscale(), "log")
+        self.assertTrue(all(value == 0.01 for line in latency.axes[0].lines for value in line.get_ydata()))
+        from matplotlib import pyplot as plt
+        for call in save.call_args_list:
+            plt.close(call.args[0])
 
     def test_svg_exports_have_no_trailing_whitespace(self):
         with tempfile.TemporaryDirectory() as directory:

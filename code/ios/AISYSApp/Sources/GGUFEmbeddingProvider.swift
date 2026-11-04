@@ -75,7 +75,7 @@ final class GGUFEmbeddingProvider: @unchecked Sendable {
                 scores.append(zip(queryVector, value).reduce(0.0) { $0 + Double($1.0) * Double($1.1) })
             } catch LocalLLMEngineError.promptTooLong(let actual, let limit) {
                 scores.append(nil)
-                warnings.append("청크 \(index)의 임베딩 입력이 \(actual)/\(limit)토큰으로 초과했습니다. 해당 청크는 키워드 점수만 사용합니다.")
+                warnings.append("청크 \(index)의 임베딩 입력이 \(actual)/\(limit)토큰으로 초과했습니다. 해당 청크의 의미 점수를 사용하지 않습니다.")
             }
         }
         return RAGSemanticResult(
@@ -90,6 +90,17 @@ final class GGUFEmbeddingProvider: @unchecked Sendable {
                 "vectorCacheMisses": String(misses), "vectorCacheCapacity": "512"
             ], warnings: warnings
         )
+    }
+
+    func clearCachedQuery(_ query: String) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let manifest else { throw RAGError.unavailable("질문 캐시를 비우려면 임베딩 모델이 준비되어야 합니다.") }
+        vectors.removeValue(forKey: Self.cacheKey(manifest.queryPrefix + query))
+    }
+
+    private static func cacheKey(_ text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     private func load() throws {
@@ -164,7 +175,7 @@ final class GGUFEmbeddingProvider: @unchecked Sendable {
 
     private func vector(_ text: String, hits: inout Int, misses: inout Int) throws -> [Float] {
         try Task.checkCancellation()
-        let key = SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+        let key = Self.cacheKey(text)
         if let cached = vectors[key] { hits += 1; return cached }
         #if canImport(LlamaSwift)
         guard let context, let vocab, let manifest else { throw RAGError.unavailable("임베딩 엔진이 준비되지 않았습니다.") }

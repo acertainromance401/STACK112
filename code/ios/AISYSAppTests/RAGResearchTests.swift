@@ -2,6 +2,21 @@ import XCTest
 @testable import AISYSApp
 
 final class RAGResearchTests: XCTestCase {
+    func testWithinDocumentRetrievalUsesOriginalSourceAndDoesNotApplyReferenceDiversityCap() throws {
+        let source = document("source", text: String(repeating: "청색 표식 자료입니다. ", count: 100))
+        let retriever = RAGRetriever(semanticScorer: { _, texts in texts.map { _ in 0.8 } })
+        for mode in [RAGRetrievalMode.keyword, .semantic, .hybrid] {
+            let result = try retriever.retrieveWithin(document: source, query: "청색", mode: mode)
+            XCTAssertEqual(result.hits.count, 3)
+            XCTAssertEqual(result.effectiveMode, mode)
+            XCTAssertTrue(result.hits.allSatisfy { $0.chunk.documentID == source.id })
+            if mode == .semantic { XCTAssertTrue(result.hits.allSatisfy { $0.keywordRank == nil }) }
+        }
+        XCTAssertThrowsError(try retriever.retrieveWithin(document: source, query: "", mode: .keyword))
+        XCTAssertThrowsError(try retriever.retrieveWithin(document: source, query: "청색", mode: .currentOnly))
+        XCTAssertThrowsError(try retriever.retrieveWithin(document: source, query: "청색", mode: .keyword, topK: 0))
+    }
+
     func testUnicodeChunksAndExcerptsRetainExactOriginalRanges() throws {
         let text = String(repeating: "첫 문장 👨‍👩‍👧‍👦. 다음 문장 e\u{301} 한글입니다.\n", count: 30)
         let source = document("target", text: text)
@@ -69,6 +84,36 @@ final class RAGResearchTests: XCTestCase {
         let b = try keywordRetriever.retrieve(query: "청색", target: target, documents: sources.reversed(), mode: .keyword, topK: 10)
         XCTAssertEqual(a.hits.map(\.id), b.hits.map(\.id))
         XCTAssertEqual(a.hits.filter { $0.chunk.documentID == "a" }.count, 2)
+    }
+
+    func testSemanticOnlyUsesCosineWithoutLexicalOrExactCaseBonus() throws {
+        let target = document("target", text: "현재")
+        let exact = document("a", number: "2024도21", text: "청색")
+        let semantic = document("b", number: "2024도22", text: "다른 표현")
+        let retriever = RAGRetriever(semanticScorer: { _, _ in [0.4, 0.9] })
+        let result = try retriever.retrieve(query: "청색 2024도21", target: target,
+                                             documents: [target, semantic, exact], mode: .semantic)
+        XCTAssertEqual(result.effectiveMode, .semantic)
+        XCTAssertEqual(result.hits.map(\.chunk.documentID), ["b", "a"])
+        XCTAssertEqual(result.hits.map(\.score), [0.9, 0.4])
+        XCTAssertTrue(result.hits.allSatisfy { $0.keywordRank == nil })
+        XCTAssertEqual(result.hits.map(\.semanticRank), [1, 2])
+    }
+
+    func testSemanticOnlyRejectsLowOrUnavailableScoresWithoutKeywordFallback() throws {
+        let target = document("target", text: "현재")
+        let source = document("source", text: "청색")
+        let low = RAGRetriever(semanticScorer: { _, _ in [0.30] })
+        let result = try low.retrieve(query: "청색", target: target, documents: [source], mode: .semantic)
+        XCTAssertTrue(result.hits.isEmpty)
+        XCTAssertEqual(result.effectiveMode, .semantic)
+        XCTAssertThrowsError(try keywordRetriever.retrieve(query: "청색", target: target,
+                                                           documents: [source], mode: .semantic))
+        let missing = RAGRetriever(provider: GGUFEmbeddingProvider(modelURL: nil))
+        XCTAssertThrowsError(try missing.retrieve(query: "청색", target: target, documents: [source], mode: .semantic))
+        let empty = try low.retrieve(query: "청색", target: target, documents: [], mode: .semantic)
+        XCTAssertEqual(empty.effectiveMode, .semantic)
+        XCTAssertTrue(empty.hits.isEmpty)
     }
 
     func testGroundingDistinguishesSyntaxUnknownCitationsNumbersAndQuotes() throws {

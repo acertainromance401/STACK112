@@ -1,0 +1,5 @@
+mode,pairs,coverage_delta,better,equal,worse
+keyword,1,0.08333333333333333,1,0,0
+semantic,1,0.0,0,1,0
+hybrid,1,0.08333333333333333,1,0,0
+fields,1,0.0,0,1,0

@@ -108,12 +108,14 @@ enum RAGChunker {
 }
 
 enum RAGRetrievalMode: String, Codable, CaseIterable, Identifiable {
-    case currentOnly, keyword, hybrid
+    case currentOnly, keyword, semantic, hybrid
+    static let baselineModes: [Self] = [.currentOnly, .keyword, .hybrid]
     var id: String { rawValue }
     var label: String {
         switch self {
         case .currentOnly: return "현재 판례만"
         case .keyword: return "키워드"
+        case .semantic: return "의미 검색 (E5 단독)"
         case .hybrid: return "키워드 + 의미"
         }
     }
@@ -171,20 +173,39 @@ struct RAGRetriever {
             guard let number = LocalCaseSearchEngine.normalizedCaseNumber($0.caseNumber) else { return true }
             return seenCaseNumbers.insert(number).inserted
         }
-        let chunks = try candidates.flatMap { try RAGChunker.chunks(for: $0) }
-        let corpus = chunks.map { chunk in
-            APICase(id: chunk.id, caseNumber: chunk.caseNumber, caseName: chunk.title, courtName: "",
-                    subject: candidates.first { $0.id == chunk.documentID }?.subject ?? "",
-                    issueSummary: chunk.text, holdingSummary: nil, examPoints: nil, sourceUrl: chunk.sourceURL)
+        return try rank(query: query, candidates: candidates, mode: mode, topK: topK, perDocumentLimit: 2)
+    }
+
+    func retrieveWithin(document: RAGDocument, query: String, mode: RAGRetrievalMode,
+                        topK: Int = 3) throws -> RAGSearchResult {
+        guard topK > 0, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !document.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              mode != .currentOnly else {
+            throw RAGError.invalidInput("문서 내부 검색에는 원문, 질문, 검색 모드와 양수 topK가 필요합니다.")
         }
-        var keywordIDs = LocalCaseSearchEngine.search(query: query, in: corpus, limit: corpus.count).map(\.id)
-        let exactIDs = chunks.filter { containsCaseNumber(query, $0.caseNumber) }.map(\.id)
-        keywordIDs = exactIDs + keywordIDs.filter { !exactIDs.contains($0) }
+        return try rank(query: query, candidates: [document], mode: mode, topK: topK, perDocumentLimit: topK)
+    }
+
+    private func rank(query: String, candidates: [RAGDocument], mode: RAGRetrievalMode,
+                      topK: Int, perDocumentLimit: Int) throws -> RAGSearchResult {
+        let chunks = try candidates.flatMap { try RAGChunker.chunks(for: $0) }
+        var keywordIDs: [String] = []
+        var exactIDs: [String] = []
+        if mode != .semantic {
+            let corpus = chunks.map { chunk in
+                APICase(id: chunk.id, caseNumber: chunk.caseNumber, caseName: chunk.title, courtName: "",
+                        subject: candidates.first { $0.id == chunk.documentID }?.subject ?? "",
+                        issueSummary: chunk.text, holdingSummary: nil, examPoints: nil, sourceUrl: chunk.sourceURL)
+            }
+            keywordIDs = LocalCaseSearchEngine.search(query: query, in: corpus, limit: corpus.count).map(\.id)
+            exactIDs = chunks.filter { containsCaseNumber(query, $0.caseNumber) }.map(\.id)
+            keywordIDs = exactIDs + keywordIDs.filter { !exactIDs.contains($0) }
+        }
         let keywordRanks = Dictionary(uniqueKeysWithValues: keywordIDs.enumerated().map { ($0.element, $0.offset + 1) })
         var scores: [Double?] = Array(repeating: nil, count: chunks.count)
         var semanticIdentity: [String: String] = [:]
         var warnings: [String] = []
-        if mode == .hybrid && !chunks.isEmpty {
+        if (mode == .hybrid || mode == .semantic) && !chunks.isEmpty {
             do {
                 let result = try semanticScorer(query, chunks.map(\.text))
                 scores = result.scores
@@ -197,6 +218,7 @@ struct RAGRetriever {
                 warnings.append(message)
                 semanticIdentity = ["status": "unavailable", "reason": error.localizedDescription]
                 Self.logger.error("\(message, privacy: .public)")
+                if mode == .semantic { throw error }
             }
         }
         guard scores.count == chunks.count else {
@@ -206,13 +228,21 @@ struct RAGRetriever {
             throw RAGError.invalidInput("의미 검색 점수에 유효하지 않은 값이 있습니다.")
         }
         let semanticAvailable = scores.contains { $0 != nil }
+        if mode == .semantic && !semanticAvailable && !chunks.isEmpty {
+            throw RAGError.unavailable("E5 단독 검색에 사용할 의미 점수가 없습니다. 키워드 검색으로 대체하지 않습니다.")
+        }
         let semanticIDs = chunks.indices.filter { (scores[$0] ?? 0) > 0.30 }.sorted {
             if scores[$0] != scores[$1] { return (scores[$0] ?? 0) > (scores[$1] ?? 0) }
             return chunks[$0].id < chunks[$1].id
         }.map { chunks[$0].id }
         let semanticRanks = Dictionary(uniqueKeysWithValues: semanticIDs.enumerated().map { ($0.element, $0.offset + 1) })
-        let effective: RAGRetrievalMode = mode == .hybrid && semanticAvailable ? .hybrid : .keyword
-        let ranked = chunks.compactMap { chunk -> RAGHit? in
+        let effective: RAGRetrievalMode = mode == .semantic ? .semantic
+            : (mode == .hybrid && semanticAvailable ? .hybrid : .keyword)
+        let ranked = chunks.enumerated().compactMap { index, chunk -> RAGHit? in
+            if mode == .semantic {
+                guard let rank = semanticRanks[chunk.id], let cosine = scores[index] else { return nil }
+                return RAGHit(chunk: chunk, score: cosine, keywordRank: nil, semanticRank: rank)
+            }
             let lexical = keywordRanks[chunk.id]
             let semantic = effective == .hybrid ? semanticRanks[chunk.id] : nil
             guard lexical != nil || semantic != nil else { return nil }
@@ -227,7 +257,7 @@ struct RAGRetriever {
         var perDocument: [String: Int] = [:]
         let diverse = ranked.filter {
             let count = perDocument[$0.chunk.documentID, default: 0]
-            guard count < 2 else { return false }
+            guard count < perDocumentLimit else { return false }
             perDocument[$0.chunk.documentID] = count + 1
             return true
         }
@@ -236,6 +266,9 @@ struct RAGRetriever {
         }
         if mode == .hybrid && semanticAvailable && scores.contains(where: { $0 == nil }) {
             warnings.append("일부 청크의 의미 벡터가 없어 해당 청크는 키워드 점수만 사용했습니다.")
+        }
+        if mode == .semantic && scores.contains(where: { $0 == nil }) {
+            warnings.append("일부 청크의 의미 벡터가 없어 E5 단독 검색 후보에서 제외했습니다.")
         }
         if diverse.isEmpty { warnings.append("검색된 참고 근거가 없습니다. 현재 판례 E0만으로 분석합니다.") }
         return RAGSearchResult(

@@ -1,0 +1,3 @@
+fa7154e7e83f5473a0d6e0f845132b35359bc85145616313ff916983b2fe3761  docs/research/long-summary-controlled-2026-11-04/README.md
+f4005b3d722b1ad3ddf550e3b04db9faea06289c62ba9e5444fd82fe9593b598  docs/research/long-summary-controlled-2026-11-04/raw/manifest.json
+c6b72cfad82208e183cb2e149d64da40c9124f850c589db17e8ff41c3d1a4ee0  docs/research/long-summary-evaluation-2026-11-03/gold.json

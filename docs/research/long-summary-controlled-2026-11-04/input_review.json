@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "source-bounded AI provisional; no independent legal expert validation",
+  "rubricNotes": {
+    "C1": "변경·새 의무 창설 불가를 모두 명시하면 full. 기존 평가처럼 판시사항의 소극 표시도 인정한다.",
+    "C2": "권리·집행권원 효력의 소멸·변경 금지가 핵심이다. 일부 미이행 의무에만 명령할 수 있다는 설명만 있으면 partial.",
+    "C3": "면접교섭 제한·변경에 별도 가사비송 절차가 필요하다는 핵심 관계를 평가한다.",
+    "C4": "기존 판결과 다른 추가 조건만 있고 비혈족 여성 동석 금지의 구체적 내용이 없으면 partial.",
+    "C5": "추가 조건의 제64조 범위 초과만 있고 면접교섭권의 실질적 제한이라는 이유가 없으면 partial. 사건 적용 없는 추상 법리는 absent.",
+    "C6": "원심결정 파기와 환송을 모두 명시하면 full. 원심법원이라고 표현하고 부산 명칭을 생략한 것만으로 감점하지 않는다."
+  },
+  "inputs": [
+    {
+      "promptSHA256": "42c500f7a951abc1411495c806b3a461132f5497db8184135423648bf6523bd3",
+      "conditionIDs": ["capped-fields"],
+      "items": [
+        {"id":"C1","status":"full","quote":"이행명령으로 판결 등에 의하여 확정된 의무의 내용을 변경하거나 의무자에게 새로운 의무를 창설할 수 있는지 여부(소극)","reason":"변경과 창설 모두 소극으로 명시한다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 소멸·변경 금지가 전달되지 않았다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 동석 금지 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"추가 조건에 대한 사건 적용이 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ]
+    },
+    {
+      "promptSHA256": "107791e8c24bb861ee3f4db9ad061f30b584dbc4bee8f7aed2ea0aaaab1810be",
+      "conditionIDs": ["uncapped-fields"],
+      "items": [
+        {"id":"C1","status":"full","quote":"이행명령으로 판결 등에 의하여 확정되어 있는 의무의 내용을 변경하거나 의무자에 대하여 새로운 의무를 창설할 수 있는 것은 아니다.","reason":"권리 실현 절차의 성격과 변경·창설 금지가 모두 보존된다."},
+        {"id":"C2","status":"full","quote":"이행하지 아니한 부분에 관한 권리 또는 집행권원의 효력을 사실상 소멸 또는 변경시키는 결과를 가져오는 처분을 할 수는 없다.","reason":"일부 명령과 권리 소멸·변경의 구별이 완성된다."},
+        {"id":"C3","status":"full","quote":"마류 가사비송사건에 해당하여 조정 전치주의, 심판절차에서의 필요적 심문 등 가사소송법이 예정한 절차에 따라 진행되어야","reason":"면접교섭 제한·배제·변경에 필요한 별도 법정 절차가 명시된다."},
+        {"id":"C4","status":"absent","reason":"파서 필드에는 실제 비혈족 여성 동석 금지 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"추상적인 제64조 한계 법리는 있지만 이 사건 추가 조건에 대한 적용은 없다."},
+        {"id":"C6","status":"absent","reason":"파서 필드에는 주문이 없다."}
+      ]
+    },
+    {
+      "promptSHA256": "bccd35009cc2b3324f7bcef1b1a2efbe0840fe4f0f8aada144f17539a0d45c4a",
+      "conditionIDs": ["capped-keyword", "capped-hybrid"],
+      "items": [
+        {"id":"C1","status":"absent","reason":"새 의무 창설 금지 원칙이 잘려 있다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 소멸·변경 금지가 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"partial","quote":"면접교섭 조건에 관하여 이혼 사건 판결 주문과 다른 내용을 추가하는","reason":"추가 조건 사안은 전달되지만 비혈족 여성 동석 금지라는 구체적 내용이 없다."},
+        {"id":"C5","status":"partial","quote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"추가 조건의 위법성은 있으나 실질적 면접교섭권 제한이라는 이유는 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송 주문이 전달되지 않았다."}
+      ]
+    },
+    {
+      "promptSHA256": "e8357e427ab496155c88809b6dd5d55866fc559587f790181e733e9d299ee51b",
+      "conditionIDs": ["uncapped-keyword", "uncapped-hybrid"],
+      "items": [
+        {"id":"C1","status":"full","quote":"이행명령으로 판결 등에 의하여 확정된 의무의 내용을 변경하거나 의무자에게 새로운 의무를 창설할 수 있는지 여부(소극)","reason":"판시사항의 변경·창설 불가가 보존된다."},
+        {"id":"C2","status":"absent","reason":"관련 판시사항이 소멸 또에서 잘려 금지 결론이 없고 일부 의무 설명도 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"partial","quote":"면접교섭 조건에 관하여 이혼 사건 판결 주문과 다른 내용을 추가하는 것이 허용되는지가 문제 된 사건","reason":"추가 조건 사안은 있으나 실제 동석 금지 내용은 없다."},
+        {"id":"C5","status":"partial","quote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"제64조 범위 초과 판단은 있지만 실질적 권리 제한의 구체적 이유는 없다."},
+        {"id":"C6","status":"full","quote":"원심결정을 파기하고, 사건을 다시 심리·판단하도록 원심법원에 환송하기로","reason":"파기와 환송이 모두 명시된다."}
+      ]
+    },
+    {
+      "promptSHA256": "7f0eb434c6311a048c0d48006e7fba8c3bee3939a057ccddd5f353a58bda3228",
+      "conditionIDs": ["capped-semantic"],
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지 원칙이 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 소멸·변경 금지가 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"실제 추가 조건이나 기존 판결과의 차이가 없다."},
+        {"id":"C5","status":"partial","quote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"범위 초과의 적용은 있으나 실질적 권리 제한 이유가 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송 주문이 없다."}
+      ]
+    },
+    {
+      "promptSHA256": "64cad3660d6ff04b803cf19863a99968fcca72ae64b356845f33396c65a8d065",
+      "conditionIDs": ["uncapped-semantic"],
+      "items": [
+        {"id":"C1","status":"absent","reason":"일반 이행명령 가능성은 있지만 변경·창설 금지까지 전달되지 않았다."},
+        {"id":"C2","status":"partial","quote":"이행명령을 할 때까지 의무자가 이행하지 아니한 의무의 일부에 대하여만 이행명령을 할 수도 있지만","reason":"일부 의무에 대한 명령 가능성은 있으나 권리 소멸·변경 금지 문장이 끝나기 전에 청크가 잘렸다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"실제 추가 조건이나 기존 판결과의 차이가 없다."},
+        {"id":"C5","status":"partial","quote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"범위 초과의 적용만 있고 실질적 권리 제한의 이유는 없다."},
+        {"id":"C6","status":"full","quote":"원심결정을 파기하고, 사건을 다시 심리·판단하도록 원심법원에 환송하기로","reason":"파기와 환송이 모두 명시된다."}
+      ]
+    }
+  ]
+}

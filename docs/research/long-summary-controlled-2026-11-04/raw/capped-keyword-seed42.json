@@ -1,0 +1,21 @@
+{
+  "conditionID" : "capped-keyword",
+  "decoder" : "seeded",
+  "formatParsed" : false,
+  "generationMS" : 99794.36187500323,
+  "id" : "capped-keyword-seed42",
+  "manifestSHA256" : "f4005b3d722b1ad3ddf550e3b04db9faea06289c62ba9e5444fd82fe9593b598",
+  "order" : 17,
+  "repetition" : 1,
+  "result" : {
+    "contextTokens" : 8192,
+    "generatedTokenCount" : 66,
+    "originalPromptTokenCount" : 272,
+    "outputTokenLimit" : 128,
+    "promptTokenCount" : 272,
+    "samplerSeed" : 42,
+    "stopReason" : "end_of_generation",
+    "text" : "심쟁점: 대법원 2026. 8. 24. 자 2026으552 결정\n결론: 이행명령은 가사소송법 제64조에 의한 범위를어난 것으로 부과할 수 없다.\n\n포인트: 부과 cannot."
+  },
+  "seed" : 42
+}

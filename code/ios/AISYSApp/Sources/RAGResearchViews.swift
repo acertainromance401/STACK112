@@ -193,7 +193,7 @@ struct RAGEvaluationView: View {
     @State private var exporting = false
     @State private var exportData = RAGJSONDocument(data: Data())
     @State private var repetitions = 3
-    @State private var selectedModes = Set(RAGRetrievalMode.allCases)
+    @State private var selectedModes = Set(RAGRetrievalMode.baselineModes)
     @State private var operation: Task<Void, Never>?
     @State private var progress = ""
     @State private var error: String?

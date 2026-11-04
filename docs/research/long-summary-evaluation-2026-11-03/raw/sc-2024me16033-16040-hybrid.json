@@ -1,0 +1,262 @@
+{
+  "documentID" : "sc-2024me16033-16040",
+  "formatParsed" : false,
+  "generationMS" : 130610.61170833273,
+  "input" : {
+    "caseName" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법",
+    "caseNumber" : "2024므16033, 16040",
+    "courtName" : "대법원",
+    "examPoints" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 다시 심리·판단하도록 원심법원에 환송하기로 하여, 관여 대법관의 일치된 의견으로 주문과 같이 판결한다.\n대법관 마용주(재판장), 천대엽, 서경환(주심), 신숙희\n",
+    "holdingSummary" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 다시 심리·판단하도록 원심법원에 환송하기로 하여, 관여 대법관의 일치된 의견으로 주문과 같이 판결한다.\n대법관 마용주(재판장), 천대엽, 서경환(주심), 신숙희\n",
+    "id" : "sc-2024me16033-16040",
+    "issueSummary" : "대법원 2026. 5. 29. 선고 2024므16033, 16040 판결\n【이혼등청구의소·이혼등청구의소】〈비상장주식을 그 명의대로 모두 피고에게 귀속시키고 원고에게 재산분할 비율에 상응하는 금전을 지급하도록 명한 재산분할 방법이 부당한지가 문제 된 사건〉【공2026하,1426】\n\n【판시사항】\n재산분할 사건에서 비상장주식에 관하여 우선적으로 고려할 재산분할 방법(=대상분할) 및 오로지 대상분할 방식으로 재산분할을 명하는 것이 당사자들의 형평을 현저히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n",
+    "sourceUrl" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+    "subject" : "가사·이혼·재산분할"
+  },
+  "mode" : "hybrid",
+  "prompt" : "현재 판례만 요약. 참고 판례의 결론과 혼합 금지. 불명확하면 근거 부족.\n[현재 판례]\n사건번호: 2024므16033, 16040\n사건명: 이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법\n쟁점: 대법원 2026. 5. 29. 선고 2024므16033, 16040 판결\n【이혼등청구의소·이혼등청구의소】〈비상장주식을 그 명의대로 모두 피고에게 귀속시키고 원고에게 재산분할\n판결: 급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원\n시험포인트: 급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법\n[출력]\n한줄요약:\n핵심쟁점:\n결론:\n포인트:",
+  "rawOutput" : "사건번호: 202416033, 16040\n사건명: 이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법\n\n판결: 급할 것을 명하였다. 이혼등청구의소·이혼등청구의소는 비상장주식의 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다.\n\n원심의 판단에는 재산분할 방법에 관한 pháp리를 오해하여 판결에 영향을 미친 잘못",
+  "searches" : [
+    {
+      "chunkCount" : 27,
+      "effectiveMode" : "hybrid",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 315,
+            "id" : "sc-2024me16033-16040:3f315774e7de:0-315",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 0,
+            "text" : "대법원 2026. 5. 29. 선고 2024므16033, 16040 판결\n【이혼등청구의소·이혼등청구의소】〈비상장주식을 그 명의대로 모두 피고에게 귀속시키고 원고에게 재산분할 비율에 상응하는 금전을 지급하도록 명한 재산분할 방법이 부당한지가 문제 된 사건〉【공2026하,1426】\n\n【판시사항】\n재산분할 사건에서 비상장주식에 관하여 우선적으로 고려할 재산분할 방법(=대상분할) 및 오로지 대상분할 방식으로 재산분할을 명하는 것이 당사자들의 형평을 현저히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 1,
+          "score" : 0.03252247488101534,
+          "semanticRank" : 2
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 571,
+            "id" : "sc-2024me16033-16040:3f315774e7de:251-571",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 251,
+            "text" : "히 해하는 경우, 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려해야 하는지 여부(적극)\n【판결요지】\n법원은 재산분할 사건에서 당사자의 청구에 의하여 그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 한다.\n따라서 구체적 사건에서 현물분할, 경매분할, 채무의 인수를 명하는 방식뿐만 아니라 부부 공동재산 중 특정재산을 배우자 일방의 소유로 하고 그 배우자로 하여금 상대방에게 일정액의 금전을 지급하게 하는 방식[이른바 ‘대상분할(代償分割)’] 또는 그 혼합적 형태 등 다양한 방법으로 적합한 재산",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "score" : 0.01639344262295082,
+          "semanticRank" : 1
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 1646,
+            "id" : "sc-2024me16033-16040:3f315774e7de:1365-1646",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 1365,
+            "text" : " 1998. 2. 13. 선고 97므1486, 1493 판결(공1998상, 767), 대법원 2014. 7. 16. 선고 2012므2888 전원합의체 판결(공2014하, 1583)\n【전 문】\n【원고(반소피고), 피상고인】\n원고(반소피고) (소송대리인 법무법인(유한) 지평 외 1인)\n【피고(반소원고), 상고인】\n피고(반소원고) (소송대리인 법무법인(유한) 광장 외 1인)\n【사건본인】\n사건본인 1 외 1인\n【원심판결】\n서울고법 2024. 9. 6. 선고 2024르21037, 21044 판결\n【주 문】\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "score" : 0.015873015873015872,
+          "semanticRank" : 3
+        }
+      ],
+      "requestedMode" : "hybrid",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "1",
+        "vectorCacheMisses" : "27",
+        "warmBeforeSearch" : "false"
+      },
+      "semanticScoredChunkCount" : 27,
+      "warnings" : [
+
+      ]
+    },
+    {
+      "chunkCount" : 27,
+      "effectiveMode" : "hybrid",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 5786,
+            "id" : "sc-2024me16033-16040:3f315774e7de:5567-5786",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 5567,
+            "text" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 다시 심리·판단하도록 원심법원에 환송하기로 하여, 관여 대법관의 일치된 의견으로 주문과 같이 판결한다.\n대법관 마용주(재판장), 천대엽, 서경환(주심), 신숙희\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 2,
+          "score" : 0.03225806451612903,
+          "semanticRank" : 2
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 1885,
+            "id" : "sc-2024me16033-16040:3f315774e7de:1582-1885",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 1582,
+            "text" : "본인 1 외 1인\n【원심판결】\n서울고법 2024. 9. 6. 선고 2024르21037, 21044 판결\n【주 문】\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 서울고등법원에 환송한다.\n【이 유】\n상고이유(상고이유서 제출기간이 지난 후에 제출된 준비서면의 기재는 상고이유를 보충하는 범위에서)를 판단한다.\n1. 사안의 개요\n원심판결 이유 및 기록에 의하면, 다음 사실을 알 수 있다.\n가. 원고(반소피고, 이하 ‘원고’라 한다)는 2010. 10. 11. 피고(반소원고, 이하 ‘피고’라 한다)와 혼인하여 부부로 지내왔다.\n나.",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 3,
+          "score" : 0.031746031746031744,
+          "semanticRank" : 3
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 3458,
+            "id" : "sc-2024me16033-16040:3f315774e7de:3254-3458",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 3254,
+            "text" : "부 일방에 의한 회사 가치 훼손행위 또는 경영상 판단에 따라 비상장주식의 가치가 좌우되는 위험도 상대적으로 높다.\n따라서 법원이 비상장주식에 관하여 재산분할의 방법을 정할 때에는 당사자들이 비상장주식의 분할 방법에 관하여 합의를 하였거나 그 객관적 가치를 산정하기 어려운 경우 등의 특별한 사정이 없는 한 가급적 대상분할 방식을 우선적으로 고려하는 것이 바람직하다.",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 9,
+          "score" : 0.030117753623188408,
+          "semanticRank" : 4
+        }
+      ],
+      "requestedMode" : "hybrid",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "27",
+        "vectorCacheMisses" : "1",
+        "warmBeforeSearch" : "true"
+      },
+      "semanticScoredChunkCount" : 27,
+      "warnings" : [
+
+      ]
+    },
+    {
+      "chunkCount" : 27,
+      "effectiveMode" : "hybrid",
+      "hits" : [
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 5786,
+            "id" : "sc-2024me16033-16040:3f315774e7de:5567-5786",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 5567,
+            "text" : "급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 다시 심리·판단하도록 원심법원에 환송하기로 하여, 관여 대법관의 일치된 의견으로 주문과 같이 판결한다.\n대법관 마용주(재판장), 천대엽, 서경환(주심), 신숙희\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 1,
+          "score" : 0.03278688524590164,
+          "semanticRank" : 1
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 1885,
+            "id" : "sc-2024me16033-16040:3f315774e7de:1582-1885",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 1582,
+            "text" : "본인 1 외 1인\n【원심판결】\n서울고법 2024. 9. 6. 선고 2024르21037, 21044 판결\n【주 문】\n원심판결 중 재산분할 청구 부분을 파기하고, 이 부분 사건을 서울고등법원에 환송한다.\n【이 유】\n상고이유(상고이유서 제출기간이 지난 후에 제출된 준비서면의 기재는 상고이유를 보충하는 범위에서)를 판단한다.\n1. 사안의 개요\n원심판결 이유 및 기록에 의하면, 다음 사실을 알 수 있다.\n가. 원고(반소피고, 이하 ‘원고’라 한다)는 2010. 10. 11. 피고(반소원고, 이하 ‘피고’라 한다)와 혼인하여 부부로 지내왔다.\n나.",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "keywordRank" : 2,
+          "score" : 0.031754032258064516,
+          "semanticRank" : 4
+        },
+        {
+          "chunk" : {
+            "caseNumber" : "2024므16033, 16040",
+            "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+            "documentID" : "sc-2024me16033-16040",
+            "endUTF16" : 1646,
+            "id" : "sc-2024me16033-16040:3f315774e7de:1365-1646",
+            "sourceKind" : "user_provided_judgment",
+            "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+            "startUTF16" : 1365,
+            "text" : " 1998. 2. 13. 선고 97므1486, 1493 판결(공1998상, 767), 대법원 2014. 7. 16. 선고 2012므2888 전원합의체 판결(공2014하, 1583)\n【전 문】\n【원고(반소피고), 피상고인】\n원고(반소피고) (소송대리인 법무법인(유한) 지평 외 1인)\n【피고(반소원고), 상고인】\n피고(반소원고) (소송대리인 법무법인(유한) 광장 외 1인)\n【사건본인】\n사건본인 1 외 1인\n【원심판결】\n서울고법 2024. 9. 6. 선고 2024르21037, 21044 판결\n【주 문】\n",
+            "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+          },
+          "score" : 0.016129032258064516,
+          "semanticRank" : 2
+        }
+      ],
+      "requestedMode" : "hybrid",
+      "semanticModelIdentity" : {
+        "dimensions" : "768",
+        "documentPrefix" : "passage: ",
+        "file" : "multilingual-e5-base-Q8_0.gguf",
+        "maxTokens" : "512",
+        "model" : "intfloat\/multilingual-e5-base",
+        "normalization" : "L2",
+        "pooling" : "mean",
+        "provider" : "GGUF multilingual-e5-base",
+        "queryPrefix" : "query: ",
+        "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+        "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+        "tokenizer" : "t5",
+        "vectorCacheCapacity" : "512",
+        "vectorCacheHits" : "27",
+        "vectorCacheMisses" : "1",
+        "warmBeforeSearch" : "true"
+      },
+      "semanticScoredChunkCount" : 27,
+      "warnings" : [
+
+      ]
+    }
+  ],
+  "selectionMS" : 53540.01625000092,
+  "sourceSHA256" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+  "totalMS" : 184150.99241666758,
+  "wrappedPrompt" : "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n한국어 판례 학습 카드. 주어진 근거와 출력 형식만 사용.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n현재 판례만 요약. 참고 판례의 결론과 혼합 금지. 불명확하면 근거 부족.\n[현재 판례]\n사건번호: 2024므16033, 16040\n사건명: 이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법\n쟁점: 대법원 2026. 5. 29. 선고 2024므16033, 16040 판결\n【이혼등청구의소·이혼등청구의소】〈비상장주식을 그 명의대로 모두 피고에게 귀속시키고 원고에게 재산분할\n판결: 급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법에 관한 법리를 오해하여 판결에 영향을 미친 잘못이 있다. 이를 지적하는 상고이유 주장은 이유 있다.\n4. 결론\n원\n시험포인트: 급할 것을 명하였다. 이러한 원심의 판단에는 재산분할 방법\n[출력]\n한줄요약:\n핵심쟁점:\n결론:\n포인트:<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+}

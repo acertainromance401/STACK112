@@ -2,7 +2,7 @@
   "scope": "3 judgments, 3 queries, 9 real-model attempts; one sample per cell; simulator only",
   "independent_expert_review": false,
   "report_sha256": "8ba8724c0181a0b65ccb65e08c93b67ff9af3160b69e8ccd8ffc2b2567cf2a71",
-  "analysis_script_sha256": "c186e20337b80048130add810cc12ff44f987592f06966629bb04b8b098cbd6c",
+  "analysis_script_sha256": "5d0fd0aacff2f954f28c845e3ac0c3b5f52c6cf739464216ce65bc82c47314e3",
   "model_sha256": "6f85a640a97cf2bf5b8e764087b1e83da0fdb51d7c9fab7d0fece9385611df83",
   "pandas_version": "2.3.0",
   "matplotlib_version": "3.9.2",
@@ -42,6 +42,34 @@
       "irrelevant_evidence_selections": 1,
       "ai_review_correct": 0.0,
       "valid_and_ai_correct": 0.0
+    }
+  ],
+  "retrieval_summary": [
+    {
+      "mode": "keyword",
+      "samples": 3,
+      "positive_queries": 2,
+      "no_reference_queries": 1,
+      "precision_at_3": 0.2222222222,
+      "recall_at_3": 1.0,
+      "mrr_at_3": 1.0,
+      "no_reference_successes": 0,
+      "no_reference_success_rate": 0.0,
+      "irrelevant_evidence_requests": 1,
+      "irrelevant_evidence_request_rate": 0.3333333333
+    },
+    {
+      "mode": "hybrid",
+      "samples": 3,
+      "positive_queries": 2,
+      "no_reference_queries": 1,
+      "precision_at_3": 0.2222222222,
+      "recall_at_3": 1.0,
+      "mrr_at_3": 1.0,
+      "no_reference_successes": 0,
+      "no_reference_success_rate": 0.0,
+      "irrelevant_evidence_requests": 1,
+      "irrelevant_evidence_request_rate": 0.3333333333
     }
   ]
 }

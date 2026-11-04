@@ -1,0 +1,7 @@
+query_id,mode,effective_mode,environment,retrieval_seconds_simulator_only,e5_warm_before_search,e5_cache_hits,e5_cache_misses
+L1,hybrid,hybrid,simulator_not_device_evidence,80.51009104166587,false,2.0,41.0
+L1,keyword,keyword,simulator_not_device_evidence,0.033250916667384445,,,
+L2,hybrid,hybrid,simulator_not_device_evidence,0.8604165416672913,true,42.0,1.0
+L2,keyword,keyword,simulator_not_device_evidence,0.03196366666634276,,,
+L3,hybrid,hybrid,simulator_not_device_evidence,48.77742424999997,true,17.0,27.0
+L3,keyword,keyword,simulator_not_device_evidence,0.02722775000074762,,,

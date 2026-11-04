@@ -1,0 +1,90 @@
+{
+  "durationMS" : 808.6107916678884,
+  "phase" : "warm_passages_uncached_query",
+  "queryID" : "L2",
+  "queryText" : "이 판결이 인용한 97므1486 판례와 공통되는 재산분할의 기본 판단 기준을 설명하라. 이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법",
+  "relevance" : {
+    "evaluatedDocumentIDs" : [
+      "sc-97me1486-1493",
+      "sc-2026eu552"
+    ],
+    "precisionAtK" : 0.3333333333333333,
+    "recallAtK" : 1,
+    "reciprocalRank" : 1
+  },
+  "repetition" : 1,
+  "search" : {
+    "chunkCount" : 42,
+    "effectiveMode" : "semantic",
+    "hits" : [
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 205,
+          "id" : "sc-97me1486-1493:c5af08af5466:0-205",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 0,
+          "text" : "대법원 1998. 2. 13. 선고 97므1486, 1493 판결\n【이혼및위자료등·이혼등】【공1998.3.15.(54),767】\n\n【판시사항】\n[1] 부부 일방의 특유재산이 재산분할의 대상이 되는 경우\n[2] 부부 일방이 혼인 중에 부담한 제3자에 대한 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "score" : 0.8860909803495691,
+        "semanticRank" : 1
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 461,
+          "id" : "sc-97me1486-1493:c5af08af5466:141-461",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 141,
+          "text" : " 채무가 청산대상이 되는 경우\n[3] 법원이 재산분할을 명함에 있어서 참작해야 할 사항 및 설시 정도\n【판결요지】\n[1] 민법 제839조의2에 규정된 재산분할제도는 혼인 중에 취득한 실질적인 공동재산을 청산 분배하는 것을 주된 목적으로 하는 것이므로, 부부가 재판상 이혼을 할 때 쌍방의 협력으로 이룩한 재산이 있는 한, 법원으로서는 당사자의 청구에 의하여 그 재산의 형성에 기여한 정도 등 당사자 쌍방의 일체의 사정을 참작하여 분할의 액수와 방법을 정하여야 하는바, 이 경우 부부 일방의 특유재산은 원칙적으로 분할의 대상이 되지 아니하나 특유재산일지라도 다른 일방이 적극",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "score" : 0.8835995125398144,
+        "semanticRank" : 2
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2026으552",
+          "documentFingerprint" : "2d2581cb0f3b513d1018d68a67952ae4b8c86c4d25143b9b64a8632984cfe735",
+          "documentID" : "sc-2026eu552",
+          "endUTF16" : 706,
+          "id" : "sc-2026eu552:2d2581cb0f3b:437-706",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 437,
+          "text" : "를 가져오는 경우, 가사소송법 제64조에 따른 이행명령의 범위를 벗어나 허용될 수 없는지 여부(적극)\n【결정요지】\n[1] 가사소송법 제64조에 따라 가정법원은, 판결·심판·조정조서·조정을 갈음하는 결정 또는 양육비부담조서(이하 ‘판결 등’이라고 한다)에 의하여 금전의 지급, 유아의 인도, 자녀와의 면접교섭 허용 등의 의무를 이행하여야 할 사람이 정당한 이유 없이 그 의무를 이행하지 아니하는 경우에는 당사자의 신청에 의하여 일정한 기간 내에 그 의무를 이행할 것을 명할 수 있다.",
+          "title" : "이행명령"
+        },
+        "score" : 0.854891345017595,
+        "semanticRank" : 9
+      }
+    ],
+    "requestedMode" : "semantic",
+    "semanticModelIdentity" : {
+      "dimensions" : "768",
+      "documentPrefix" : "passage: ",
+      "file" : "multilingual-e5-base-Q8_0.gguf",
+      "maxTokens" : "512",
+      "model" : "intfloat\/multilingual-e5-base",
+      "normalization" : "L2",
+      "pooling" : "mean",
+      "provider" : "GGUF multilingual-e5-base",
+      "queryPrefix" : "query: ",
+      "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+      "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+      "tokenizer" : "t5",
+      "vectorCacheCapacity" : "512",
+      "vectorCacheHits" : "42",
+      "vectorCacheMisses" : "1",
+      "warmBeforeSearch" : "true"
+    },
+    "semanticScoredChunkCount" : 42,
+    "warnings" : [
+
+    ]
+  }
+}

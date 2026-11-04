@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "reason": "User requested shorter runtime and explicitly selected the balanced 24-generation option.",
+  "completedAtScopeDecision": 17,
+  "originalPlannedGenerations": 40,
+  "requestedCompletedGenerations": 24,
+  "policies": ["capped", "uncapped"],
+  "modes": ["fields", "keyword", "semantic", "hybrid"],
+  "greedyRepetitions": 2,
+  "fixedSeeds": [42],
+  "excludedSeeds": [43, 44],
+  "multiSeedVarianceEvaluated": false,
+  "sourceSnapshots": {
+    "code/ios/AISYSAppTests/ControlledSummaryEvaluationTests.swift": "measured/ControlledSummaryEvaluationTests.swift"
+  },
+  "termination": "Terminate only the dedicated simulator app after checkpoint 24 is saved; preserve all completed outputs and disclose the intentionally interrupted original 40-call XCTest."
+}

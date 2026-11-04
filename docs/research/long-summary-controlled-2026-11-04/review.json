@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "source-bounded AI provisional; no independent legal expert validation",
+  "unitPolicy": "Every nonempty sentence/line is reviewed. A unit containing a supported opening and unsupported added clauses is conservatively unsupported as a whole; core-item coverage is scored separately.",
+  "outputs": [
+    {
+      "promptSHA256": "42c500f7a951abc1411495c806b3a461132f5497db8184135423648bf6523bd3",
+      "outputSHA256": "e306dc1ba5463a8624d61a1f5b5eb578b5dc4775f796ba60e22118a6a055c707",
+      "items": [
+        {"id":"C1","status":"full","quote":"의무의 내용을 변경하거나 새로운 의무를 창설할 수 없으며","reason":"변경과 창설 금지를 명시한다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 소멸·변경 금지가 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 동석 금지 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"추가 조건의 범위 초과 판단이 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"가사소송법 제64조에 따라 가정법원은 판결 등으로 의무의 내용을 변경하거나 새로운 의무를 창설할 수 없으며, 가사소송법 제67조 제1항에 따라 판결 등으로 유아의 인도나 자녀 시험포인트를 지급할 수 없다는 결론을 내리며, 가사소송법 제68조에 따라 판결 등으로 자녀 시험포인트를 지급할 수 없다는 결론을 내리며, 가사소송법 제67조 제2항에 따라 판결 등","status":"unsupported","inputSupported":false,"reason":"첫머리 C1은 맞지만 뒤에 시험포인트 지급 및 제67·68조의 지원되지 않는 결론을 섞어 한 단위 전체는 지지되지 않는다."}
+      ]
+    },
+    {
+      "promptSHA256": "107791e8c24bb861ee3f4db9ad061f30b584dbc4bee8f7aed2ea0aaaab1810be",
+      "outputSHA256": "b767056ef6d8e7d11cba8cb95cf4799d2e540b3a009fd6d002046c72e4841ecc",
+      "items": [
+        {"id":"C1","status":"absent","reason":"기존 의무 변경·새 의무 창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 소멸·변경 금지가 없다."},
+        {"id":"C3","status":"full","quote":"면접교섭권의 처분 또는 제한·배제·변경에 관한 사건으로서 마류 가사비송사건에 해당하여 조정 전치주의, 심판절차에서의 필요적 심문 등 가사소송법이 예정한 절차에 따라 진행되어야","reason":"제한·변경 사건의 가사비송 분류와 필수 절차를 보존한다. 첫머리 제64조 연결의 모호함은 별도 단위 근거성에서 기록한다."},
+        {"id":"C4","status":"absent","reason":"추가 동석 금지 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"이 사건 추가 조건의 위법성 적용이 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"가사소송법 제64조에 따라 가정법원은 가사소송법 제2조 제1항 제2호 (나)목 3)에서 정한 면접교섭권의 처분 또는 제한·배제·변경에 관한 사건으로서 마류 가사비송사건에 해당하여 조정 전치주의, 심판절차에서의 필요적 심문 등 가사소송법이 예정한 절차에 따라 진행되어야 하고, 그 심판에 따라 판결 등으로 확정된 면접교섭권의 내용은 종국적으로 변경","status":"unsupported","inputSupported":false,"reason":"절차 설명은 원문에 있지만 제64조에 따른 이행명령과 별도 권리변경 심판을 연결하여 적어 법적 절차 구분이 불분명하다. 명시적 반대 진술로까지 단정하지는 않는다."}
+      ]
+    },
+    {
+      "promptSHA256": "bccd35009cc2b3324f7bcef1b1a2efbe0840fe4f0f8aada144f17539a0d45c4a",
+      "outputSHA256": "37aa3b09956b12349ac1da2946823189b6c80e8f05e1ee19684ea6a164b8abcb",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·새 의무 창설 금지 원칙이 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"partial","quote":"이행명령을 하면서 면접교섭 조건에 관하여 추가적인 내용을 추가하는","reason":"추가 조건 사안을 전달하지만 실제 동석 금지의 내용은 없다."},
+        {"id":"C5","status":"partial","quote":"가사소송법 제64조에 의한 이행명령의 범위를어나는","reason":"오탈자가 있으나 추가 조건의 범위 초과 취지를 전달한다. 실질적 면접교섭권 제한의 이유는 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"판례는 이행명령을 하면서 면접교섭 조건에 관하여 추가적인 내용을 추가하는 것은 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 주장하고 있다.","status":"supported","sourceQuote":"이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","inputSupported":true,"inputQuote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"오탈자와 주장이라는 거친 표현에도 추가 조건이 제64조 범위를 벗어난다는 중심 명제는 원문과 입력이 지지한다."}
+      ]
+    },
+    {
+      "promptSHA256": "e8357e427ab496155c88809b6dd5d55866fc559587f790181e733e9d299ee51b",
+      "outputSHA256": "c37f786833a8de783a10e2a837679d0b2bd7b5c170ff0145961f4432e541e2bd",
+      "items": [
+        {"id":"C1","status":"absent","reason":"의무 변경·창설 금지 원칙이 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가준수사항이라고만 하여 면접교섭 조건의 구체적 변경 관계를 전달하지 않는다."},
+        {"id":"C5","status":"partial","quote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 허용될 수 없다.","reason":"추가 조건의 범위 초과는 보존하지만 실질적 면접교섭권 제한이라는 이유가 없다."},
+        {"id":"C6","status":"absent","reason":"특별항고이유가 타당하다고만 하며 파기환송을 명시하지 않는다."}
+      ],
+      "claims": [
+        {"text":"판례의 결론은 \"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 허용될 수 없다.\"로, 원심결정에는 적법한 절차에 따른 재판을 받을 권리를 침해하여법 위반의 잘못이 있다고 할 것이고, 이를 지적하는 취지의 특별항고이유 주장은 이유이다.","status":"supported","sourceQuote":"원심결정에는 적법한 절차에 따른 재판을 받을 권리를 침해하여 재판에 영향을 미친 헌법 위반의 잘못이 있다고 할 것이고","inputSupported":true,"inputQuote":"원심결정에는 적법한 절차에 따른 재판을 받을 권리를 침해하여 재판에 영향을 미친 헌법 위반의 잘못이 있다고 할 것이고","reason":"오탈자는 있지만 추가 조건의 위법성과 특별항고이유를 받아들이는 이유는 원문·입력이 지지한다. 실제 주문은 누락했다."}
+      ]
+    },
+    {
+      "promptSHA256": "7f0eb434c6311a048c0d48006e7fba8c3bee3939a057ccddd5f353a58bda3228",
+      "outputSHA256": "4cc5adc9dbf94b7f2272eb25d09591635763c58cb3b4b549240d74f763b251e1",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 조건의 내용이 없다."},
+        {"id":"C5","status":"absent","reason":"무엇이 범위를 벗어났는지 주어를 생략하여 사건의 추가 조건에 대한 적용을 전달하지 못한다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"가사소송법 제64조에 따라 가사소송법 제64조에 의한 이행명령의 범위를어나 허용될 수 없다는 결론.","status":"supported","sourceQuote":"이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","inputSupported":true,"inputQuote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"범위 초과 처분은 허용되지 않는다는 불완전한 명제 자체는 지지된다. 주어·사건 적용 누락은 여섯 핵심 항목 점수에서 감점한다."}
+      ]
+    },
+    {
+      "promptSHA256": "64cad3660d6ff04b803cf19863a99968fcca72ae64b356845f33396c65a8d065",
+      "outputSHA256": "b1dc7aed09029c38cc3d821f33ea789d4fb101880f028924d37c9519387252a1",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 조건의 내용이 없다."},
+        {"id":"C5","status":"absent","reason":"사건 추가 조건을 생략하여 범위 초과의 적용 대상을 알 수 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"판례: 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 허용될 수 없다.","status":"supported","sourceQuote":"이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","inputSupported":true,"inputQuote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"일반적 범위 초과 불허 명제는 지지되지만 어떤 추가 조건인지 없어 핵심 항목을 충족하지 못한다."}
+      ]
+    },
+    {
+      "promptSHA256": "bccd35009cc2b3324f7bcef1b1a2efbe0840fe4f0f8aada144f17539a0d45c4a",
+      "outputSHA256": "915db6bb7fcaade01ec2c2d7488b6ac2ab982fc25082a652ce25449d4d7b57f7",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 면접교섭 조건의 내용이 없다."},
+        {"id":"C5","status":"absent","reason":"무엇이 추가되어 범위를 벗어났는지 생략한 일반적인 부과 불가 문구만 있다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"심쟁점: 대법원 2026. 8. 24. 자 2026으552 결정","status":"supported","sourceQuote":"대법원 2026. 8. 24. 자 2026으552 결정","inputSupported":true,"inputQuote":"대법원 2026. 8. 24. 자 2026으552 결정","reason":"제목 오탈자와 별개로 판례 식별 정보는 맞다. 핵심 법률 정보 coverage와 구분한다."},
+        {"text":"결론: 이행명령은 가사소송법 제64조에 의한 범위를어난 것으로 부과할 수 없다.","status":"supported","sourceQuote":"이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","inputSupported":true,"inputQuote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"이 사건 범위 초과 명령의 불허라는 문맥상 명제는 지지되지만 어떤 추가 조건인지는 빠졌다. 모든 이행명령의 일반적 금지라고 확대 해석하지 않는다."},
+        {"text":"포인트: 부과 cannot.","status":"non_substantive","inputSupported":false,"reason":"대상과 법률 명제가 없는 불완전한 메모다."}
+      ]
+    },
+    {
+      "promptSHA256": "e8357e427ab496155c88809b6dd5d55866fc559587f790181e733e9d299ee51b",
+      "outputSHA256": "04f403bd774f1a484c4b4b81f0da53f993254936c769655fd2aa58e6a0eb0faa",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가준수사항이라고만 하여 실제 면접교섭 조건 변경 관계를 전달하지 않는다."},
+        {"id":"C5","status":"partial","quote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 허용될 수 없다.","reason":"추가 조건의 범위 초과는 보존하지만 실질적 면접교섭권 제한의 이유가 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 허용될 수 없다.","status":"supported","sourceQuote":"이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","inputSupported":true,"inputQuote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"벗어나는의 오탈자 외에 추가 조건의 위법성은 원문·입력이 지지한다."}
+      ]
+    },
+    {
+      "promptSHA256": "7f0eb434c6311a048c0d48006e7fba8c3bee3939a057ccddd5f353a58bda3228",
+      "outputSHA256": "50b4977ef8be6040fbf4e1ffc6e92e99989c54ffe6bfeded17f2ce89fb8b0e0b",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"어떤 추가 조건이 범위를 벗어났는지 적용 대상을 생략했다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"판례는 가사소송법 제64조에 따라 가정법원은 이행명령의 범위를어나 허용할 수 없다는 결론을 내린다.","status":"supported","sourceQuote":"이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","inputSupported":true,"inputQuote":"사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.","reason":"일반적 범위 초과 불허 명제는 지지되나 구체적 적용 대상이 없다."}
+      ]
+    },
+    {
+      "promptSHA256": "64cad3660d6ff04b803cf19863a99968fcca72ae64b356845f33396c65a8d065",
+      "outputSHA256": "7613bdaf8377cb5429fd8d918d45e2d14630e3c907786a7bd17df369f78d6449",
+      "items": [
+        {"id":"C1","status":"absent","reason":"변경·창설 금지가 없다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"재판받을 권리만 언급하고 별도 가사비송 절차를 설명하지 않는다."},
+        {"id":"C4","status":"absent","reason":"추가 면접교섭 조건의 내용이 없다."},
+        {"id":"C5","status":"absent","reason":"추가 조건이나 면접교섭권 제한이라는 적용 대상이 없어 일반적 범위 초과 문구만 남았다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"판례의 결론은 가사소송법 제64조에 의한 이행명령의 범위를어나는 것으로 주장하고 있어, 원심결정에서 재판을 받는 권리를 침해하여법 위반의 잘못이라고 할 수 있다.","status":"supported","sourceQuote":"원심결정에는 적법한 절차에 따른 재판을 받을 권리를 침해하여 재판에 영향을 미친 헌법 위반의 잘못이 있다고 할 것이고","inputSupported":true,"inputQuote":"원심결정에는 적법한 절차에 따른 재판을 받을 권리를 침해하여 재판에 영향을 미친 헌법 위반의 잘못이 있다고 할 것이고","reason":"범위 초과와 재판받을 권리 침해라는 불완전한 진술 자체는 원문·입력이 지지한다. 무엇이 추가되었는지와 주문은 없다."}
+      ]
+    },
+    {
+      "promptSHA256": "42c500f7a951abc1411495c806b3a461132f5497db8184135423648bf6523bd3",
+      "outputSHA256": "26d2041b39bc70f237226795f3d46036eb99d9cdaa9fbc3ee1e050a60cad4381",
+      "items": [
+        {"id":"C1","status":"partial","quote":"의무의 내용을 변경하거나 새로운 의무를 창설할 수 있는지 여부","reason":"변경·창설 가능성이라는 쟁점은 보존하지만 소극이라는 답을 삭제했다. 긍정 결론을 명시한 것은 아니므로 반대 진술로 판정하지 않는다."},
+        {"id":"C2","status":"absent","reason":"권리·집행권원 효력의 구별이 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 동석 금지 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"추가 조건의 범위 초과 적용이 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"1. 가사소송법 제64조, 제67조 제1항, 제68조에 의하여 판결 등으로서 의무의 내용을 변경하거나 새로운 의무를 창설할 수 있는지 여부.","status":"supported","sourceQuote":"의무의 내용을 변경하거나 의무자에게 새로운 의무를 창설할 수 있는지 여부(소극)","inputSupported":true,"inputQuote":"의무의 내용을 변경하거나 의무자에게 새로운 의무를 창설할 수 있는지 여부(소극)","reason":"쟁점을 질문하는 문장이므로 창설 가능을 긍정한 진술은 아니다. 관련 조문과 쟁점은 근거가 있으나 소극 결론 누락은 C1에서 감점한다."}
+      ]
+    },
+    {
+      "promptSHA256": "107791e8c24bb861ee3f4db9ad061f30b584dbc4bee8f7aed2ea0aaaab1810be",
+      "outputSHA256": "19ba1b65c6660b79a46b2af78503833fa83422305c70610a6ac6dd60cfb01af3",
+      "items": [
+        {"id":"C1","status":"absent","reason":"의무의 변경·창설 금지가 없다."},
+        {"id":"C2","status":"partial","quote":"판결 등에 의하여 확정된 의무 중의 일부가 이행하지 아니한 경우, 당사자의 신청에 의하여 일정한 기간 내에 그 의무를 이행할 것을 명할 수 있다.","reason":"미이행 일부 의무에 대한 명령 가능성은 보존하지만 권리·집행권원 소멸·변경 금지는 없다."},
+        {"id":"C3","status":"absent","reason":"별도 가사비송 절차가 없다."},
+        {"id":"C4","status":"absent","reason":"추가 동석 금지 조건이 없다."},
+        {"id":"C5","status":"absent","reason":"추가 조건의 위법성 적용이 없다."},
+        {"id":"C6","status":"absent","reason":"파기환송이 없다."}
+      ],
+      "claims": [
+        {"text":"판례는 가사소송법 제64조에 따라 가정법원은, 판결 등에 의하여 확정된 의무 중의 일부가 이행하지 아니한 경우, 당사자의 신청에 의하여 일정한 기간 내에 그 의무를 이행할 것을 명할 수 있다.","status":"supported","sourceQuote":"판결 등에 의하여 확정된 의무 중 이행명령을 할 때까지 의무자가 이행하지 아니한 의무의 일부에 대하여만 이행명령을 할 수도 있지만","inputSupported":true,"inputQuote":"판결 등에 의하여 확정된 의무 중 이행명령을 할 때까지 의무자가 이행하지 아니한 의무의 일부에 대하여만 이행명령을 할 수도 있지만","reason":"미이행 의무에 관한 이행명령의 일반 설명은 원문·입력이 지지하지만, 사건의 핵심 한계 법리와 실제 주문은 누락했다."}
+      ]
+    }
+  ]
+}

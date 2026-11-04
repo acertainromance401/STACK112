@@ -1,0 +1,91 @@
+{
+  "durationMS" : 525.8665833316627,
+  "phase" : "warm_passages_uncached_query",
+  "queryID" : "L3",
+  "queryText" : "면접교섭 허용 의무에 대한 이행명령으로 확정된 판결에 없던 새로운 조건을 추가할 수 있는가? 이행명령",
+  "relevance" : {
+    "evaluatedDocumentIDs" : [
+      "sc-97me1486-1493",
+      "sc-2024me16033-16040"
+    ],
+    "noRelevantDocumentCorrect" : false,
+    "precisionAtK" : 0
+  },
+  "repetition" : 1,
+  "search" : {
+    "chunkCount" : 43,
+    "effectiveMode" : "semantic",
+    "hits" : [
+      {
+        "chunk" : {
+          "caseNumber" : "97므1486, 1493",
+          "documentFingerprint" : "c5af08af5466e3efd5fb10fc1c26ef929e857366eb2b560e313ce6fe441927a8",
+          "documentID" : "sc-97me1486-1493",
+          "endUTF16" : 1123,
+          "id" : "sc-97me1486-1493:c5af08af5466:815-1123",
+          "sourceKind" : "user_provided_judgment",
+          "startUTF16" : 815,
+          "text" : "39조의2, 제843조 \/ [3] 민법 제839조의2, 제843조\n【참조판례】\n[1] 대법원 1994. 5. 13. 선고 93므1020 판결(공1994상, 1698), 대법원 1994. 10. 25. 선고 94므734 판결(공1994하, 3125), 대법원 1994. 12. 13. 선고 94므598 판결(공1995상, 492), 대법원 1995. 10. 12. 선고 95므175, 182 판결(공1995하, 3780), 대법원 1996. 2. 9. 선고 94므635, 642 판결(공1996상, 952) \/ [2][3] 대법원 1993. 5. 25.",
+          "title" : "이혼및위자료등·이혼등"
+        },
+        "score" : 0.8161973770107183,
+        "semanticRank" : 1
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 1646,
+          "id" : "sc-2024me16033-16040:3f315774e7de:1365-1646",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 1365,
+          "text" : " 1998. 2. 13. 선고 97므1486, 1493 판결(공1998상, 767), 대법원 2014. 7. 16. 선고 2012므2888 전원합의체 판결(공2014하, 1583)\n【전 문】\n【원고(반소피고), 피상고인】\n원고(반소피고) (소송대리인 법무법인(유한) 지평 외 1인)\n【피고(반소원고), 상고인】\n피고(반소원고) (소송대리인 법무법인(유한) 광장 외 1인)\n【사건본인】\n사건본인 1 외 1인\n【원심판결】\n서울고법 2024. 9. 6. 선고 2024르21037, 21044 판결\n【주 문】\n",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "score" : 0.8116757473492054,
+        "semanticRank" : 2
+      },
+      {
+        "chunk" : {
+          "caseNumber" : "2024므16033, 16040",
+          "documentFingerprint" : "3f315774e7deff02091271285a9c73a61fbea1d4ff42f0087e8771a196943016",
+          "documentID" : "sc-2024me16033-16040",
+          "endUTF16" : 3987,
+          "id" : "sc-2024me16033-16040:3f315774e7de:3675-3987",
+          "sourceKind" : "user_provided_judgment",
+          "sourceURL" : "https:\/\/lx.scourt.go.kr\/search\/detail\/precedent\/0\/2026000041679",
+          "startUTF16" : 3675,
+          "text" : "만을 고집할 것이 아니라 현물분할 등 여러 종류의 재산분할 방법을 혼용하는 방안을 적극적으로 고려하여야 한다.\n나. 앞서 본 사실관계와 기록에 의하여 알 수 있는 아래와 같은 사정을 위 법리에 비추어 보면, 원심이 이 사건 주식에 관하여 오로지 대상분할 방식으로 재산분할을 명한 것은 당사자들의 형평을 현저히 해하는 방식으로 허용될 수 없다고 볼 여지가 있다.\n1) 원심은 주식회사 △△△ 비상장주식에 대하여는 당사자들의 분할 방법에 대한 합의를 존중하여 현물분할을 명하면서도 이 사건 주식을 포함한 나머지 부부 공동재산 전부에 대하여는 대상분할을 명하였다.",
+          "title" : "이혼등청구의소·이혼등청구의소: 비상장주식의 재산분할 방법"
+        },
+        "score" : 0.805194331396666,
+        "semanticRank" : 3
+      }
+    ],
+    "requestedMode" : "semantic",
+    "semanticModelIdentity" : {
+      "dimensions" : "768",
+      "documentPrefix" : "passage: ",
+      "file" : "multilingual-e5-base-Q8_0.gguf",
+      "maxTokens" : "512",
+      "model" : "intfloat\/multilingual-e5-base",
+      "normalization" : "L2",
+      "pooling" : "mean",
+      "provider" : "GGUF multilingual-e5-base",
+      "queryPrefix" : "query: ",
+      "revision" : "8a6f6cb284d54c798cc364ba497c976fbb8fe6bc",
+      "sha256" : "1629184be879a108e16cceef62f7a0fedfff4eefb81cd734d646f8f404b85cdc",
+      "tokenizer" : "t5",
+      "vectorCacheCapacity" : "512",
+      "vectorCacheHits" : "43",
+      "vectorCacheMisses" : "1",
+      "warmBeforeSearch" : "true"
+    },
+    "semanticScoredChunkCount" : 43,
+    "warnings" : [
+
+    ]
+  }
+}

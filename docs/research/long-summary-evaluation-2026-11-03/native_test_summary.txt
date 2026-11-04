@@ -1,0 +1,26 @@
+Test Case '-[AISYSAppTests.LongSummaryEvaluationTests testRealLongJudgmentSummaryComparison]' passed (1706.981 seconds).
+	 Executed 1 test, with 0 failures (0 unexpected) in 1706.981 (1706.984) seconds
+Test Case '-[AISYSAppTests.RAGResearchTests testActualGGUFHybridRetrievalHasVerifiableModelIdentity]' passed (1.686 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testBudgetFailureDoesNotBecomeModelSuccessOrExtractiveAnswer]' passed (0.237 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testCancellationPropagatesWithoutRetryOrFallback]' passed (0.194 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testDatasetValidationRejectsDuplicateIDsAndTargetLeakage]' passed (0.004 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testEvaluationExportsAllModesAndKeepsSimulatorPerformanceUnmeasured]' passed (0.223 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testExactCaseNumberRankingAndSelfExclusion]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testFailedAttemptsAreRecordedAndHumanReviewIsValidated]' passed (0.356 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testFullTextChangesBeyondLegacyPrefixInvalidateCorpus]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testGroundingDistinguishesSyntaxUnknownCitationsNumbersAndQuotes]' passed (0.003 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testHybridFusesScoresAndReportsUnavailableEmbedding]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testRecoveryFailureIsVisibleAndNextRequestCanReload]' passed (0.510 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testRelevanceUsesDocumentDeduplicationAndExplicitEmptyGold]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testResearchGenerationPassesExactBudgetedEvidenceWithoutLegacyPostprocessing]' passed (0.196 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testRetrievalIsDeterministicAndLimitsRepeatedDocumentChunks]' passed (0.004 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testSemanticOnlyRejectsLowOrUnavailableScoresWithoutKeywordFallback]' passed (0.003 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testSemanticOnlyUsesCosineWithoutLexicalOrExactCaseBonus]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testSeparateGroundedOXDraftRequiresQuestionAnswerAndExplanation]' passed (0.208 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testStoredDetailResolvesFullOriginalRatherThanExtractedFields]' passed (0.001 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testUnicodeChunksAndExcerptsRetainExactOriginalRanges]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testWithinDocumentRetrievalUsesOriginalSourceAndDoesNotApplyReferenceDiversityCap]' passed (0.002 seconds).
+	 Executed 20 tests, with 0 failures (0 unexpected) in 3.642 (3.656) seconds
+	 Executed 21 tests, with 0 failures (0 unexpected) in 1710.623 (1710.641) seconds
+	 Executed 21 tests, with 0 failures (0 unexpected) in 1710.623 (1710.643) seconds
+** TEST SUCCEEDED **

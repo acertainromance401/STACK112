@@ -1,0 +1,50 @@
+Scope: user-approved 24 completed summaries; original 40-loop intentionally interrupted (exit 65), not a 40-call test pass.
+
+Preflight: 3 tests passed.
+Test Case '-[AISYSAppTests.ControlledSummaryEvaluationTests testEvaluationRequiresOptIn]' passed (0.024 seconds).
+Test Case '-[AISYSAppTests.ControlledSummaryEvaluationTests testPreflightControlledSummaryPrompts]' passed (202.308 seconds).
+Test Case '-[AISYSAppTests.ControlledSummaryEvaluationTests testSummaryTemplateDefaultsAndUncappedFields]' passed (0.001 seconds).
+** TEST SUCCEEDED **
+
+Original run: 35 existing functional tests passed; the controlled 40-loop was intentionally interrupted after checkpoint 24.
+Test Case '-[AISYSAppTests.AISYSAppTests testCorpusChangesInvalidateSummaryAndEmptyEvidenceCaches]' passed (1.065 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testCorpusRevisionChangesForAddsEditsAndDeletesOnly]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testEmptyCaseDoesNotRetrieveArbitraryEvidence]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testOCRCaseRetrievesWithoutBeingRegistered]' passed (0.004 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testOversizedSummaryIsReportedInsteadOfDroppingEvidence]' passed (0.212 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testRankingIsDeterministic]' passed (0.004 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testRealTokenizerPreservesEvidenceAndRepeatedInferenceWorks]' passed (152.765 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testRetrievalExcludesSelfDuplicatesAndUnrelatedCases]' passed (0.003 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testRootSynchronizesInitialDataSameCountEditsAndDeletion]' passed (4.246 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testRuleBasedSummaryDoesNotUseReferenceRuling]' passed (0.008 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testSaveWrongAnswerAddsItemToTop]' passed (0.001 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testSaveWrongQuizRecordReturnsId]' passed (0.008 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testScannedCaseEditsRefreshSearchButDoNotExposeOCRRawText]' passed (0.031 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testSummaryCacheUsesFullCaseContents]' passed (0.193 seconds).
+Test Case '-[AISYSAppTests.AISYSAppTests testSummaryDeliversCurrentCaseEvidenceAndOutputFormatToEngine]' passed (0.225 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testActualGGUFHybridRetrievalHasVerifiableModelIdentity]' passed (1.928 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testBudgetFailureDoesNotBecomeModelSuccessOrExtractiveAnswer]' passed (0.201 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testCancellationPropagatesWithoutRetryOrFallback]' passed (0.193 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testDatasetValidationRejectsDuplicateIDsAndTargetLeakage]' passed (0.014 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testEvaluationExportsAllModesAndKeepsSimulatorPerformanceUnmeasured]' passed (0.381 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testExactCaseNumberRankingAndSelfExclusion]' passed (0.009 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testFailedAttemptsAreRecordedAndHumanReviewIsValidated]' passed (0.322 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testFullTextChangesBeyondLegacyPrefixInvalidateCorpus]' passed (0.001 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testGroundingDistinguishesSyntaxUnknownCitationsNumbersAndQuotes]' passed (0.003 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testHybridFusesScoresAndReportsUnavailableEmbedding]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testRecoveryFailureIsVisibleAndNextRequestCanReload]' passed (0.516 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testRelevanceUsesDocumentDeduplicationAndExplicitEmptyGold]' passed (0.001 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testResearchGenerationPassesExactBudgetedEvidenceWithoutLegacyPostprocessing]' passed (0.192 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testRetrievalIsDeterministicAndLimitsRepeatedDocumentChunks]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testSemanticOnlyRejectsLowOrUnavailableScoresWithoutKeywordFallback]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testSemanticOnlyUsesCosineWithoutLexicalOrExactCaseBonus]' passed (0.001 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testSeparateGroundedOXDraftRequiresQuestionAnswerAndExplanation]' passed (0.201 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testStoredDetailResolvesFullOriginalRatherThanExtractedFields]' passed (0.001 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testUnicodeChunksAndExcerptsRetainExactOriginalRanges]' passed (0.002 seconds).
+Test Case '-[AISYSAppTests.RAGResearchTests testWithinDocumentRetrievalUsesOriginalSourceAndDoesNotApplyReferenceDiversityCap]' passed (0.002 seconds).
+** TEST FAILED **
+
+Reduced runner rebuild: 2 opt-in/template tests passed (no additional summary generation).
+Test Case '-[AISYSAppTests.ControlledSummaryEvaluationTests testEvaluationRequiresOptIn]' passed (0.007 seconds).
+Test Case '-[AISYSAppTests.ControlledSummaryEvaluationTests testSummaryTemplateDefaultsAndUncappedFields]' passed (0.003 seconds).
+** TEST SUCCEEDED **

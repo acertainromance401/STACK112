@@ -1,0 +1,2 @@
+c6b72cfad82208e183cb2e149d64da40c9124f850c589db17e8ff41c3d1a4ee0  docs/research/long-summary-evaluation-2026-11-03/gold.json
+81403c7750494f9eec54efca2ebccd5db212afdeb9ddad6a3bd02d0aee3963af  docs/research/long-summary-evaluation-2026-11-03/README.md

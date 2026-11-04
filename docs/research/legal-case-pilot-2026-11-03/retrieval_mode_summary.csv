@@ -1,0 +1,3 @@
+mode,samples,positive_queries,no_reference_queries,precision_at_3,recall_at_3,mrr_at_3,no_reference_successes,no_reference_success_rate,irrelevant_evidence_requests,irrelevant_evidence_request_rate
+keyword,3,2,1,0.2222222222222222,1.0,1.0,0,0.0,1,0.3333333333333333
+hybrid,3,2,1,0.2222222222222222,1.0,1.0,0,0.0,1,0.3333333333333333
