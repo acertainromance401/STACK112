@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "source-bounded AI provisional; no independent legal expert validation",
+  "rubric": "../long-summary-controlled-2026-11-04/input_review.json",
+  "unitPolicy": "Every nonempty physical output line is classified by 1-based line number. Empty labels and incomplete source fragments are not converted into successful summaries or a numerical faithfulness score.",
+  "outputs": [
+    {
+      "mode": "keyword",
+      "outputSHA256": "5207d9e2343385096cc04f1b03398d8e93c36a63d2ff48ead397e86e8bef580d",
+      "items": [
+        {"id": "C1", "status": "absent", "reason": "법률 내용을 출력하지 않았다."},
+        {"id": "C2", "status": "absent", "reason": "입력에 있던 권리·집행권원 효력 변경 금지를 출력하지 않았다."},
+        {"id": "C3", "status": "absent", "reason": "입력에 있던 별도 가사비송 절차를 출력하지 않았다."},
+        {"id": "C4", "status": "absent", "reason": "추가 조건의 사실이 없다."},
+        {"id": "C5", "status": "absent", "reason": "사건 적용 판단이 없다."},
+        {"id": "C6", "status": "absent", "reason": "주문 표제만 있고 파기환송 내용이 없다."}
+      ],
+      "units": [
+        {"line": 1, "status": "empty_label", "reason": "사실 표제만 있고 내용이 없다."},
+        {"line": 2, "status": "empty_label", "reason": "판단 표제만 있고 내용이 없다."},
+        {"line": 3, "status": "empty_label", "reason": "주문 표제만 있고 내용이 없다."}
+      ]
+    },
+    {
+      "mode": "semantic",
+      "outputSHA256": "24277aea650872952bdf2dbd75c15da1016e2a21da2c38304f4b9f28c41e78ea",
+      "items": [
+        {"id": "C1", "status": "absent", "reason": "기존 의무 변경·새 의무 창설 금지가 없다."},
+        {"id": "C2", "status": "absent", "reason": "일부 명령과 권리·집행권원 효력 변경 금지가 없다."},
+        {"id": "C3", "status": "absent", "reason": "별도 가사비송 절차가 없다."},
+        {"id": "C4", "status": "absent", "reason": "추가 조건의 구체적 내용이나 기존 판결과의 차이가 없다."},
+        {"id": "C5", "status": "absent", "reason": "추상적 조건문을 쓰다가 끝났으며, 이 사건 추가 조건의 제64조 범위 초과를 전달하지 않는다."},
+        {"id": "C6", "status": "absent", "reason": "입력에 있던 파기환송을 출력하지 않았다."}
+      ],
+      "units": [
+        {"line": 1, "status": "incomplete_source_fragment", "reason": "원문의 면접교섭 제한 조건과 절차 위헌 표현을 이어 쓰다가 128토큰에서 끝났다. 구체적 사실·완성된 법적 결론·주문은 없다."}
+      ]
+    },
+    {
+      "mode": "hybrid",
+      "outputSHA256": "4907c41ff0ca8afc858e4da76066a6dca16d343e1d42dc8a405afb9123e8fbc9",
+      "items": [
+        {"id": "C1", "status": "absent", "reason": "기존 의무 변경·새 의무 창설 금지가 없다."},
+        {"id": "C2", "status": "partial", "quote": "이행명령을 할 때까지 의무자가 이행하지 아니한 의무의 일부에 대하여만 이행명령을 할 수 있지만", "reason": "일부 미이행 의무에만 명령할 수 있다는 설명은 있으나 권리·집행권원 효력 소멸·변경 금지까지 전달하지 못했다. 기존 부분 점수 기준을 그대로 적용한다."},
+        {"id": "C3", "status": "absent", "reason": "별도 가사비송 절차가 없다."},
+        {"id": "C4", "status": "absent", "reason": "사실 항목은 사건번호뿐이고 추가 조건을 설명하지 않는다."},
+        {"id": "C5", "status": "absent", "reason": "입력에 복원한 실질적 면접교섭권 제한과 제64조 범위 초과 판단을 출력하지 않았다."},
+        {"id": "C6", "status": "absent", "reason": "입력에 있던 파기환송을 출력하지 않았다."}
+      ],
+      "units": [
+        {"line": 1, "status": "source_supported_identifier", "reason": "사건번호는 맞지만 구체적 사실 설명은 아니다."},
+        {"line": 2, "status": "empty_label", "reason": "판단 표제다."},
+        {"line": 3, "status": "incomplete_source_fragment", "reason": "일부 미이행 의무와 명령의 관계는 원문에 있지만 뒤의 핵심 금지 문장에 도달하기 전에 잘렸다."}
+      ]
+    }
+  ]
+}

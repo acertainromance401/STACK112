@@ -1,0 +1,17 @@
+{
+  "generationMS" : 188632.27699999698,
+  "id" : "keyword-seed42",
+  "manifestSHA256" : "1a9ac99cef0ffd7bc05d2948388b5ac0a134ef3cf4ce41fb6dee0093d437879d",
+  "mode" : "keyword",
+  "order" : 1,
+  "result" : {
+    "contextTokens" : 8192,
+    "generatedTokenCount" : 10,
+    "originalPromptTokenCount" : 638,
+    "outputTokenLimit" : 128,
+    "promptTokenCount" : 638,
+    "samplerSeed" : 42,
+    "stopReason" : "end_of_generation",
+    "text" : "사실: \n판단:\n주문:"
+  }
+}

@@ -1,0 +1,7 @@
+mode,baseline_policy,baseline_input_coverage,improved_input_coverage,baseline_output_coverage,improved_output_coverage,baseline_prompt_tokens,improved_prompt_tokens,baseline_generation_seconds,improved_generation_seconds,improved_generated_tokens,improved_stop_reason,new_prompt_equals_baseline
+keyword,capped,0.16666666666666666,0.5,0.0,0.0,272,638,99.79436187500323,188.63227699999698,10,end_of_generation,False
+keyword,uncapped,0.5,0.5,0.08333333333333333,0.0,703,638,229.7988543749998,188.63227699999698,10,end_of_generation,False
+semantic,capped,0.08333333333333333,0.16666666666666666,0.0,0.0,277,416,97.21294941666929,165.8288990416695,128,token_limit,False
+semantic,uncapped,0.3333333333333333,0.16666666666666666,0.0,0.0,686,416,227.31315274999724,165.8288990416695,128,token_limit,False
+hybrid,capped,0.16666666666666666,0.5,0.0,0.08333333333333333,272,577,106.16977012500138,217.4141139583371,128,token_limit,False
+hybrid,uncapped,0.5,0.5,0.08333333333333333,0.08333333333333333,703,577,218.49551970833272,217.4141139583371,128,token_limit,False

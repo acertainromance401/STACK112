@@ -1,0 +1,2 @@
+cc770be877b4c3e9acb446e492b16dadc13d85589bc1821d8d420262ed3fc24f  /Users/acertainromance401/.copilot/session-state/cfeb734a-9843-48eb-a5ff-c76382537235/files/summary-preservation-validation-v2.log
+241234f87a6e55c798e48210b160a9ffebac226de6fe9a32867b7c7c9694f170  /Users/acertainromance401/.copilot/session-state/cfeb734a-9843-48eb-a5ff-c76382537235/files/summary-preservation-pilot.log

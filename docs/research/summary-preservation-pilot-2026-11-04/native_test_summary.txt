@@ -1,0 +1,17 @@
+Environment: Xcode 26.1.1; iOS 26.1; iPhone 16 Simulator; CPU.
+Focused validation:
+  RAGResearchTests: 20 passed.
+  ControlledSummaryEvaluationTests default-template / opt-in checks: 2 passed.
+  SummaryPreservationEvaluationTests fast checks: 3 passed.
+  Total: 25 passed, 0 failures.
+Actual generation:
+  SummaryPreservationEvaluationTests/testRunShortPreservationPilot: passed.
+  Test duration: 676.282 seconds.
+  Xcode test execution duration including preparation: 730.889 seconds.
+  Completed native outputs: exactly 3, keyword/semantic/hybrid, actual seed 42.
+  Model generation time sum: 571.875290 seconds.
+  Collection-test success is not a quality pass.
+Analysis regression:
+  python3 -m unittest discover -s scripts -p 'test_analyze_*.py'
+  36 tests passed.
+Production defaults: unchanged.

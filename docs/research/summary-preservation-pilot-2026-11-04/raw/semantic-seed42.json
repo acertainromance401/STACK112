@@ -1,0 +1,17 @@
+{
+  "generationMS" : 165828.8990416695,
+  "id" : "semantic-seed42",
+  "manifestSHA256" : "1a9ac99cef0ffd7bc05d2948388b5ac0a134ef3cf4ce41fb6dee0093d437879d",
+  "mode" : "semantic",
+  "order" : 2,
+  "result" : {
+    "contextTokens" : 8192,
+    "generatedTokenCount" : 128,
+    "originalPromptTokenCount" : 416,
+    "outputTokenLimit" : 128,
+    "promptTokenCount" : 416,
+    "samplerSeed" : 42,
+    "stopReason" : "token_limit",
+    "text" : "사실: 자녀와의 면접교섭 허용 의무에 대하여 이루어지는 가사소송법 제64조에 따른 이행명령의 내용이 실질적으로 가사소송법 제2조 제1항 제2호 (나)목 3)에서 정한 면접교섭권에 대한 제한·배제·변경 처분과 같은 결과를 가져온다면, 이 사건 이행명령을 한 원심결정에는 적법한 절차에 따른 재판을 받을 권리를 침해하여 재판에 영향을 미친"
+  }
+}

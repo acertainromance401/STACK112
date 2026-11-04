@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "source-bounded AI provisional; no independent legal expert validation",
+  "timing": "Frozen after inspecting the three native manifest inputs, before inspecting any new generation output.",
+  "rubric": "../long-summary-controlled-2026-11-04/input_review.json",
+  "inputs": [
+    {
+      "mode": "keyword",
+      "promptSHA256": "ac2ecc4da136afaf508b65e85d4b62a44a812f276d82b617e4e8ee8eb2efd799",
+      "items": [
+        {"id": "C1", "status": "absent", "reason": "기존 의무 변경 및 새 의무 창설 금지를 함께 제시하지 않는다."},
+        {"id": "C2", "status": "full", "quote": "권리 또는 집행권원의 효력을 사실상 소멸 또는 변경시키는 결과를 가져오는 처분을 할 수는 없다.", "reason": "일부 명령과 권리·집행권원 효력 변경 금지를 함께 전달한다."},
+        {"id": "C3", "status": "full", "quote": "마류 가사비송사건에 해당하여 조정 전치주의, 심판절차에서의 필요적 심문 등 가사소송법이 예정한 절차에 따라 진행되어야", "reason": "면접교섭 제한·배제·변경에 필요한 별도 가사비송 절차가 명시된다."},
+        {"id": "C4", "status": "absent", "reason": "비혈족 여성 동석 금지 및 원래 판결과 다른 추가 조건이라는 사실이 없다."},
+        {"id": "C5", "status": "absent", "reason": "실질적 면접교섭권 제한 설명은 있지만, 이 사건 추가 조건의 제64조 범위 초과라는 적용 결론이 없다. 생략된 결론을 추론으로 보충하지 않는다."},
+        {"id": "C6", "status": "full", "quote": "원심결정을 파기하고, 사건을 부산가정법원에 환송한다.", "reason": "파기와 환송을 모두 명시한다."}
+      ],
+      "roleLimitations": "사실 슬롯은 구체적 사실 대신 법적 평가를 선택했고, 판단 슬롯은 사건 적용 대신 일반 절차 법리를 선택했다."
+    },
+    {
+      "mode": "semantic",
+      "promptSHA256": "991251add0e5772e70586c47a44e73c2227269a43aaed019d845997e504904ff",
+      "items": [
+        {"id": "C1", "status": "absent", "reason": "기존 의무 변경·새 의무 창설 금지가 없다."},
+        {"id": "C2", "status": "absent", "reason": "일부 미이행 의무와 권리·집행권원 효력 변경 금지가 없다."},
+        {"id": "C3", "status": "absent", "reason": "면접교섭 변경을 위한 별도 가사비송 절차가 없다."},
+        {"id": "C4", "status": "absent", "reason": "실제 추가 조건이나 기존 판결과의 차이가 없다."},
+        {"id": "C5", "status": "absent", "reason": "면접교섭 제한과 제64조 한계에 관한 추상 법리는 있으나, 이 사건 추가 조건에 대한 적용이 없다. 기존 기준처럼 추상 법리만으로 점수를 주지 않는다."},
+        {"id": "C6", "status": "full", "quote": "원심결정을 파기하고, 사건을 부산가정법원에 환송한다.", "reason": "파기와 환송을 모두 명시한다."}
+      ],
+      "roleLimitations": "사실 슬롯은 절차적 위헌 판단, 판단 슬롯은 파기환송 결론을 선택했다. 문장 완결성만으로 의미 역할의 적합성은 보장되지 않는다."
+    },
+    {
+      "mode": "hybrid",
+      "promptSHA256": "9d59d04ccd33e7aeee99be34891e80f2af71684056703d474956ca0512708ebd",
+      "items": [
+        {"id": "C1", "status": "absent", "reason": "기존 의무 변경·새 의무 창설 금지가 없다."},
+        {"id": "C2", "status": "full", "quote": "권리 또는 집행권원의 효력을 사실상 소멸 또는 변경시키는 결과를 가져오는 처분을 할 수는 없다.", "reason": "일부 명령과 권리·집행권원 효력 변경 금지를 전달한다."},
+        {"id": "C3", "status": "absent", "reason": "별도 가사비송 절차가 없다."},
+        {"id": "C4", "status": "absent", "reason": "비혈족 여성 동석 금지나 원래 판결과 다른 추가 조건이라는 구체적 사안이 없다."},
+        {"id": "C5", "status": "full", "quote": "면접교섭권의 내용을 실질적으로 제한·배제·변경하는 처분과 같은 결과를 가져오는 것에 해당한다. 따라서 이 사건 추가준수사항을 부과한 것은 가사소송법 제64조에 의한 이행명령의 범위를 벗어나는 것으로서 허용될 수 없다.", "reason": "앞 문장 복원으로 실질적 권리 제한의 이유와 추가 조건의 범위 초과 결론을 연결한다."},
+        {"id": "C6", "status": "full", "quote": "원심결정을 파기하고, 사건을 부산가정법원에 환송한다.", "reason": "파기와 환송을 모두 명시한다."}
+      ],
+      "roleLimitations": "판단의 문맥 복원은 성공했지만 사실 슬롯과 복원된 앞 문장이 중복된다. 핵심 문장 중복 제거만 적용했고 의미 중복 제거는 아직 없다."
+    }
+  ]
+}
